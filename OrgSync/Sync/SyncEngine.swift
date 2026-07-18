@@ -79,6 +79,13 @@ final class SyncEngine {
         }
     }
 
+    func discardPendingCommitNow() async {
+        await run("Discarding…") {
+            guard let state = self.state else { throw GitHubError.notConfigured }
+            self.apply(await self.worker.discardPendingCommit(state: state))
+        }
+    }
+
     private func run(_ label: String, _ operation: @escaping () async throws -> Void) async {
         phase = .syncing(label)
         do {

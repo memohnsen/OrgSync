@@ -15,6 +15,7 @@ struct GitCommandPaletteView: View {
 
     @State private var commitMessage = ""
     @State private var showCommitPrompt = false
+    @State private var showDiscardPrompt = false
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,14 @@ struct GitCommandPaletteView: View {
                         .disabled(sync.phase.isBusy || !sync.hasPendingCommit)
                         .accessibilityHint("Publishes the pending commit to GitHub.")
 
+                        Button(role: .destructive) {
+                            showDiscardPrompt = true
+                        } label: {
+                            Label("Discard Pending Commit", systemImage: "xmark.seal")
+                        }
+                        .disabled(sync.phase.isBusy || !sync.hasPendingCommit)
+                        .accessibilityHint("Abandons the pending commit. Your file changes are kept as local changes.")
+
                         Button {
                             Task { await sync.syncNow(); await reminders.sync(repo: repo); repo.refresh() }
                         } label: {
@@ -109,6 +118,14 @@ struct GitCommandPaletteView: View {
                 }
             } message: {
                 Text("This creates a local pending commit. Use Push when you are ready to publish it to GitHub.")
+            }
+            .confirmationDialog("Discard Pending Commit?", isPresented: $showDiscardPrompt, titleVisibility: .visible) {
+                Button("Discard Commit", role: .destructive) {
+                    Task { await sync.discardPendingCommitNow() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("The unpublished commit is abandoned. Your file changes stay in the working copy as local changes, so you can pull and commit again.")
             }
         }
         .accessibilityIdentifier("git.commandPalette")

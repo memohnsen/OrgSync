@@ -77,6 +77,43 @@ private func makeWorkingCopy() throws -> URL {
     }
 }
 
+@Suite struct SyncWorkerPendingCommitTests {
+    @Test func discardingPendingCommitRecoversFromNonFastForward() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        var result = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+
+        // Stage and commit a local edit, then let the remote move on.
+        try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        result = await worker.stageAll(state: result.state)
+        result = try await worker.commitStaged(state: result.state, client: client, message: "local edit")
+        #expect(result.state.pendingCommit != nil)
+        remote.seedCommit(branch: "main", changes: ["b.org": Data("remote\n".utf8)])
+
+        // The pending commit can no longer fast-forward, and pull is blocked.
+        await #expect(throws: GitHubError.nonFastForward) {
+            _ = try await worker.pushPending(state: result.state, client: client)
+        }
+        await #expect(throws: GitHubError.self) {
+            _ = try await worker.pull(state: result.state, client: client)
+        }
+
+        // Discarding the commit keeps the edit as a local change and unblocks sync.
+        result = await worker.discardPendingCommit(state: result.state)
+        #expect(result.state.pendingCommit == nil)
+        #expect(result.status.modified == ["a.org"])
+
+        result = try await worker.sync(state: result.state, client: client)
+        #expect(remote.filesAtHead(branch: "main")["a.org"] == Data("local v2\n".utf8))
+        #expect(remote.filesAtHead(branch: "main")["b.org"] == Data("remote\n".utf8))
+        #expect(result.status.hasLocalChanges == false)
+    }
+}
+
 @Suite struct SyncWorkerPushBaselineTests {
     @Test func editsAndCreationsDuringPushSurviveTheNextPull() async throws {
         let remote = FakeGitHubRepo()

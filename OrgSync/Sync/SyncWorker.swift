@@ -136,6 +136,17 @@ actor SyncWorker {
         return Result(state: state, status: localChanges(against: state))
     }
 
+    /// Abandons a locally created commit object without publishing it. The
+    /// working copy is untouched, so its changes become plain local changes
+    /// again. This is the escape hatch when the remote moved and the pending
+    /// commit can no longer fast-forward.
+    func discardPendingCommit(state initialState: SyncRepoState) -> Result {
+        var state = initialState
+        state.pendingCommit = nil
+        persist(state)
+        return Result(state: state, status: localChanges(against: state))
+    }
+
     func pull(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         guard initialState.pendingCommit == nil else {
             throw GitHubError.server(status: 409, message: "Push the pending commit before pulling remote changes")

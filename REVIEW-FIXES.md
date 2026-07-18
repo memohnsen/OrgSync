@@ -15,7 +15,7 @@ uploaded (as `pushPending` does with `pendingCommit.changes`) instead of re-scan
 the disk after the push. Files edited or created mid-push must remain visible as
 local changes. Add regression test.
 
-## Step 3 — [ ] Fix: pending-commit deadlock after remote moves
+## Step 3 — [x] Fix: pending-commit deadlock after remote moves
 Add a "discard pending commit" path in `SyncWorker`/`SyncEngine` and surface it in
 the Git command palette so a non-fast-forward pending commit is recoverable without
 disconnecting. Add test.
