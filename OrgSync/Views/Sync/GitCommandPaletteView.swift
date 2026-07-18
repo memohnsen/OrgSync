@@ -38,50 +38,56 @@ struct GitCommandPaletteView: View {
                         Button {
                             Task { await sync.pullNow(); repo.refresh() }
                         } label: {
-                            Label("Pull", systemImage: "arrow.down.circle")
+                            commandLabel("Pull", systemImage: "arrow.down.circle", enabled: canPull)
                         }
-                        .disabled(sync.phase.isBusy || sync.hasPendingCommit)
+                        .buttonStyle(.plain)
+                        .disabled(!canPull)
                         .accessibilityHint(sync.hasPendingCommit ? "Push the pending commit before pulling." : "Downloads and merges remote changes.")
 
                         Button {
                             Task { await sync.stageAllNow() }
                         } label: {
-                            Label("Stage All Changes", systemImage: "tray.and.arrow.down")
+                            commandLabel("Stage All Changes", systemImage: "tray.and.arrow.down", enabled: canStage)
                         }
-                        .disabled(sync.phase.isBusy || sync.hasPendingCommit || !sync.status.hasLocalChanges)
+                        .buttonStyle(.plain)
+                        .disabled(!canStage)
                         .accessibilityHint("Selects every current local change for the next commit.")
 
                         Button {
                             commitMessage = OrgSyncCommitMessage.automatic()
                             showCommitPrompt = true
                         } label: {
-                            Label("Commit Staged Changes", systemImage: "checkmark.seal")
+                            commandLabel("Commit Staged Changes", systemImage: "checkmark.seal", enabled: canCommit)
                         }
-                        .disabled(sync.phase.isBusy || sync.hasPendingCommit || sync.stagedChangeCount == 0)
+                        .buttonStyle(.plain)
+                        .disabled(!canCommit)
                         .accessibilityHint("Creates a local pending Git commit without publishing it.")
 
                         Button {
                             Task { await sync.pushPendingNow(); await reminders.sync(repo: repo); repo.refresh() }
                         } label: {
-                            Label("Push", systemImage: "arrow.up.circle")
+                            commandLabel("Push", systemImage: "arrow.up.circle", enabled: canPush)
                         }
-                        .disabled(sync.phase.isBusy || !sync.hasPendingCommit)
+                        .buttonStyle(.plain)
+                        .disabled(!canPush)
                         .accessibilityHint("Publishes the pending commit to GitHub.")
 
                         Button(role: .destructive) {
                             showDiscardPrompt = true
                         } label: {
-                            Label("Discard Pending Commit", systemImage: "xmark.seal")
+                            commandLabel("Discard Pending Commit", systemImage: "xmark.seal", enabled: canDiscard)
                         }
-                        .disabled(sync.phase.isBusy || !sync.hasPendingCommit)
+                        .buttonStyle(.plain)
+                        .disabled(!canDiscard)
                         .accessibilityHint("Abandons the pending commit. Your file changes are kept as local changes.")
 
                         Button {
                             Task { await sync.syncNow(); await reminders.sync(repo: repo); repo.refresh() }
                         } label: {
-                            Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+                            commandLabel("Sync", systemImage: "arrow.triangle.2.circlepath", enabled: canSync)
                         }
-                        .disabled(sync.phase.isBusy || sync.hasPendingCommit)
+                        .buttonStyle(.plain)
+                        .disabled(!canSync)
                         .accessibilityHint("Pulls remote changes, then commits and pushes local changes.")
                     }
 
@@ -143,6 +149,18 @@ struct GitCommandPaletteView: View {
             }
         }
         .accessibilityIdentifier("git.commandPalette")
+    }
+
+    private var canPull: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
+    private var canStage: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.status.hasLocalChanges }
+    private var canCommit: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.stagedChangeCount > 0 }
+    private var canPush: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
+    private var canDiscard: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
+    private var canSync: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
+
+    private func commandLabel(_ title: String, systemImage: String, enabled: Bool) -> some View {
+        Label(title, systemImage: systemImage)
+            .foregroundStyle(enabled ? Color.primary : Color.secondary)
     }
 }
 
