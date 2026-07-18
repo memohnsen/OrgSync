@@ -13,7 +13,7 @@ struct AgendaView: View {
     private enum Scope: String, CaseIterable, Identifiable {
         case today = "Today"
         case upcoming = "Upcoming"
-        case all = "All TODOs"
+        case all = "All"
         var id: String { rawValue }
     }
 
@@ -188,7 +188,7 @@ struct AgendaView: View {
 
     private var emptyDescription: String {
         scope == .all ? "Add TODO headlines to an org file to see them here."
-                      : "Scheduled and deadline TODOs from your notes will appear here."
+                      : "Scheduled and deadline items from your notes will appear here."
     }
 
     private func reload() {

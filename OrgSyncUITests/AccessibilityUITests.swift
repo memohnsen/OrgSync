@@ -63,7 +63,7 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertEqual(scope.label, "Agenda View")
         XCTAssertTrue(scope.buttons["Today"].exists)
         XCTAssertTrue(scope.buttons["Upcoming"].exists)
-        XCTAssertTrue(scope.buttons["All TODOs"].exists)
+        XCTAssertTrue(scope.buttons["All"].exists)
     }
 
     @MainActor
