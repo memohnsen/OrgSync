@@ -96,5 +96,23 @@
    <ArchiveAction
       buildConfiguration="Release"
       revealArchiveInOrganizer="YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType="Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title="Increment Build Number"
+               scriptText="&quot;${PROJECT_DIR}/Scripts/increment_build_number.sh&quot;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier="primary"
+                     BlueprintIdentifier="714B542A300BB52500C2F7A9"
+                     BuildableName="OrgSync.app"
+                     BlueprintName="OrgSync"
+                     ReferencedContainer="container:OrgSync.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
    </ArchiveAction>
 </Scheme>
