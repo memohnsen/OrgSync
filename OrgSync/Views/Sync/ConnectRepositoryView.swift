@@ -45,17 +45,14 @@ struct ConnectRepositoryView: View {
             } else {
                 LabeledContent("Last Synced", value: "Never")
             }
-        } header: {
-            Text("Connection")
-        }
-
-        Section {
             Button(role: .destructive) {
                 showDisconnect = true
             } label: {
                 Text("Disconnect")
             }
             .accessibilityHint("Stops syncing this repository. You can choose whether to keep local files.")
+        } header: {
+            Text("Connection")
         }
         .confirmationDialog("Disconnect Repository", isPresented: $showDisconnect, titleVisibility: .visible) {
             Button("Keep Local Files", role: .none) { Task { await sync.disconnect(deleteLocalFiles: false) } }
