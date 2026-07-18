@@ -33,4 +33,17 @@ import Testing
 
         #expect(OrgEditorToolbarPreferences.load(defaults: defaults) == OrgEditorToolbarPreferences.defaultCommands)
     }
+
+    @Test func untouchedInsertionIsEligibleForReplacementByADifferentCommand() {
+        let pending = OrgEditorToolbarInsertionPolicy.pendingInsertion(
+            command: .headline,
+            before: "Inbox",
+            after: "* Inbox"
+        )!
+
+        #expect(pending.range == NSRange(location: 0, length: 2))
+        #expect(OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .checkbox, currentText: "* Inbox"))
+        #expect(!OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .headline, currentText: "* Inbox"))
+        #expect(!OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .checkbox, currentText: "* Inbox edited"))
+    }
 }

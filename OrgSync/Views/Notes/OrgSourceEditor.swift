@@ -57,10 +57,12 @@ struct OrgSourceEditor: UIViewRepresentable {
         private var parent: OrgSourceEditor
         weak var textView: UITextView?
         private var accessoryView: OrgEditorAccessoryView?
+        private var pendingToolbarInsertion: OrgEditorToolbarPendingInsertion?
 
         init(_ parent: OrgSourceEditor) { self.parent = parent }
 
         func textViewDidChange(_ textView: UITextView) {
+            pendingToolbarInsertion = nil
             parent.text = textView.text
             rehighlight(textView)
         }
@@ -92,6 +94,11 @@ struct OrgSourceEditor: UIViewRepresentable {
         }
 
         private func perform(_ command: OrgEditorCommand) {
+            guard let textView else { return }
+            let hadSelection = textView.selectedRange.length > 0
+            replacePendingInsertionIfAppropriate(for: command, in: textView)
+            let textBeforeCommand = textView.text ?? ""
+
             switch command {
             case .headline: insertAtLineStart("* ")
             case .todo: insertAtLineStart("* TODO ")
@@ -110,6 +117,41 @@ struct OrgSourceEditor: UIViewRepresentable {
             case .comment: insertAtLineStart("# ")
             case .sourceBlock: insertSnippet("#+begin_src\n\n#+end_src", caretOffsetFromEnd: 10)
             }
+
+            if !hadSelection {
+                recordPendingInsertion(of: command, from: textBeforeCommand, in: textView)
+            }
+        }
+
+        /// A generated snippet becomes replaceable only until the user edits the
+        /// document themselves. This lets adjacent toolbar choices behave like a
+        /// picker instead of leaving a trail of abandoned org syntax behind.
+        private func replacePendingInsertionIfAppropriate(for command: OrgEditorCommand, in textView: UITextView) {
+            guard let pending = pendingToolbarInsertion,
+                  OrgEditorToolbarInsertionPolicy.shouldReplace(
+                    pending: pending,
+                    with: command,
+                    currentText: textView.text ?? ""
+                  ) else {
+                if pendingToolbarInsertion?.expectedText != textView.text {
+                    pendingToolbarInsertion = nil
+                }
+                return
+            }
+
+            replace(pending.range, with: "", in: textView)
+            setCaret(to: pending.range.location, in: textView)
+            commit(textView)
+            pendingToolbarInsertion = nil
+        }
+
+        private func recordPendingInsertion(of command: OrgEditorCommand, from before: String, in textView: UITextView) {
+            let after = textView.text ?? ""
+            pendingToolbarInsertion = OrgEditorToolbarInsertionPolicy.pendingInsertion(
+                command: command,
+                before: before,
+                after: after
+            )
         }
 
         private func todayStamp() -> String {
@@ -191,8 +233,10 @@ private final class OrgEditorAccessoryView: UIToolbar {
         super.init(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 52))
 
         autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        isAccessibilityElement = false
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.alwaysBounceHorizontal = true
+        scrollView.isAccessibilityElement = false
         addSubview(scrollView)
         update(commands: commands)
     }
@@ -210,8 +254,7 @@ private final class OrgEditorAccessoryView: UIToolbar {
         var x: CGFloat = 8
         let height = scrollView.bounds.height
         for control in controls {
-            let width: CGFloat = control.accessibilityIdentifier == "editor.command.editToolbar" ? 84 :
-                control.accessibilityIdentifier == "editor.command.separator" ? 1 : 44
+            let width: CGFloat = control.accessibilityIdentifier == "editor.command.separator" ? 1 : 44
             let controlHeight = control.accessibilityIdentifier == "editor.command.separator" ? 26 : height
             control.frame = CGRect(x: x, y: (height - controlHeight) / 2, width: width, height: controlHeight)
             x += width + (control.accessibilityIdentifier == "editor.command.separator" ? 10 : 8)
@@ -248,9 +291,7 @@ private final class OrgEditorAccessoryView: UIToolbar {
         controls.append(separator)
 
         var editConfiguration = UIButton.Configuration.gray()
-        editConfiguration.title = "Edit"
         editConfiguration.image = UIImage(systemName: "slider.horizontal.3")
-        editConfiguration.imagePadding = 6
         editConfiguration.buttonSize = .medium
         editConfiguration.cornerStyle = .capsule
         editConfiguration.baseForegroundColor = .label
@@ -262,6 +303,7 @@ private final class OrgEditorAccessoryView: UIToolbar {
         editButton.accessibilityIdentifier = "editor.command.editToolbar"
         scrollView.addSubview(editButton)
         controls.append(editButton)
+        accessibilityElements = controls.filter { $0.accessibilityIdentifier != "editor.command.separator" }
         setNeedsLayout()
     }
 }

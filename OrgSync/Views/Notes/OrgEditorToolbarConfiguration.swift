@@ -95,3 +95,37 @@ enum OrgEditorToolbarPreferences {
         return commands.filter { seen.insert($0).inserted }
     }
 }
+
+struct OrgEditorToolbarPendingInsertion: Equatable {
+    let command: OrgEditorCommand
+    let range: NSRange
+    let expectedText: String
+}
+
+enum OrgEditorToolbarInsertionPolicy {
+    static func pendingInsertion(command: OrgEditorCommand, before: String, after: String) -> OrgEditorToolbarPendingInsertion? {
+        let beforeLength = (before as NSString).length
+        let afterLength = (after as NSString).length
+        guard afterLength > beforeLength else { return nil }
+
+        let beforeNS = before as NSString
+        let afterNS = after as NSString
+        var prefixLength = 0
+        while prefixLength < beforeLength,
+              beforeNS.character(at: prefixLength) == afterNS.character(at: prefixLength) {
+            prefixLength += 1
+        }
+
+        return OrgEditorToolbarPendingInsertion(
+            command: command,
+            range: NSRange(location: prefixLength, length: afterLength - beforeLength),
+            expectedText: after
+        )
+    }
+
+    static func shouldReplace(pending: OrgEditorToolbarPendingInsertion,
+                              with nextCommand: OrgEditorCommand,
+                              currentText: String) -> Bool {
+        pending.command != nextCommand && pending.expectedText == currentText
+    }
+}
