@@ -43,17 +43,11 @@ struct SettingsView: View {
                 } header: { Text("Preferences") }
 
                 Section {
-                    Toggle("Auto-Sync", isOn: $settings.autoSync)
-                        .accessibilityIdentifier("settings.autoSync")
-                        .accessibilityHint("Enables automatic pull on open when the individual setting is on.")
-                    Toggle("Pull on Open", isOn: $settings.pullOnOpen)
-                        .disabled(!settings.autoSync)
+                    Toggle("Pull Git on Open", isOn: $settings.pullOnOpen)
                         .accessibilityIdentifier("settings.pullOnOpen")
                         .accessibilityHint("Pulls remote changes when the app becomes active.")
                 } header: {
                     Text("Sync")
-                } footer: {
-                    Text("Auto-Sync pulls when the app opens. Requires a connected repository.")
                 }
 
                 Section {

@@ -110,7 +110,6 @@ struct RootView: View {
         }
         for action in AutoSyncPolicy.actions(
             for: event,
-            autoSyncEnabled: settings.autoSync,
             isConnected: sync.isConnected,
             pullOnOpen: settings.pullOnOpen,
             remindersSyncEnabled: settings.remindersSync

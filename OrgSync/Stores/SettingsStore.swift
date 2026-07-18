@@ -20,7 +20,6 @@ final class SettingsStore {
     private enum Key {
         static let repoURL = "settings.github.repoURL"
         static let branch = "settings.github.branch"
-        static let autoSync = "settings.sync.autoSync"
         static let pullOnOpen = "settings.sync.pullOnOpen"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
@@ -52,10 +51,6 @@ final class SettingsStore {
 
     // MARK: - Sync preferences
 
-    var autoSync: Bool {
-        didSet { defaults.set(autoSync, forKey: Key.autoSync) }
-    }
-
     var pullOnOpen: Bool {
         didSet { defaults.set(pullOnOpen, forKey: Key.pullOnOpen) }
     }
@@ -81,7 +76,6 @@ final class SettingsStore {
         self.defaults = defaults
         repoURL = defaults.string(forKey: Key.repoURL) ?? ""
         branch = defaults.string(forKey: Key.branch) ?? "main"
-        autoSync = defaults.bool(forKey: Key.autoSync)
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""

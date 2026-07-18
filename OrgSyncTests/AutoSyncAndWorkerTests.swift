@@ -9,25 +9,22 @@ import Testing
 
 @Suite struct AutoSyncPolicyTests {
     @Test func activeLifecycleCoversEverySettingsCombination() {
-        for autoSync in [false, true] {
-            for connected in [false, true] {
-                for pullOnOpen in [false, true] {
-                    for reminders in [false, true] {
-                        let actions = AutoSyncPolicy.actions(
-                            for: .active,
-                            autoSyncEnabled: autoSync,
-                            isConnected: connected,
-                            pullOnOpen: pullOnOpen,
-                            remindersSyncEnabled: reminders
-                        )
-                        let expected: [AutoSyncAction]
-                        if autoSync && connected && pullOnOpen {
-                            expected = reminders ? [.pullThenSyncReminders] : [.pull]
-                        } else {
-                            expected = reminders ? [.syncReminders] : []
-                        }
-                        #expect(actions == expected, "active: auto=\(autoSync), connected=\(connected), pull=\(pullOnOpen), reminders=\(reminders)")
+        for connected in [false, true] {
+            for pullOnOpen in [false, true] {
+                for reminders in [false, true] {
+                    let actions = AutoSyncPolicy.actions(
+                        for: .active,
+                        isConnected: connected,
+                        pullOnOpen: pullOnOpen,
+                        remindersSyncEnabled: reminders
+                    )
+                    let expected: [AutoSyncAction]
+                    if connected && pullOnOpen {
+                        expected = reminders ? [.pullThenSyncReminders] : [.pull]
+                    } else {
+                        expected = reminders ? [.syncReminders] : []
                     }
+                    #expect(actions == expected, "active: connected=\(connected), pull=\(pullOnOpen), reminders=\(reminders)")
                 }
             }
         }
@@ -36,7 +33,6 @@ import Testing
     @Test func inactiveLifecycleNeverSchedulesWork() {
         #expect(AutoSyncPolicy.actions(
             for: .inactive,
-            autoSyncEnabled: true,
             isConnected: true,
             pullOnOpen: true,
             remindersSyncEnabled: true
@@ -109,13 +105,11 @@ import Testing
         let settings = SettingsStore(defaults: defaults)
         settings.repoURL = "owner/repository"
         settings.branch = "release"
-        settings.autoSync = true
         settings.pullOnOpen = true
 
         let restored = SettingsStore(defaults: defaults)
         #expect(restored.repoURL == "owner/repository")
         #expect(restored.branch == "release")
-        #expect(restored.autoSync)
         #expect(restored.pullOnOpen)
         #expect(restored.todoKeywords == OrgTodoConfig.defaultPreference)
         #expect(restored.todoStatusColors.isEmpty)

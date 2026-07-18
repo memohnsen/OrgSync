@@ -22,14 +22,13 @@ nonisolated enum AutoSyncAction: Equatable, Sendable {
 nonisolated enum AutoSyncPolicy {
     static func actions(
         for event: AutoSyncLifecycleEvent,
-        autoSyncEnabled: Bool,
         isConnected: Bool,
         pullOnOpen: Bool,
         remindersSyncEnabled: Bool
     ) -> [AutoSyncAction] {
         switch event {
         case .active:
-            let shouldPull = autoSyncEnabled && isConnected && pullOnOpen
+            let shouldPull = isConnected && pullOnOpen
             if shouldPull {
                 return remindersSyncEnabled ? [.pullThenSyncReminders] : [.pull]
             }
