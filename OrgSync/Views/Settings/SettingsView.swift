@@ -15,6 +15,7 @@ struct SettingsView: View {
     @Environment(RepoStore.self) private var repo
     @Environment(SettingsStore.self) private var settings
     @Environment(RemindersSyncEngine.self) private var reminders
+    @State private var showRemindersSyncSuccess = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -55,7 +56,8 @@ struct SettingsView: View {
                             }
                         }
                         .accessibilityIdentifier("settings.remindersList")
-                        Button("Sync Reminders Now") { Task { await reminders.sync(repo: repo) } }
+                        Button("Sync Reminders Now") { Task { await syncRemindersNow() } }
+                            .disabled(!settings.remindersSync || reminders.isSyncing)
                             .accessibilityIdentifier("settings.syncRemindersNow")
                     } else {
                         Button("Allow Reminders Access") { Task { await reminders.requestAccess() } }
@@ -65,7 +67,7 @@ struct SettingsView: View {
                     Text("Reminders")
                 } footer: {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+                        Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with only the selected Reminders list." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
                         Text("OrgSync • Version 1.0")
                             .frame(maxWidth: .infinity)
                             .multilineTextAlignment(.center)
@@ -85,7 +87,17 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("settings.screen")
+            .alert("Reminders Synced", isPresented: $showRemindersSyncSuccess) {
+                Button("Done", role: .cancel) {}
+            } message: {
+                Text("The selected Reminders list is up to date.")
+            }
         }
+    }
+
+    private func syncRemindersNow() async {
+        await reminders.sync(repo: repo)
+        showRemindersSyncSuccess = reminders.lastError == nil
     }
 }
 
