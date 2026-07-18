@@ -74,6 +74,39 @@ IOS_SIMULATOR_ID="YOUR-SIMULATOR-UUID" just run
 
 The full test suite can also be run from Xcode.
 
+### Live GitHub integration test
+
+The regular Git tests use an in-memory GitHub server, so they are fast and
+repeatable while covering clone, pull, commit, push, merge conflicts, diffs,
+and recovery. There is also an opt-in smoke test for a real GitHub repository;
+it validates authentication, repository discovery, clone, and pull without
+writing to the remote branch.
+
+1. Create a disposable repository for testing.
+2. Create a fine-grained GitHub PAT restricted to that one repository, with
+   **Contents: Read and write** permission. Use a short expiry.
+3. Copy the template and fill in your local credentials:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+   ```dotenv
+   ORGSYNC_REVIEW_REPO_URL=https://github.com/OWNER/REPOSITORY
+   ORGSYNC_REVIEW_PAT=github_pat_your_disposable_token
+   ORGSYNC_REVIEW_BRANCH=main
+   ```
+
+4. Run the opt-in test:
+
+   ```sh
+   just test-live-git
+   ```
+
+`.env` is ignored by Git and must never be committed. The live test creates a
+temporary local working copy and never pushes or otherwise changes the remote
+repository.
+
 ## Archives and build numbers
 
 The shared `OrgSync` scheme runs
