@@ -43,6 +43,7 @@ final class AccessibilityUITests: XCTestCase {
     @MainActor
     func testGitCommandPaletteIsAvailableFromNotes() throws {
         let app = launch()
+        app.tabBars.buttons["Notes"].tap()
         let commands = app.buttons["notes.gitCommands"]
 
         XCTAssertTrue(commands.waitForExistence(timeout: 2))

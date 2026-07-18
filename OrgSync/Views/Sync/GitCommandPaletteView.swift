@@ -102,14 +102,6 @@ struct GitCommandPaletteView: View {
                         .disabled(!canDiscard)
                         .accessibilityHint("Abandons the pending commit. Your file changes are kept as local changes.")
 
-                        Button {
-                            Task { await sync.syncNow(); await reminders.sync(repo: repo); repo.refresh() }
-                        } label: {
-                            commandLabel("Sync", systemImage: "arrow.triangle.2.circlepath", enabled: canSync, isLoading: isRunning("Syncing…"))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canSync)
-                        .accessibilityHint("Pulls remote changes, then commits and pushes local changes.")
                     }
 
                     let conflicts = sync.conflictCopies()
@@ -193,8 +185,6 @@ struct GitCommandPaletteView: View {
     private var canCommit: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.stagedChangeCount > 0 }
     private var canPush: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
     private var canDiscard: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
-    private var canSync: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
-
     private func isRunning(_ message: String) -> Bool {
         if case let .syncing(currentMessage) = sync.phase {
             return currentMessage == message
