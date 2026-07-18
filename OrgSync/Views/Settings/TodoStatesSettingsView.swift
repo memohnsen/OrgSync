@@ -23,8 +23,7 @@ struct TodoStatesSettingsView: View {
         List {
             statusSection(title: "Active Statuses", isDone: false,
                           footer: "TODO, PROGRESS, and WAITING are active by default. Active statuses appear in Agenda and cycle toward completion.")
-            statusSection(title: "Completed Statuses", isDone: true,
-                          footer: "Only DONE strikes through a note title.")
+            statusSection(title: "Completed Statuses", isDone: true)
 
             Section {
                 TextField("Status name", text: $newStatus)
@@ -62,7 +61,7 @@ struct TodoStatesSettingsView: View {
     }
 
     @ViewBuilder
-    private func statusSection(title: String, isDone: Bool, footer: String) -> some View {
+    private func statusSection(title: String, isDone: Bool, footer: String? = nil) -> some View {
         let group = statuses.filter { $0.isDone == isDone }
         Section {
             ForEach(group) { status in
@@ -90,7 +89,7 @@ struct TodoStatesSettingsView: View {
         } header: {
             Text(title)
         } footer: {
-            Text(footer)
+            if let footer { Text(footer) }
         }
     }
 
