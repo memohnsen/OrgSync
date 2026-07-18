@@ -67,6 +67,27 @@ final class AccessibilityUITests: XCTestCase {
     }
 
     @MainActor
+    func testAgendaQuickAddIncludesOrgFields() throws {
+        let app = launch()
+        app.tabBars.buttons["Agenda"].tap()
+
+        let add = app.buttons["agenda.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 2))
+        add.tap()
+        XCTAssertTrue(app.textFields["agenda.quickAddTitle"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["agenda.quickAddStatus"].exists)
+        XCTAssertTrue(app.textFields["agenda.quickAddTags"].exists)
+        XCTAssertTrue(app.switches["agenda.quickAddScheduled"].exists)
+        XCTAssertTrue(app.switches["agenda.quickAddDeadline"].exists)
+
+        app.textFields["agenda.quickAddTitle"].tap()
+        app.textFields["agenda.quickAddTitle"].typeText("Quick add regression")
+        app.buttons["agenda.quickAddConfirm"].tap()
+        app.segmentedControls["agenda.scope"].buttons["All"].tap()
+        XCTAssertTrue(app.staticTexts["Quick add regression"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
     func testSettingsInputsAndSyncControlsHaveAccessibleNames() throws {
         let app = launch()
         app.tabBars.buttons["Settings"].tap()

@@ -19,10 +19,19 @@ struct AgendaView: View {
 
     @Environment(RepoStore.self) private var repo
     @Environment(SettingsStore.self) private var settings
+    @Environment(RemindersSyncEngine.self) private var reminders
     @State private var scope: Scope = .today
     @State private var items: [OrgTodoItem] = []
     @State private var rescheduling: OrgTodoItem?
     @State private var rescheduleDate = Date()
+    @State private var showQuickAdd = false
+    @State private var quickAddTitle = ""
+    @State private var quickAddStatus = "TODO"
+    @State private var quickAddTags = ""
+    @State private var includesScheduledDate = false
+    @State private var scheduledDate = Date()
+    @State private var includesDeadlineDate = false
+    @State private var deadlineDate = Date()
 
     var body: some View {
         NavigationStack {
@@ -53,6 +62,15 @@ struct AgendaView: View {
             }
             .navigationTitle("Agenda")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { beginQuickAdd() } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Add agenda item")
+                    .accessibilityIdentifier("agenda.add")
+                }
+            }
             .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("agenda.screen")
             .refreshable { reload() }
@@ -74,6 +92,52 @@ struct AgendaView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showQuickAdd) {
+                NavigationStack {
+                    Form {
+                        TextField("Title", text: $quickAddTitle)
+                            .accessibilityIdentifier("agenda.quickAddTitle")
+                        Picker("State", selection: $quickAddStatus) {
+                            ForEach(availableStatuses, id: \.name) { status in
+                                Text(status.name).tag(status.name)
+                            }
+                        }
+                        .accessibilityIdentifier("agenda.quickAddStatus")
+                        TextField("Tags", text: $quickAddTags, prompt: Text("work, personal"))
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("agenda.quickAddTags")
+
+                        Section("Schedule") {
+                            Toggle("Scheduled", isOn: $includesScheduledDate)
+                                .accessibilityIdentifier("agenda.quickAddScheduled")
+                            if includesScheduledDate {
+                                DatePicker("Scheduled Date", selection: $scheduledDate, displayedComponents: .date)
+                                    .accessibilityIdentifier("agenda.quickAddScheduledDate")
+                            }
+                            Toggle("Deadline", isOn: $includesDeadlineDate)
+                                .accessibilityIdentifier("agenda.quickAddDeadline")
+                            if includesDeadlineDate {
+                                DatePicker("Deadline Date", selection: $deadlineDate, displayedComponents: .date)
+                                    .accessibilityIdentifier("agenda.quickAddDeadlineDate")
+                            }
+                        }
+                    }
+                    .navigationTitle("New Agenda Item")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showQuickAdd = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Add") { addQuickItem() }
+                                .disabled(quickAddTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                .accessibilityIdentifier("agenda.quickAddConfirm")
+                        }
+                    }
+                }
+                .presentationDetents([.medium, .large])
             }
         }
     }
@@ -200,6 +264,54 @@ struct AgendaView: View {
     }
 
     // MARK: - Actions
+
+    private var availableStatuses: [OrgTodoStatus] {
+        OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords)
+    }
+
+    private func beginQuickAdd() {
+        quickAddTitle = ""
+        quickAddStatus = availableStatuses.first(where: { !$0.isDone })?.name ?? availableStatuses.first?.name ?? "TODO"
+        quickAddTags = ""
+        includesScheduledDate = false
+        scheduledDate = .now
+        includesDeadlineDate = false
+        deadlineDate = .now
+        showQuickAdd = true
+    }
+
+    private func addQuickItem() {
+        let title = quickAddTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+        let status = availableStatuses.contains(where: { $0.name == quickAddStatus }) ? quickAddStatus : "TODO"
+        let tags = normalizedTags(quickAddTags)
+        let tagSuffix = tags.isEmpty ? "" : " :" + tags.joined(separator: ":") + ":"
+
+        guard let inbox = repo.item(forRelativePath: "inbox.org") ?? repo.createNote(named: "inbox", in: repo.repoURL) else { return }
+        var text = repo.text(of: inbox)
+        if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
+        if !text.isEmpty { text += "\n" }
+        text += "* \(status) \(title)\(tagSuffix)\n"
+        if includesScheduledDate {
+            text += "SCHEDULED: \(OrgTimestamp(date: scheduledDate, isActive: true, includeTime: false).serialize())\n"
+        }
+        if includesDeadlineDate {
+            text += "DEADLINE: \(OrgTimestamp(date: deadlineDate, isActive: true, includeTime: false).serialize())\n"
+        }
+        guard repo.write(text, to: inbox) else { return }
+        showQuickAdd = false
+        reload()
+        if settings.remindersSync {
+            Task { await reminders.sync(repo: repo) }
+        }
+    }
+
+    private func normalizedTags(_ text: String) -> [String] {
+        Array(Set(text.split(whereSeparator: { $0 == "," || $0.isWhitespace })
+            .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: ":")) }
+            .filter { !$0.isEmpty }))
+            .sorted()
+    }
 
     private func complete(_ item: OrgTodoItem) {
         mutate(item) { headline, document in
