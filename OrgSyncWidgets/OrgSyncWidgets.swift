@@ -38,7 +38,7 @@ struct FavoritesWidget: Widget {
                 entry.items.first(where: { $0.filePath == path })
                     ?? WidgetAgendaItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
             }
-            WidgetNoteList(title: "Favorites", symbol: "star.fill", items: Array(favoriteItems), empty: "Favorite notes appear here.")
+            WidgetNoteList(title: "Favorites", symbol: "star.fill", accent: .yellow, items: Array(favoriteItems), empty: "Favorite notes appear here.")
         }
         .configurationDisplayName("Favorite Notes").description("Quick links to your favorite OrgSync notes.")
         .supportedFamilies([.systemSmall, .systemMedium])
@@ -50,7 +50,7 @@ struct UpcomingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: AgendaProvider()) { entry in
             let upcoming = entry.items.filter { ($0.deadline ?? $0.scheduled) != nil }.sorted { ($0.deadline ?? $0.scheduled ?? .distantFuture) < ($1.deadline ?? $1.scheduled ?? .distantFuture) }
-            WidgetNoteList(title: "Upcoming", symbol: "calendar", items: Array(upcoming.prefix(5)), empty: "Scheduled TODOs appear here.")
+            WidgetNoteList(title: "Upcoming", symbol: "calendar", accent: .cyan, items: Array(upcoming.prefix(5)), empty: "Scheduled TODOs appear here.")
         }
         .configurationDisplayName("Upcoming TODOs").description("Your next scheduled and deadline tasks.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
@@ -58,10 +58,12 @@ struct UpcomingWidget: Widget {
 }
 
 struct WidgetNoteList: View {
-    var title: String; var symbol: String; var items: [WidgetAgendaItem]; var empty: String
+    var title: String; var symbol: String; var accent: Color; var items: [WidgetAgendaItem]; var empty: String
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: symbol).font(.headline)
+            Label(title, systemImage: symbol)
+                .font(.headline)
+                .foregroundStyle(accent)
             if items.isEmpty { Text(empty).font(.caption).foregroundStyle(.secondary) }
             ForEach(items) { item in
                 Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
