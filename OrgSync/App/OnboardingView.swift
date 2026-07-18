@@ -11,7 +11,6 @@ import SwiftUI
 struct OnboardingView: View {
     let openInbox: () -> Void
     let connectRepository: () -> Void
-    let dismiss: () -> Void
 
     @State private var page = 0
 
@@ -29,19 +28,13 @@ struct OnboardingView: View {
                 .accessibilityHidden(true)
 
             VStack(spacing: 0) {
-                HStack {
-                    Text("ORG SYNC")
-                        .font(.caption.weight(.bold))
-                        .tracking(1.8)
-                        .foregroundStyle(.white.opacity(0.75))
-                    Spacer()
-                    Button("Not now", action: dismiss)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .accessibilityHint("Closes onboarding and opens your notes.")
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 14)
+                Text("ORG SYNC")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.8)
+                    .foregroundStyle(.white.opacity(0.75))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 8)
 
                 TabView(selection: $page) {
                     welcomePage.tag(0)
@@ -129,7 +122,7 @@ struct OnboardingView: View {
 
     private func onboardingPage(symbol: String, title: String, description: String, card: AnyView) -> some View {
         VStack(alignment: .leading, spacing: 22) {
-            Spacer()
+            Color.clear.frame(height: 18)
             Image(systemName: symbol)
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(Color(red: 0.18, green: 0.45, blue: 0.76))
@@ -158,7 +151,7 @@ struct OnboardingView: View {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .stroke(.white.opacity(0.18), lineWidth: 1)
                 }
-            Spacer()
+            Spacer(minLength: 18)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 8)
@@ -215,5 +208,5 @@ private struct OnboardingGrid: View {
 }
 
 #Preview {
-    OnboardingView(openInbox: {}, connectRepository: {}, dismiss: {})
+    OnboardingView(openInbox: {}, connectRepository: {})
 }

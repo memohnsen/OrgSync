@@ -74,8 +74,7 @@ struct RootView: View {
                 connectRepository: {
                     onboarding.finish()
                     selectedTab = "settings"
-                },
-                dismiss: onboarding.finish
+                }
             )
         }
         .onChange(of: scenePhase) { _, newPhase in
