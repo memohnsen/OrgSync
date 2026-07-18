@@ -147,6 +147,19 @@ actor SyncWorker {
         return Result(state: state, status: localChanges(against: state))
     }
 
+    /// The close-of-app workflow: stage every local change, create the normal
+    /// timestamped commit, then advance the remote branch. A pre-existing
+    /// pending commit is pushed as-is so it is never replaced.
+    func stageCommitAndPush(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
+        if initialState.pendingCommit != nil {
+            return try await pushPending(state: initialState, client: client)
+        }
+        let staged = stageAll(state: initialState)
+        guard staged.status.hasLocalChanges else { return staged }
+        let committed = try await commitStaged(state: staged.state, client: client, message: nil)
+        return try await pushPending(state: committed.state, client: client)
+    }
+
     /// Restores the working copy to the last synced GitHub baseline. Unlike
     /// discarding a pending commit, this removes unsaved local file changes.
     func discardLocalChanges(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {

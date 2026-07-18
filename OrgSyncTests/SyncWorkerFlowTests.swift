@@ -153,6 +153,28 @@ private func makeWorkingCopy() throws -> URL {
     }
 }
 
+@Suite struct SyncWorkerCloseWorkflowTests {
+    @Test func closeWorkflowStagesCommitsAndPushesEveryLocalChange() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["existing.org": Data("before\n".utf8)])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        let connected = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+        try Data("after\n".utf8).write(to: root.appendingPathComponent("existing.org"))
+        try Data("new\n".utf8).write(to: root.appendingPathComponent("new.org"))
+
+        let result = try await worker.stageCommitAndPush(state: connected.state, client: client)
+        #expect(!result.status.hasLocalChanges)
+        #expect(result.state.stagedPaths.isEmpty)
+        #expect(result.state.pendingCommit == nil)
+        #expect(remote.filesAtHead(branch: "main")["existing.org"] == Data("after\n".utf8))
+        #expect(remote.filesAtHead(branch: "main")["new.org"] == Data("new\n".utf8))
+        #expect(remote.commitMessage(sha: result.state.baseCommitSHA)?.hasPrefix("OrgSync update — ") == true)
+    }
+}
+
 @Suite struct SyncWorkerPushBaselineTests {
     @Test func editsAndCreationsDuringPushSurviveTheNextPull() async throws {
         let remote = FakeGitHubRepo()

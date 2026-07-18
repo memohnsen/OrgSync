@@ -136,7 +136,7 @@ struct RootView: View {
         let taskID = UIApplication.shared.beginBackgroundTask(withName: "OrgSyncPush")
         guard taskID != .invalid else { return }
         Task {
-            await sync.pushNow()
+            await sync.pushOnCloseNow()
             await MainActor.run { UIApplication.shared.endBackgroundTask(taskID) }
         }
     }
