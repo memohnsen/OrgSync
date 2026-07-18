@@ -19,6 +19,7 @@ struct RootView: View {
     @State private var reminders: RemindersSyncEngine
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
+    @State private var isShowingSplash = true
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -32,15 +33,23 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab("Notes", systemImage: "note.text", value: "notes") {
-                NotesView(openNotePath: $openedNotePath)
+        ZStack {
+            TabView(selection: $selectedTab) {
+                Tab("Notes", systemImage: "note.text", value: "notes") {
+                    NotesView(openNotePath: $openedNotePath)
+                }
+                Tab("Agenda", systemImage: "calendar", value: "agenda") {
+                    AgendaView()
+                }
+                Tab("Settings", systemImage: "gearshape", value: "settings") {
+                    SettingsView()
+                }
             }
-            Tab("Agenda", systemImage: "calendar", value: "agenda") {
-                AgendaView()
-            }
-            Tab("Settings", systemImage: "gearshape", value: "settings") {
-                SettingsView()
+
+            if isShowingSplash {
+                SplashView()
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .environment(repo)
@@ -60,6 +69,13 @@ struct RootView: View {
             } else {
                 selectedTab = "notes"
                 openedNotePath = url.path.removingPercentEncoding?.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(850))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.25)) {
+                isShowingSplash = false
             }
         }
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
