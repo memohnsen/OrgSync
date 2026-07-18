@@ -93,7 +93,7 @@ struct AgendaView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showQuickAdd) {
+            .fullScreenCover(isPresented: $showQuickAdd) {
                 NavigationStack {
                     Form {
                         TextField("Title", text: $quickAddTitle)
@@ -137,7 +137,6 @@ struct AgendaView: View {
                         }
                     }
                 }
-                .presentationDetents([.medium, .large])
             }
         }
     }
