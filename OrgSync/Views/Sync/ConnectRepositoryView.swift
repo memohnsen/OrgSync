@@ -14,20 +14,18 @@ struct ConnectRepositoryView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var validated: GitHubClient.RepoInfo?
-    @State private var branches: [String] = []
     @State private var selectedBranch = ""
     @State private var isWorking = false
     @State private var workingLabel = ""
     @State private var errorMessage: String?
     @State private var showDisconnect = false
-    @State private var showConnectSheet = false
 
     var body: some View {
         Group {
             if sync.isConnected {
                 connectedSection
             } else {
-                disconnectedSection
+                connectFlow
             }
         }
     }
@@ -58,31 +56,6 @@ struct ConnectRepositoryView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Stop syncing with GitHub. You can keep the downloaded notes on this device or remove them.")
-        }
-    }
-
-    @ViewBuilder
-    private var disconnectedSection: some View {
-        Section {
-            Button("Connect & Clone") { showConnectSheet = true }
-                .accessibilityIdentifier("settings.connectRepository")
-                .accessibilityHint("Enter GitHub repository details, validate them, and clone the selected branch.")
-                .sheet(isPresented: $showConnectSheet) {
-                    NavigationStack {
-                        Form {
-                            connectFlow
-                        }
-                        .navigationTitle("Connect & Clone")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button("Cancel") { showConnectSheet = false }
-                            }
-                        }
-                    }
-                }
-        } header: {
-            Text("GitHub")
         }
     }
 
@@ -124,6 +97,22 @@ struct ConnectRepositoryView: View {
             .accessibilityIdentifier("settings.validateRepository")
             .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
 
+            Button {
+                Task { await connect() }
+            } label: {
+                if isWorking && validated != nil {
+                    HStack {
+                        ProgressView()
+                        Text(workingLabel.isEmpty ? "Connecting…" : workingLabel)
+                    }
+                } else {
+                    Text("Connect & Clone")
+                }
+            }
+            .disabled(isWorking || validated == nil || selectedBranch.isEmpty)
+            .accessibilityIdentifier("settings.connectRepository")
+            .accessibilityHint("Downloads the chosen branch to this device after the repository is validated.")
+
         } header: {
             Text("GitHub")
         } footer: {
@@ -131,36 +120,6 @@ struct ConnectRepositoryView: View {
                 Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
             } else {
                 Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
-            }
-        }
-
-        if let validated {
-            Section("Repository") {
-                LabeledContent("Repository", value: validated.fullName)
-                if let description = validated.description, !description.isEmpty {
-                    LabeledContent("About", value: description)
-                }
-                LabeledContent("Default Branch", value: validated.defaultBranch)
-                if !branches.isEmpty {
-                    Picker("Branch", selection: $selectedBranch) {
-                        ForEach(branches, id: \.self) { Text($0).tag($0) }
-                    }
-                }
-                Button {
-                    Task { await connect() }
-                } label: {
-                    if isWorking {
-                        HStack {
-                            ProgressView()
-                            Text(workingLabel.isEmpty ? "Connecting…" : workingLabel)
-                        }
-                    } else {
-                        Text("Connect & Clone")
-                    }
-                }
-                .disabled(isWorking || selectedBranch.isEmpty)
-                .accessibilityIdentifier("settings.confirmConnectRepository")
-                .accessibilityHint("Downloads the selected branch to this device and enables sync.")
             }
         }
 
@@ -182,9 +141,8 @@ struct ConnectRepositoryView: View {
         do {
             let info = try await sync.validateRepository()
             validated = info
-            branches = (try? await sync.availableBranches()) ?? [info.defaultBranch]
             let preferred = settings.branch.isEmpty ? info.defaultBranch : settings.branch
-            selectedBranch = branches.contains(preferred) ? preferred : (branches.first ?? info.defaultBranch)
+            selectedBranch = preferred
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -198,7 +156,6 @@ struct ConnectRepositoryView: View {
         do {
             settings.branch = selectedBranch
             try await sync.connect(branch: selectedBranch)
-            showConnectSheet = false
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }

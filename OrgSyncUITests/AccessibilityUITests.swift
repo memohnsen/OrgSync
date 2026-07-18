@@ -70,9 +70,6 @@ final class AccessibilityUITests: XCTestCase {
     func testSettingsInputsAndSyncControlsHaveAccessibleNames() throws {
         let app = launch()
         app.tabBars.buttons["Settings"].tap()
-        let connect = app.buttons["settings.connectRepository"]
-        XCTAssertTrue(connect.waitForExistence(timeout: 2))
-        connect.tap()
 
         let repositoryURL = app.textFields["settings.repositoryURL"]
         let branch = app.textFields["settings.branch"]
