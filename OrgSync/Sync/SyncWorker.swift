@@ -183,6 +183,12 @@ actor SyncWorker {
             case let (remoteSHA?, nil):
                 if baseSHA == nil || remoteChanged {
                     try await takeRemote(path: path, sha: remoteSHA, client: client, entry: remote, skipped: &skipped, newFiles: &newFiles)
+                } else {
+                    // Locally deleted (or skipped and never downloaded) with an
+                    // unchanged remote: keep the baseline entry so the deletion
+                    // stays a visible local change to push, and the skipped
+                    // path isn't forgotten and re-downloaded next pull.
+                    newFiles[path] = baseSHA
                 }
             case let (nil, localSHA?):
                 if baseSHA != nil && localSHA == baseSHA, let localURL { try? fileManager.removeItem(at: localURL) }

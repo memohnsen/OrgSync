@@ -3,7 +3,7 @@
 Fixes from the 2026-07-18 four-agent codebase review, in priority order.
 Each step is committed separately; checkboxes flip to `[x]` as steps complete.
 
-## Step 1 — [ ] Fix: `pull` silently discards local deletions (file resurrection)
+## Step 1 — [x] Fix: `pull` silently discards local deletions (file resurrection)
 `SyncWorker.swift` `applyRemote`/pull logic: in the (remote exists, local deleted)
 case with an unchanged remote, keep the deletion tracked (`newFiles[path] = baseSHA`)
 so `localChanges` still reports it and the delete gets pushed. Preserve `skippedPaths`
