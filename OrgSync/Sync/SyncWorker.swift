@@ -65,7 +65,81 @@ actor SyncWorker {
         localChanges(against: state)
     }
 
+    /// Marks every local change for the next commit. OrgSync has no separate
+    /// on-device git index; this persisted list is its lightweight equivalent.
+    func stageAll(state initialState: SyncRepoState) -> Result {
+        var state = initialState
+        let status = localChanges(against: state)
+        state.stagedPaths = status.changedPaths
+        persist(state)
+        return Result(state: state, status: status)
+    }
+
+    /// Creates a Git commit object without moving the remote branch ref.
+    func commitStaged(state initialState: SyncRepoState, client: GitHubClient, message: String?) async throws -> Result {
+        guard initialState.pendingCommit == nil else {
+            throw GitHubError.server(status: 409, message: "Push the pending commit before creating another commit")
+        }
+        let current = localChanges(against: initialState)
+        let staged = Set(initialState.stagedPaths)
+        let modified = current.modified.filter { staged.contains($0) }
+        let added = current.added.filter { staged.contains($0) }
+        let deleted = current.deleted.filter { staged.contains($0) }
+        guard !modified.isEmpty || !added.isEmpty || !deleted.isEmpty else {
+            throw GitHubError.server(status: 422, message: "Stage one or more changes before committing")
+        }
+
+        let working = enumerateWorkingFiles()
+        var entries: [TreeEntryInput] = []
+        var pendingChanges: [PendingGitCommit.Change] = []
+        for path in modified + added {
+            guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
+            let blobSHA = try await client.createBlob(data: data)
+            entries.append(TreeEntryInput(path: path, sha: blobSHA))
+            pendingChanges.append(.init(path: path, blobSHA: blobSHA))
+        }
+        for path in deleted {
+            entries.append(TreeEntryInput(path: path, sha: nil))
+            pendingChanges.append(.init(path: path, blobSHA: nil))
+        }
+
+        let baseCommit = try await client.getCommit(sha: initialState.baseCommitSHA)
+        let tree = try await client.createTree(baseTree: baseCommit.tree.sha, entries: entries)
+        let count = pendingChanges.count
+        let commitSHA = try await client.createCommit(
+            message: message ?? "OrgSync: update \(count) file\(count == 1 ? "" : "s")",
+            tree: tree,
+            parents: [initialState.baseCommitSHA]
+        )
+        var state = initialState
+        state.stagedPaths = []
+        state.pendingCommit = PendingGitCommit(sha: commitSHA, changes: pendingChanges)
+        persist(state)
+        return Result(state: state, status: localChanges(against: state))
+    }
+
+    /// Publishes a previously created commit by advancing the branch ref.
+    func pushPending(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
+        guard let pending = initialState.pendingCommit else {
+            throw GitHubError.server(status: 422, message: "Create a commit before pushing")
+        }
+        try await client.updateRef(branch: initialState.branch, sha: pending.sha, force: false)
+        var state = initialState
+        for change in pending.changes {
+            if let blobSHA = change.blobSHA { state.files[change.path] = blobSHA }
+            else { state.files.removeValue(forKey: change.path) }
+        }
+        state.baseCommitSHA = pending.sha
+        state.pendingCommit = nil
+        state.lastSyncDate = Date()
+        persist(state)
+        return Result(state: state, status: localChanges(against: state))
+    }
+
     func pull(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
+        guard initialState.pendingCommit == nil else {
+            throw GitHubError.server(status: 409, message: "Push the pending commit before pulling remote changes")
+        }
         var state = initialState
         let remoteHead = try await client.getRef(branch: state.branch).object.sha
         if remoteHead == state.baseCommitSHA {
@@ -126,12 +200,14 @@ actor SyncWorker {
     }
 
     func sync(state: SyncRepoState, client: GitHubClient) async throws -> Result {
+        if state.pendingCommit != nil { return try await pushPending(state: state, client: client) }
         let pulled = try await pull(state: state, client: client)
         guard pulled.status.hasLocalChanges else { return pulled }
         return try await commitAndPush(state: pulled.state, client: client, message: nil, allowRetry: true)
     }
 
     func commitAndPush(state: SyncRepoState, client: GitHubClient, message: String?, allowRetry: Bool = true) async throws -> Result {
+        if state.pendingCommit != nil { return try await pushPending(state: state, client: client) }
         if enumerateWorkingFiles().keys.contains(where: { $0.contains(" (conflict ") }) {
             throw GitHubError.server(status: 409, message: "Resolve conflict copies before committing and pushing")
         }
@@ -160,6 +236,7 @@ actor SyncWorker {
         }
         var rebased = state
         rebase(&rebased, to: commit)
+        rebased.stagedPaths = []
         persist(rebased)
         return Result(state: rebased, status: localChanges(against: rebased))
     }

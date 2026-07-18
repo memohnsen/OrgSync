@@ -26,6 +26,11 @@ nonisolated struct SyncRepoState: Codable, Equatable, Sendable {
     /// subsequent status doesn't mistake them for local deletions.
     var skippedPaths: [String]
     var lastSyncDate: Date?
+    /// Locally selected paths that will be included in the next commit.
+    var stagedPaths: [String]
+    /// A Git object created locally through the GitHub API but not yet attached
+    /// to the remote branch. This makes Commit and Push distinct operations.
+    var pendingCommit: PendingGitCommit?
 
     init(owner: String,
          repo: String,
@@ -33,7 +38,9 @@ nonisolated struct SyncRepoState: Codable, Equatable, Sendable {
          baseCommitSHA: String,
          files: [String: String] = [:],
          skippedPaths: [String] = [],
-         lastSyncDate: Date? = nil) {
+         lastSyncDate: Date? = nil,
+         stagedPaths: [String] = [],
+         pendingCommit: PendingGitCommit? = nil) {
         self.owner = owner
         self.repo = repo
         self.branch = branch
@@ -41,7 +48,38 @@ nonisolated struct SyncRepoState: Codable, Equatable, Sendable {
         self.files = files
         self.skippedPaths = skippedPaths
         self.lastSyncDate = lastSyncDate
+        self.stagedPaths = stagedPaths
+        self.pendingCommit = pendingCommit
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case owner, repo, branch, baseCommitSHA, files, skippedPaths, lastSyncDate, stagedPaths, pendingCommit
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        owner = try values.decode(String.self, forKey: .owner)
+        repo = try values.decode(String.self, forKey: .repo)
+        branch = try values.decode(String.self, forKey: .branch)
+        baseCommitSHA = try values.decode(String.self, forKey: .baseCommitSHA)
+        files = try values.decode([String: String].self, forKey: .files)
+        skippedPaths = try values.decodeIfPresent([String].self, forKey: .skippedPaths) ?? []
+        lastSyncDate = try values.decodeIfPresent(Date.self, forKey: .lastSyncDate)
+        stagedPaths = try values.decodeIfPresent([String].self, forKey: .stagedPaths) ?? []
+        pendingCommit = try values.decodeIfPresent(PendingGitCommit.self, forKey: .pendingCommit)
+    }
+}
+
+/// The exact tree entries represented by a locally committed Git object.
+nonisolated struct PendingGitCommit: Codable, Equatable, Sendable {
+    struct Change: Codable, Equatable, Sendable {
+        var path: String
+        /// `nil` represents a deletion.
+        var blobSHA: String?
+    }
+
+    var sha: String
+    var changes: [Change]
 }
 
 /// Result of a status check: local working-tree changes plus whether the local
@@ -54,6 +92,7 @@ nonisolated struct SyncStatus: Equatable, Sendable {
 
     var hasLocalChanges: Bool { !modified.isEmpty || !added.isEmpty || !deleted.isEmpty }
     var localChangeCount: Int { modified.count + added.count + deleted.count }
+    var changedPaths: [String] { (modified + added + deleted).sorted() }
 }
 
 /// A commit as shown in the log view.

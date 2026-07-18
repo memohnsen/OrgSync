@@ -107,6 +107,24 @@ import Testing
         #expect(status.deleted == ["deleted.org"])
         #expect(status.localChangeCount == 3)
     }
+
+    @Test func stagingAllChangesPersistsEveryChangedPath() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let original = Data("before".utf8)
+        try Data("after".utf8).write(to: root.appendingPathComponent("changed.org"))
+        try Data("new".utf8).write(to: root.appendingPathComponent("new.org"))
+        let state = SyncRepoState(
+            owner: "owner", repo: "repo", branch: "main", baseCommitSHA: "base",
+            files: ["changed.org": GitBlob.sha1(for: original), "deleted.org": GitBlob.sha1(for: Data("gone".utf8))]
+        )
+
+        let result = await SyncWorker(repoURL: root).stageAll(state: state)
+        #expect(result.state.stagedPaths == ["changed.org", "deleted.org", "new.org"])
+        #expect(result.status.localChangeCount == 3)
+    }
 }
 
 @Suite @MainActor struct SyncSettingsPersistenceTests {

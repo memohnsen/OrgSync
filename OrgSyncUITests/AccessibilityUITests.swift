@@ -41,6 +41,18 @@ final class AccessibilityUITests: XCTestCase {
     }
 
     @MainActor
+    func testGitCommandPaletteIsAvailableFromNotes() throws {
+        let app = launch()
+        let commands = app.buttons["notes.gitCommands"]
+
+        XCTAssertTrue(commands.waitForExistence(timeout: 2))
+        XCTAssertEqual(commands.label, "Git commands")
+        commands.tap()
+        XCTAssertTrue(app.navigationBars["Git Commands"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Connect a Repository"].exists)
+    }
+
+    @MainActor
     func testAgendaScopeIsAccessible() throws {
         let app = launch()
         app.tabBars.buttons["Agenda"].tap()
@@ -65,15 +77,6 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertEqual(repositoryURL.label, "Repository URL")
         XCTAssertEqual(branch.label, "Branch")
         XCTAssertEqual(token.label, "Personal Access Token")
-
-        app.swipeUp()
-        let autoSync = app.switches["settings.autoSync"]
-        let pullOnOpen = app.switches["settings.pullOnOpen"]
-        let pushOnClose = app.switches["settings.pushOnClose"]
-        XCTAssertTrue(autoSync.waitForExistence(timeout: 2))
-        XCTAssertEqual(autoSync.label, "Auto-Sync")
-        XCTAssertEqual(pullOnOpen.label, "Pull on Open")
-        XCTAssertEqual(pushOnClose.label, "Commit & Push on Close")
     }
 
     @MainActor

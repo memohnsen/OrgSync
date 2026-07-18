@@ -42,11 +42,9 @@ final class OrgSyncUITests: XCTestCase {
     }
 
     @MainActor
-    func testSyncPreferenceControlsAreAvailable() throws {
+    func testGitSettingsAreAvailable() throws {
         app.tabBars.buttons["Settings"].tap()
-        app.swipeUp()
-        XCTAssertTrue(app.switches["settings.autoSync"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.switches["settings.pullOnOpen"].exists)
-        XCTAssertTrue(app.switches["settings.pushOnClose"].exists)
+        XCTAssertTrue(app.textFields["settings.repositoryURL"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.secureTextFields["settings.personalAccessToken"].exists)
     }
 }

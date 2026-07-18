@@ -26,6 +26,7 @@ struct FolderView: View {
     @State private var searchText = ""
     @State private var sortBy: Sort = .name
     @State private var syncErrorShown = false
+    @State private var showGitCommands = false
 
     // Create dialogs
     @State private var showNewNote = false
@@ -75,7 +76,7 @@ struct FolderView: View {
         .searchable(text: $searchText, prompt: "Search notes")
         .refreshableIfRoot(isRoot: isRoot, sync: sync, reminders: reminders, repo: repo)
         .toolbar {
-            if isRoot, let sync, sync.isConnected {
+            if isRoot, let sync {
                 ToolbarItem(placement: .topBarLeading) {
                     syncMenu(sync)
                 }
@@ -136,6 +137,9 @@ struct FolderView: View {
             Button("Cancel", role: .cancel) { renameTarget = nil }
             Button("Rename") { commitRename() }
         }
+        .sheet(isPresented: $showGitCommands) {
+            GitCommandPaletteView()
+        }
     }
 
     private enum Sort: String, CaseIterable, Identifiable { case name, recent; var id: String { rawValue }; var title: String { self == .name ? "Name" : "Most Recent" } }
@@ -147,48 +151,19 @@ struct FolderView: View {
 
     @ViewBuilder
     private func syncMenu(_ sync: SyncEngine) -> some View {
-        Menu {
-            Button {
-                Task { await sync.syncNow(); await reminders?.sync(repo: repo); repo.refresh() }
-            } label: {
-                Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
-            }
-            .disabled(sync.phase.isBusy)
-            Button {
-                Task { await sync.pullNow(); await reminders?.sync(repo: repo); repo.refresh() }
-            } label: {
-                Label("Pull", systemImage: "arrow.down.circle")
-            }
-            .disabled(sync.phase.isBusy)
-            Button {
-                Task { await sync.pushNow(); await reminders?.sync(repo: repo); repo.refresh() }
-            } label: {
-                Label("Commit & Push", systemImage: "arrow.up.circle")
-            }
-            .disabled(sync.phase.isBusy)
-            Divider()
-            if !sync.conflictCopies().isEmpty {
-                NavigationLink {
-                    ConflictResolutionView()
-                } label: {
-                    Label("Resolve Conflicts", systemImage: "exclamationmark.triangle")
-                }
-            }
-            NavigationLink {
-                CommitLogView()
-            } label: {
-                Label("Commit Log", systemImage: "clock.arrow.circlepath")
-            }
+        Button {
+            showGitCommands = true
         } label: {
             if sync.phase.isBusy {
                 ProgressView()
             } else {
-                Image(systemName: "arrow.triangle.2.circlepath")
+                Image(systemName: "arrow.triangle.branch")
             }
         }
-        .accessibilityLabel("Sync")
-        .accessibilityHint("Open sync actions and recent commit history.")
-        .accessibilityIdentifier("notes.sync")
+        .disabled(sync.phase.isBusy)
+        .accessibilityLabel("Git commands")
+        .accessibilityHint("Open Pull, Stage, Commit, Push, and Sync commands.")
+        .accessibilityIdentifier("notes.gitCommands")
     }
 
     @ViewBuilder

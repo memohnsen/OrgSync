@@ -35,6 +35,9 @@ final class SyncEngine {
     var isConnected: Bool { state != nil }
     var connectedRepoName: String? { state.map { "\($0.owner)/\($0.repo)" } }
     var connectedBranch: String? { state?.branch }
+    var stagedChangeCount: Int { state?.stagedPaths.count ?? 0 }
+    var hasPendingCommit: Bool { state?.pendingCommit != nil }
+    var pendingCommitSHA: String? { state?.pendingCommit.map { String($0.sha.prefix(7)) } }
 
     private let repo: RepoStore
     private let settings: SettingsStore
@@ -57,6 +60,24 @@ final class SyncEngine {
     func syncNow() async { await run("Syncing…") { try await self.sync() } }
     func pullNow() async { await run("Pulling…") { try await self.pull() } }
     func pushNow(message: String? = nil) async { await run("Pushing…") { try await self.commitAndPush(message: message) } }
+    func stageAllNow() async {
+        await run("Staging…") {
+            guard let state = self.state else { throw GitHubError.notConfigured }
+            self.apply(await self.worker.stageAll(state: state))
+        }
+    }
+    func commitStagedNow(message: String? = nil) async {
+        await run("Committing…") {
+            guard let state = self.state else { throw GitHubError.notConfigured }
+            self.apply(try await self.worker.commitStaged(state: state, client: try self.makeClient(for: state), message: message))
+        }
+    }
+    func pushPendingNow() async {
+        await run("Pushing…") {
+            guard let state = self.state else { throw GitHubError.notConfigured }
+            self.apply(try await self.worker.pushPending(state: state, client: try self.makeClient(for: state)))
+        }
+    }
 
     private func run(_ label: String, _ operation: @escaping () async throws -> Void) async {
         phase = .syncing(label)
