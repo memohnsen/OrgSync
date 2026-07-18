@@ -10,6 +10,7 @@
 
 import SwiftUI
 import EventKit
+import UIKit
 
 struct SettingsView: View {
     @Environment(RepoStore.self) private var repo
@@ -60,15 +61,20 @@ struct SettingsView: View {
                             .disabled(!settings.remindersSync || reminders.isSyncing)
                             .accessibilityIdentifier("settings.syncRemindersNow")
                     } else {
-                        Button("Allow Reminders Access") { Task { await reminders.requestAccess() } }
-                            .accessibilityHint("Opens the system permission prompt for Reminders.")
+                        if reminders.access == .denied {
+                            Link("Open Settings", destination: URL(string: UIApplication.openSettingsURLString)!)
+                                .accessibilityHint("Opens iOS Settings, where you can allow Reminders access for OrgSync.")
+                        } else {
+                            Button("Allow Reminders Access") { Task { await reminders.requestAccess() } }
+                                .accessibilityHint("Opens the system permission prompt for Reminders.")
+                        }
                     }
                 } header: {
                     Text("Reminders")
                 } footer: {
                     VStack(alignment: .leading, spacing: 14) {
                         Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with only the selected Reminders list." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
-                        Text("OrgSync • Version 1.0")
+                        Text("OrgSync • Version \(appVersion)")
                             .frame(maxWidth: .infinity)
                             .multilineTextAlignment(.center)
                             .padding(.top, 10)
@@ -98,6 +104,10 @@ struct SettingsView: View {
     private func syncRemindersNow() async {
         await reminders.sync(repo: repo)
         showRemindersSyncSuccess = reminders.lastError == nil
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 }
 

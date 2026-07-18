@@ -17,3 +17,8 @@ run: build
 # Execute the complete unit and UI test suite.
 test:
     xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' test
+
+# Exercise GitHub authentication, clone, and pull against the ignored local
+# reviewer repository credentials. This never writes to the remote branch.
+test-live-git:
+    @touch .orgsync-live-git-enabled; xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' -only-testing:OrgSyncTests/LiveGitHubIntegrationTests test; status=$?; rm -f .orgsync-live-git-enabled; exit $status

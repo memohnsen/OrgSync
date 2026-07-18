@@ -1,0 +1,3 @@
+# Local reviewer and developer credentials. Never commit these.
+.env
+.orgsync-live-git-enabled
