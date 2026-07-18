@@ -5,8 +5,8 @@
 //  Plain-text org editor: a `UITextView` wrapper that live-highlights org syntax
 //  (headline stars/keywords/priorities/tags, planning + inline timestamps, block
 //  and keyword lines, comments, and inline emphasis) with subtle system colors,
-//  plus a keyboard accessory bar with insertion shortcuts (headline, TODO,
-//  checkbox, bold, italic, today's timestamp, link template).
+//  plus a horizontally scrolling, configurable keyboard accessory palette for
+//  common org insertion and emphasis commands.
 //
 
 import SwiftUI
@@ -14,6 +14,8 @@ import UIKit
 
 struct OrgSourceEditor: UIViewRepresentable {
     @Binding var text: String
+    let commands: [OrgEditorCommand]
+    @Binding var isShowingToolbarCustomization: Bool
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -42,6 +44,7 @@ struct OrgSourceEditor: UIViewRepresentable {
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
+        context.coordinator.update(parent: self)
         // Only re-sync when an external change diverges from what's on screen.
         if textView.text != text {
             let selection = textView.selectedRange
@@ -51,14 +54,20 @@ struct OrgSourceEditor: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, UITextViewDelegate {
-        private let parent: OrgSourceEditor
+        private var parent: OrgSourceEditor
         weak var textView: UITextView?
+        private var accessoryView: OrgEditorAccessoryView?
 
         init(_ parent: OrgSourceEditor) { self.parent = parent }
 
         func textViewDidChange(_ textView: UITextView) {
             parent.text = textView.text
             rehighlight(textView)
+        }
+
+        func update(parent: OrgSourceEditor) {
+            self.parent = parent
+            accessoryView?.update(commands: parent.commands)
         }
 
         private func rehighlight(_ textView: UITextView) {
@@ -73,46 +82,42 @@ struct OrgSourceEditor: UIViewRepresentable {
         // MARK: Accessory bar
 
         func makeAccessoryView() -> UIView {
-            let bar = UIToolbar()
-            bar.autoresizingMask = .flexibleHeight
-
-            func item(_ symbol: String, _ action: Selector, label: String) -> UIBarButtonItem {
-                let button = UIBarButtonItem(image: UIImage(systemName: symbol),
-                                             style: .plain, target: self, action: action)
-                button.accessibilityLabel = label
-                return button
-            }
-            let flexible = { UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil) }
-
-            bar.items = [
-                item("number", #selector(insertHeadline), label: "Insert headline"),
-                flexible(),
-                item("checklist.unchecked", #selector(insertTodo), label: "Insert TODO keyword"),
-                flexible(),
-                item("checkmark.square", #selector(insertCheckbox), label: "Insert checkbox"),
-                flexible(),
-                item("bold", #selector(insertBold), label: "Bold"),
-                flexible(),
-                item("italic", #selector(insertItalic), label: "Italic"),
-                flexible(),
-                item("calendar", #selector(insertTimestamp), label: "Insert today's date"),
-                flexible(),
-                item("link", #selector(insertLink), label: "Insert link"),
-            ]
-            bar.sizeToFit()
-            return bar
+            let accessory = OrgEditorAccessoryView(
+                commands: parent.commands,
+                commandAction: { [weak self] command in self?.perform(command) },
+                editAction: { [weak self] in self?.parent.isShowingToolbarCustomization = true }
+            )
+            accessoryView = accessory
+            return accessory
         }
 
-        @objc private func insertHeadline() { insertAtLineStart("* ") }
-        @objc private func insertTodo() { insertAtLineStart("* TODO ") }
-        @objc private func insertCheckbox() { insertAtLineStart("- [ ] ") }
-        @objc private func insertBold() { wrapSelection("*", "*") }
-        @objc private func insertItalic() { wrapSelection("/", "/") }
-        @objc private func insertLink() { insertSnippet("[[][]]", caretOffsetFromEnd: 4) }
+        private func perform(_ command: OrgEditorCommand) {
+            switch command {
+            case .headline: insertAtLineStart("* ")
+            case .todo: insertAtLineStart("* TODO ")
+            case .checkbox: insertAtLineStart("- [ ] ")
+            case .timestamp: insertTimestamp()
+            case .scheduled: insertAtLineStart("SCHEDULED: \(todayStamp())")
+            case .deadline: insertAtLineStart("DEADLINE: \(todayStamp())")
+            case .priority: insertSnippet("[#A] ", caretOffsetFromEnd: 0)
+            case .tag: insertSnippet(":tag:", caretOffsetFromEnd: 1)
+            case .bold: wrapSelection("*", "*")
+            case .italic: wrapSelection("/", "/")
+            case .underline: wrapSelection("_", "_")
+            case .strike: wrapSelection("+", "+")
+            case .code: wrapSelection("~", "~")
+            case .link: insertSnippet("[[][]]", caretOffsetFromEnd: 4)
+            case .comment: insertAtLineStart("# ")
+            case .sourceBlock: insertSnippet("#+begin_src\n\n#+end_src", caretOffsetFromEnd: 10)
+            }
+        }
 
-        @objc private func insertTimestamp() {
-            let stamp = OrgTimestamp(date: Date(), isActive: true, includeTime: false).serialize()
-            insertSnippet(stamp, caretOffsetFromEnd: 0)
+        private func todayStamp() -> String {
+            OrgTimestamp(date: Date(), isActive: true, includeTime: false).serialize()
+        }
+
+        private func insertTimestamp() {
+            insertSnippet(todayStamp(), caretOffsetFromEnd: 0)
         }
 
         // MARK: Insertion helpers
@@ -168,6 +173,100 @@ struct OrgSourceEditor: UIViewRepresentable {
             parent.text = textView.text
             rehighlight(textView)
         }
+    }
+}
+
+private final class OrgEditorAccessoryView: UIView {
+    private let scrollView = UIScrollView()
+    private let commandStack = UIStackView()
+    private let commandAction: (OrgEditorCommand) -> Void
+    private let editAction: () -> Void
+    private var displayedCommands: [OrgEditorCommand] = []
+
+    init(commands: [OrgEditorCommand],
+         commandAction: @escaping (OrgEditorCommand) -> Void,
+         editAction: @escaping () -> Void) {
+        self.commandAction = commandAction
+        self.editAction = editAction
+        super.init(frame: .zero)
+
+        backgroundColor = .secondarySystemBackground
+        autoresizingMask = .flexibleWidth
+        commandStack.axis = .horizontal
+        commandStack.alignment = .center
+        commandStack.spacing = 8
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.alwaysBounceHorizontal = true
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        commandStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(scrollView)
+        scrollView.addSubview(commandStack)
+        NSLayoutConstraint.activate([
+            heightAnchor.constraint(equalToConstant: 58),
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            commandStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 12),
+            commandStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -12),
+            commandStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
+            commandStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -8),
+            commandStack.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -16),
+        ])
+        update(commands: commands)
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: 58)
+    }
+
+    func update(commands: [OrgEditorCommand]) {
+        guard commands != displayedCommands else { return }
+        displayedCommands = commands
+        commandStack.arrangedSubviews.forEach {
+            commandStack.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+
+        for command in commands {
+            var configuration = UIButton.Configuration.tinted()
+            configuration.image = UIImage(systemName: command.symbol)
+            configuration.buttonSize = .medium
+            configuration.cornerStyle = .capsule
+            configuration.baseForegroundColor = .label
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
+            let button = UIButton(configuration: configuration, primaryAction: UIAction { [weak self] _ in
+                self?.commandAction(command)
+            })
+            button.accessibilityLabel = command.title
+            button.accessibilityHint = "Inserts \(command.title.lowercased()) org syntax."
+            button.accessibilityIdentifier = "editor.command.\(command.rawValue)"
+            commandStack.addArrangedSubview(button)
+        }
+
+        let separator = UIView()
+        separator.backgroundColor = .separator
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.widthAnchor.constraint(equalToConstant: 1).isActive = true
+        separator.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        commandStack.addArrangedSubview(separator)
+
+        var editConfiguration = UIButton.Configuration.tinted()
+        editConfiguration.title = "Edit"
+        editConfiguration.image = UIImage(systemName: "slider.horizontal.3")
+        editConfiguration.imagePadding = 6
+        editConfiguration.buttonSize = .medium
+        editConfiguration.cornerStyle = .capsule
+        editConfiguration.baseForegroundColor = .systemBlue
+        let editButton = UIButton(configuration: editConfiguration, primaryAction: UIAction { [weak self] _ in
+            self?.editAction()
+        })
+        editButton.accessibilityLabel = "Edit toolbar"
+        editButton.accessibilityHint = "Choose, remove, and reorder editor commands."
+        editButton.accessibilityIdentifier = "editor.command.editToolbar"
+        commandStack.addArrangedSubview(editButton)
     }
 }
 

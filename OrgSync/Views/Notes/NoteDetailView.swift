@@ -24,11 +24,17 @@ struct NoteDetailView: View {
     @State private var autosaveTask: Task<Void, Never>?
     @State private var loaded = false
     @State private var originalEditText = ""
+    @State private var toolbarCommands = OrgEditorToolbarPreferences.load()
+    @State private var isCustomizingToolbar = false
 
     var body: some View {
         Group {
             if isEditing {
-                OrgSourceEditor(text: $editText)
+                OrgSourceEditor(
+                    text: $editText,
+                    commands: toolbarCommands,
+                    isShowingToolbarCustomization: $isCustomizingToolbar
+                )
                     .ignoresSafeArea(.container, edges: .bottom)
                     .onChange(of: editText) { _, _ in scheduleAutosave() }
             } else {
@@ -61,6 +67,12 @@ struct NoteDetailView: View {
         }
         .task(id: item.id) { loadFromDisk() }
         .onDisappear { flushOnDisappear() }
+        .onChange(of: toolbarCommands) { _, commands in
+            OrgEditorToolbarPreferences.save(commands)
+        }
+        .sheet(isPresented: $isCustomizingToolbar) {
+            OrgEditorToolbarCustomizationView(commands: $toolbarCommands)
+        }
     }
 
     // MARK: - Loading & saving

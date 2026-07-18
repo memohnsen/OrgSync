@@ -96,6 +96,23 @@ final class AccessibilityUITests: XCTestCase {
     }
 
     @MainActor
+    func testEditorToolbarExposesPlanningCommandsAndCustomization() throws {
+        let app = launch()
+        app.buttons["note.row.inbox.org"].tap()
+        XCTAssertTrue(app.buttons["note.edit"].waitForExistence(timeout: 2))
+        app.buttons["note.edit"].tap()
+
+        XCTAssertTrue(app.buttons["editor.command.deadline"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["editor.command.scheduled"].exists)
+        let editToolbar = app.buttons["editor.command.editToolbar"]
+        XCTAssertTrue(editToolbar.exists)
+        editToolbar.tap()
+
+        XCTAssertTrue(app.navigationBars["Edit Toolbar"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["editor.toolbar.add.comment"].exists)
+    }
+
+    @MainActor
     func testPrimaryControlsRemainAvailableAtAccessibilityTextSize() throws {
         let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
 
