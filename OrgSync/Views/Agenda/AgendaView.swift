@@ -234,9 +234,10 @@ struct AgendaView: View {
             }.sorted(by: agendaSort)
             return due.isEmpty ? [] : [AgendaSection(title: "Next \(settings.agendaDays) Days", items: due)]
         case .all:
-            let grouped = Dictionary(grouping: items, by: \.outline.filePath)
-            return grouped.keys.sorted().map { path in
-                AgendaSection(title: path, items: grouped[path, default: []].sorted(by: agendaSort))
+            let grouped = Dictionary(grouping: items) { AgendaTimeBucket.bucket(for: relevantDate($0)) }
+            return AgendaTimeBucket.allCases.compactMap { bucket in
+                let bucketItems = grouped[bucket, default: []].sorted(by: agendaSort)
+                return bucketItems.isEmpty ? nil : AgendaSection(title: bucket.rawValue, items: bucketItems)
             }
         }
     }
