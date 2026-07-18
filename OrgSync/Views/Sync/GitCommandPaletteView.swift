@@ -35,15 +35,14 @@ struct GitCommandPaletteView: View {
                         LabeledContent("Local Changes", value: "\(sync.status.localChangeCount)")
                         LabeledContent("Staged", value: "\(sync.stagedChangeCount)")
                         LabeledContent("Pending Commit", value: sync.pendingCommitSHA ?? "None")
-                    }
-
-                    Section("Commands") {
                         Button { showCommitLog = true } label: {
                             commandLabel("Commit Log", systemImage: "clock.arrow.circlepath", enabled: true)
                         }
                         .buttonStyle(.plain)
                         .accessibilityHint("Shows recent commits on the connected branch.")
+                    }
 
+                    Section("Commands") {
                         Button { showChanges = true } label: {
                             commandLabel("View Changes", systemImage: "doc.text.magnifyingglass", enabled: canViewChanges)
                         }
