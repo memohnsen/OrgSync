@@ -226,7 +226,7 @@ private final class OrgEditorAccessoryView: UIToolbar {
         controls.removeAll()
 
         for command in commands {
-            var configuration = UIButton.Configuration.tinted()
+            var configuration = UIButton.Configuration.gray()
             configuration.image = UIImage(systemName: command.symbol)
             configuration.buttonSize = .medium
             configuration.cornerStyle = .capsule
@@ -247,13 +247,13 @@ private final class OrgEditorAccessoryView: UIToolbar {
         scrollView.addSubview(separator)
         controls.append(separator)
 
-        var editConfiguration = UIButton.Configuration.tinted()
+        var editConfiguration = UIButton.Configuration.gray()
         editConfiguration.title = "Edit"
         editConfiguration.image = UIImage(systemName: "slider.horizontal.3")
         editConfiguration.imagePadding = 6
         editConfiguration.buttonSize = .medium
         editConfiguration.cornerStyle = .capsule
-        editConfiguration.baseForegroundColor = .systemBlue
+        editConfiguration.baseForegroundColor = .label
         let editButton = UIButton(configuration: editConfiguration, primaryAction: UIAction { [weak self] _ in
             self?.editAction()
         })
