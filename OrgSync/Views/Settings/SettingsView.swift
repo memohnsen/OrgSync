@@ -14,7 +14,6 @@ import EventKit
 struct SettingsView: View {
     @Environment(RepoStore.self) private var repo
     @Environment(SettingsStore.self) private var settings
-    @Environment(SyncEngine.self) private var sync
     @Environment(RemindersSyncEngine.self) private var reminders
 
     var body: some View {
@@ -59,17 +58,6 @@ struct SettingsView: View {
                     Text("Sync")
                 } footer: {
                     Text("Auto-Sync pulls when the app opens and commits & pushes when it closes, each toggleable above. Requires a connected repository.")
-                }
-
-                if sync.isConnected {
-                    Section("Sync Health") {
-                        LabeledContent("Local Changes", value: "\(sync.status.localChangeCount)")
-                        LabeledContent("Remote Updates", value: sync.status.behind == 0 ? "Up to date" : "Available")
-                        if let last = sync.lastSyncDate {
-                            LabeledContent("Last Sync") { Text(last, format: .relative(presentation: .named)) }
-                        }
-                        Button("Refresh Sync Status") { Task { _ = try? await sync.refreshStatus() } }
-                    }
                 }
 
                 Section {
