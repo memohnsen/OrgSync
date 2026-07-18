@@ -41,9 +41,7 @@ struct SettingsView: View {
                         Text("Dark").tag("dark")
                     }
                     .accessibilityIdentifier("settings.appearance")
-                } header: { Text("Preferences") } footer: {
-                    Text("Default: TODO, PROGRESS, WAITING, and DONE. Each state has its own color.")
-                }
+                } header: { Text("Preferences") }
 
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)
