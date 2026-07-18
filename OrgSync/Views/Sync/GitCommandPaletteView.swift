@@ -33,6 +33,13 @@ struct GitCommandPaletteView: View {
                     Section("Repository") {
                         LabeledContent("Local Changes", value: "\(sync.status.localChangeCount)")
                         LabeledContent("Staged", value: "\(sync.stagedChangeCount)")
+                        if let last = sync.lastSyncDate {
+                            LabeledContent("Last Synced") {
+                                Text(last, format: .relative(presentation: .named))
+                            }
+                        } else {
+                            LabeledContent("Last Synced", value: "Never")
+                        }
                         Button { showChanges = true } label: {
                             Text("View Changes").foregroundStyle(canViewChanges ? .primary : .secondary)
                         }

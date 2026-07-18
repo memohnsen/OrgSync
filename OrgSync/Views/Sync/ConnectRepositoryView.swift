@@ -38,13 +38,6 @@ struct ConnectRepositoryView: View {
         Section {
             LabeledContent("Repository", value: sync.connectedRepoName ?? "—")
             LabeledContent("Branch", value: sync.connectedBranch ?? "—")
-            if let last = sync.lastSyncDate {
-                LabeledContent("Last Synced") {
-                    Text(last, format: .relative(presentation: .named))
-                }
-            } else {
-                LabeledContent("Last Synced", value: "Never")
-            }
             Button(role: .destructive) {
                 showDisconnect = true
             } label: {
