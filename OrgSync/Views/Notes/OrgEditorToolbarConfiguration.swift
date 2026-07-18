@@ -103,6 +103,12 @@ struct OrgEditorToolbarPendingInsertion: Equatable {
 }
 
 enum OrgEditorToolbarInsertionPolicy {
+    enum Action: Equatable {
+        case none
+        case replace
+        case remove
+    }
+
     static func pendingInsertion(command: OrgEditorCommand, before: String, after: String) -> OrgEditorToolbarPendingInsertion? {
         let beforeLength = (before as NSString).length
         let afterLength = (after as NSString).length
@@ -123,9 +129,10 @@ enum OrgEditorToolbarInsertionPolicy {
         )
     }
 
-    static func shouldReplace(pending: OrgEditorToolbarPendingInsertion,
-                              with nextCommand: OrgEditorCommand,
-                              currentText: String) -> Bool {
-        pending.command != nextCommand && pending.expectedText == currentText
+    static func action(pending: OrgEditorToolbarPendingInsertion,
+                       with nextCommand: OrgEditorCommand,
+                       currentText: String) -> Action {
+        guard pending.expectedText == currentText else { return .none }
+        return pending.command == nextCommand ? .remove : .replace
     }
 }

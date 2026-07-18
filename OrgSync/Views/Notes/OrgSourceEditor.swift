@@ -96,7 +96,8 @@ struct OrgSourceEditor: UIViewRepresentable {
         private func perform(_ command: OrgEditorCommand) {
             guard let textView else { return }
             let hadSelection = textView.selectedRange.length > 0
-            replacePendingInsertionIfAppropriate(for: command, in: textView)
+            let removedMatchingInsertion = resolvePendingInsertion(for: command, in: textView)
+            guard !removedMatchingInsertion else { return }
             let textBeforeCommand = textView.text ?? ""
 
             switch command {
@@ -126,23 +127,26 @@ struct OrgSourceEditor: UIViewRepresentable {
         /// A generated snippet becomes replaceable only until the user edits the
         /// document themselves. This lets adjacent toolbar choices behave like a
         /// picker instead of leaving a trail of abandoned org syntax behind.
-        private func replacePendingInsertionIfAppropriate(for command: OrgEditorCommand, in textView: UITextView) {
+        /// Returns true when tapping the same untouched command removed its
+        /// insertion, so the caller should not insert it again.
+        private func resolvePendingInsertion(for command: OrgEditorCommand, in textView: UITextView) -> Bool {
             guard let pending = pendingToolbarInsertion,
-                  OrgEditorToolbarInsertionPolicy.shouldReplace(
+                  OrgEditorToolbarInsertionPolicy.action(
                     pending: pending,
                     with: command,
                     currentText: textView.text ?? ""
-                  ) else {
+                  ) != .none else {
                 if pendingToolbarInsertion?.expectedText != textView.text {
                     pendingToolbarInsertion = nil
                 }
-                return
+                return false
             }
 
             replace(pending.range, with: "", in: textView)
             setCaret(to: pending.range.location, in: textView)
             commit(textView)
             pendingToolbarInsertion = nil
+            return pending.command == command
         }
 
         private func recordPendingInsertion(of command: OrgEditorCommand, from before: String, in textView: UITextView) {

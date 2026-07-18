@@ -42,8 +42,8 @@ import Testing
         )!
 
         #expect(pending.range == NSRange(location: 0, length: 2))
-        #expect(OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .checkbox, currentText: "* Inbox"))
-        #expect(!OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .headline, currentText: "* Inbox"))
-        #expect(!OrgEditorToolbarInsertionPolicy.shouldReplace(pending: pending, with: .checkbox, currentText: "* Inbox edited"))
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* Inbox") == .replace)
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .headline, currentText: "* Inbox") == .remove)
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* Inbox edited") == .none)
     }
 }
