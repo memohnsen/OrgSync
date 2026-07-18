@@ -3,7 +3,7 @@
 //  OrgSync
 //
 //  Recent commits on the connected branch, fetched from the GitHub commit list
-//  API. Reachable from Settings and from the Notes sync menu.
+//  API. Reachable from the Git Commands page.
 //
 
 import SwiftUI

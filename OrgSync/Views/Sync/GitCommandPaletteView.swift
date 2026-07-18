@@ -18,6 +18,7 @@ struct GitCommandPaletteView: View {
     @State private var showDiscardPrompt = false
     @State private var showDiscardChangesPrompt = false
     @State private var showChanges = false
+    @State private var showCommitLog = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,12 @@ struct GitCommandPaletteView: View {
                     }
 
                     Section("Commands") {
+                        Button { showCommitLog = true } label: {
+                            commandLabel("Commit Log", systemImage: "clock.arrow.circlepath", enabled: true)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Shows recent commits on the connected branch.")
+
                         Button { showChanges = true } label: {
                             commandLabel("View Changes", systemImage: "doc.text.magnifyingglass", enabled: canViewChanges)
                         }
@@ -174,6 +181,16 @@ struct GitCommandPaletteView: View {
                 Text("This restores modified and deleted files from the last synced commit and removes newly added files. This cannot be undone.")
             }
             .sheet(isPresented: $showChanges) { GitChangesView() }
+            .sheet(isPresented: $showCommitLog) {
+                NavigationStack {
+                    CommitLogView()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") { showCommitLog = false }
+                            }
+                        }
+                }
+            }
         }
         .accessibilityIdentifier("git.commandPalette")
     }

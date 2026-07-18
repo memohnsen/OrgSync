@@ -50,11 +50,6 @@ struct ConnectRepositoryView: View {
         }
 
         Section {
-            NavigationLink {
-                CommitLogView()
-            } label: {
-                Label("Commit Log", systemImage: "clock.arrow.circlepath")
-            }
             Button(role: .destructive) {
                 showDisconnect = true
             } label: {
