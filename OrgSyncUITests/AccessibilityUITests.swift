@@ -13,7 +13,7 @@ final class AccessibilityUITests: XCTestCase {
     @MainActor
     private func launch(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing-reset-repo"] + extraArguments
+        app.launchArguments = ["-ui-testing-reset-repo", "-ui-testing-skip-onboarding"] + extraArguments
         app.launch()
         return app
     }

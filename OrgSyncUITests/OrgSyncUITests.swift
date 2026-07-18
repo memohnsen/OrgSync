@@ -10,7 +10,7 @@ final class OrgSyncUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["-ui-testing-reset-repo"]
+        app.launchArguments = ["-ui-testing-reset-repo", "-ui-testing-skip-onboarding"]
         app.launch()
     }
 
@@ -46,5 +46,19 @@ final class OrgSyncUITests: XCTestCase {
         app.tabBars.buttons["Settings"].tap()
         XCTAssertTrue(app.textFields["settings.repositoryURL"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.secureTextFields["settings.personalAccessToken"].exists)
+    }
+
+    @MainActor
+    func testOnboardingGuidesUsersToInboxOrGitHubSetup() throws {
+        let onboardingApp = XCUIApplication()
+        onboardingApp.launchArguments = ["-ui-testing-reset-repo", "-ui-testing-show-onboarding"]
+        onboardingApp.launch()
+
+        XCTAssertTrue(onboardingApp.otherElements["onboarding.screen"].waitForExistence(timeout: 3))
+        onboardingApp.buttons["onboarding.next"].tap()
+        XCTAssertTrue(onboardingApp.staticTexts["Capture first.\nOrganize later."].waitForExistence(timeout: 2))
+        onboardingApp.buttons["onboarding.next"].tap()
+        XCTAssertTrue(onboardingApp.buttons["onboarding.connect"].waitForExistence(timeout: 2))
+        XCTAssertTrue(onboardingApp.buttons["onboarding.openInbox"].exists)
     }
 }

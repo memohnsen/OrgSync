@@ -16,6 +16,7 @@ struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(SyncEngine.self) private var sync
     @Environment(RemindersSyncEngine.self) private var reminders
+    @Environment(OnboardingState.self) private var onboarding
 
     var body: some View {
         @Bindable var settings = settings
@@ -135,6 +136,16 @@ struct SettingsView: View {
                         Button("Dismiss") { reminders.clearError() }
                     }
                 }
+
+                #if DEBUG
+                Section("Developer") {
+                    Button("Restart Onboarding") {
+                        onboarding.restart()
+                    }
+                    .accessibilityIdentifier("settings.restartOnboarding")
+                    .accessibilityHint("Shows the first-run onboarding flow again.")
+                }
+                #endif
             }
             .navigationTitle("Settings")
             .accessibilityIdentifier("settings.screen")
@@ -148,4 +159,5 @@ struct SettingsView: View {
     return SettingsView()
         .environment(settings)
         .environment(SyncEngine(repo: repo, settings: settings))
+        .environment(OnboardingState())
 }

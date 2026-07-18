@@ -17,6 +17,7 @@ struct RootView: View {
     @State private var settings: SettingsStore
     @State private var sync: SyncEngine
     @State private var reminders: RemindersSyncEngine
+    @State private var onboarding: OnboardingState
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
     @State private var isShowingSplash = true
@@ -32,9 +33,12 @@ struct RootView: View {
         _settings = State(initialValue: settings)
         _sync = State(initialValue: SyncEngine(repo: repo, settings: settings))
         _reminders = State(initialValue: RemindersSyncEngine(settings: settings))
+        _onboarding = State(initialValue: OnboardingState())
     }
 
     var body: some View {
+        @Bindable var onboarding = onboarding
+
         ZStack {
             TabView(selection: $selectedTab) {
                 Tab("Notes", systemImage: "note.text", value: "notes") {
@@ -59,6 +63,21 @@ struct RootView: View {
         .environment(settings)
         .environment(sync)
         .environment(reminders)
+        .environment(onboarding)
+        .fullScreenCover(isPresented: $onboarding.isPresented) {
+            OnboardingView(
+                openInbox: {
+                    onboarding.finish()
+                    selectedTab = "notes"
+                    openedNotePath = "inbox.org"
+                },
+                connectRepository: {
+                    onboarding.finish()
+                    selectedTab = "settings"
+                },
+                dismiss: onboarding.finish
+            )
+        }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhase(newPhase)
         }
