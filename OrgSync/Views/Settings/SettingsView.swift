@@ -149,6 +149,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("settings.screen")
         }
     }

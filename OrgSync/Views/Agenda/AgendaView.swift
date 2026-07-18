@@ -53,6 +53,7 @@ struct AgendaView: View {
             }
             .navigationTitle("Agenda")
             .navigationBarTitleDisplayMode(.inline)
+            .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("agenda.screen")
             .refreshable { reload() }
             .task(id: repo.revision) { reload() }
