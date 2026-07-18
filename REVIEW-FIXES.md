@@ -41,7 +41,7 @@ existing pure-rule tests plus build verification rather than new unit tests.)
 FolderView swipe-delete: confirmation dialog before deleting folders and non-empty
 notes (permanent, unpushed edits unrecoverable).
 
-## Step 8 — [ ] Security: Keychain accessibility class
+## Step 8 — [x] Security: Keychain accessibility class
 `KeychainHelper`: set `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` on add
 and update; migrate existing items on write.
 

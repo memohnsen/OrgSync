@@ -29,8 +29,13 @@ enum KeychainHelper {
             kSecAttrAccount as String: account,
         ]
 
+        // AfterFirstUnlockThisDeviceOnly: the background push-on-close path
+        // must still read the token after the device locks, and the secret
+        // must never leave this device via backups. Included in updates too,
+        // so items stored before this attribute existed migrate on write.
         let attributes: [String: Any] = [
             kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
 
         let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
@@ -40,6 +45,7 @@ enum KeychainHelper {
         if status == errSecItemNotFound {
             var newItem = query
             newItem[kSecValueData as String] = data
+            newItem[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             return SecItemAdd(newItem as CFDictionary, nil) == errSecSuccess
         }
         return false
