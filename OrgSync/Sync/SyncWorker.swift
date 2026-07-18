@@ -59,6 +59,12 @@ actor SyncWorker {
         try await computeStatus(using: client, state: state)
     }
 
+    /// Local-only status calculation, exposed internally for deterministic
+    /// coverage of working-copy change classification.
+    func localStatus(state: SyncRepoState) -> SyncStatus {
+        localChanges(against: state)
+    }
+
     func pull(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         var state = initialState
         let remoteHead = try await client.getRef(branch: state.branch).object.sha

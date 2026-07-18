@@ -66,21 +66,30 @@ struct RootView: View {
     }
 
     private func handleScenePhase(_ phase: ScenePhase) {
+        let event: AutoSyncLifecycleEvent
         switch phase {
-        case .active:
-            let willPull = settings.autoSync && sync.isConnected && settings.pullOnOpen
-            if settings.remindersSync && !willPull {
-                Task { await reminders.sync(repo: repo) }
-            }
-            if willPull {
+        case .active: event = .active
+        case .background: event = .background
+        default: event = .inactive
+        }
+        for action in AutoSyncPolicy.actions(
+            for: event,
+            autoSyncEnabled: settings.autoSync,
+            isConnected: sync.isConnected,
+            pullOnOpen: settings.pullOnOpen,
+            pushOnClose: settings.pushOnClose,
+            remindersSyncEnabled: settings.remindersSync
+        ) {
+            switch action {
+            case .pull:
+                Task { await sync.pullNow(); repo.refresh() }
+            case .pullThenSyncReminders:
                 Task { await sync.pullNow(); await reminders.sync(repo: repo); repo.refresh() }
-            }
-        case .background:
-            if settings.autoSync, sync.isConnected, settings.pushOnClose {
+            case .syncReminders:
+                Task { await reminders.sync(repo: repo) }
+            case .push:
                 pushInBackground()
             }
-        default:
-            break
         }
     }
 
