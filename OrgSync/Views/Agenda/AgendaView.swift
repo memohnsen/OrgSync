@@ -173,33 +173,11 @@ struct AgendaView: View {
     }
 
     private func reload() {
-        let discovered = allOrgFiles().flatMap { file in
-            repo.document(of: file).todoItems(filePath: file.relativePath).filter { !$0.isDone }
-        }
+        let discovered = repo.allTodoItems().filter { !$0.isDone }
         items = discovered
         // Snapshot refresh is centralized in RepoStore mutations; retain this
         // direct write for an Agenda refresh when nothing has changed locally.
         AgendaSnapshotWriter.write(discovered)
-    }
-
-    private func allOrgFiles() -> [FileItem] {
-        let keys: [URLResourceKey] = [.isRegularFileKey, .contentModificationDateKey]
-        guard let enumerator = FileManager.default.enumerator(
-            at: repo.repoURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]
-        ) else { return [] }
-        return enumerator.compactMap { entry in
-            guard let url = entry as? URL,
-                  url.pathExtension.lowercased() == "org",
-                  (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
-            else { return nil }
-            return repo.item(forRelativePath: relativePath(url))
-        }
-    }
-
-    private func relativePath(_ url: URL) -> String {
-        let root = repo.repoURL.standardizedFileURL.path
-        let path = url.standardizedFileURL.path
-        return path.hasPrefix(root + "/") ? String(path.dropFirst(root.count + 1)) : url.lastPathComponent
     }
 
     // MARK: - Actions

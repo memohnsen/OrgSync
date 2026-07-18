@@ -192,11 +192,10 @@ final class SyncEngine {
 
     private func computeStatus(using client: GitHubClient, state: SyncRepoState) async throws -> SyncStatus {
         var summary = localChanges(against: state)
-        // Ahead/behind: compare the recorded head against the current remote head.
+        // Compare the recorded head against the current remote head.
         if let remoteHead = try? await client.getRef(branch: state.branch).object.sha {
             summary.behind = remoteHead == state.baseCommitSHA ? 0 : 1
         }
-        summary.ahead = summary.localChangeCount
         return summary
     }
 

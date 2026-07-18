@@ -20,6 +20,8 @@ final class RepoStore {
     private(set) var revision = 0
 
     private let fileManager = FileManager.default
+    private var mutationBatchDepth = 0
+    private var mutationPending = false
 
     init() {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -103,6 +105,27 @@ final class RepoStore {
         return results.sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
+    }
+
+    /// Every org file in the local mirror, using the repository's single
+    /// canonical discovery and path-normalization policy.
+    func allOrgFiles() -> [FileItem] {
+        _ = revision
+        guard let enumerator = fileManager.enumerator(
+            at: repoURL,
+            includingPropertiesForKeys: [.isRegularFileKey, .contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+        return enumerator.compactMap { $0 as? URL }.compactMap { url in
+            guard url.pathExtension.lowercased() == "org",
+                  (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { return nil }
+            return item(forRelativePath: relativePath(for: url))
+        }.sorted { $0.relativePath.localizedCaseInsensitiveCompare($1.relativePath) == .orderedAscending }
+    }
+
+    /// Open and completed TODOs across the full local mirror.
+    func allTodoItems() -> [OrgTodoItem] {
+        allOrgFiles().flatMap { document(of: $0).todoItems(filePath: $0.relativePath) }
     }
 
     /// Resolves a repo-relative path to a `FileItem`, if the entry still exists.
@@ -218,9 +241,26 @@ final class RepoStore {
         didMutateRepo()
     }
 
+    /// Coalesces a logical bulk operation into one revision bump and one widget
+    /// snapshot refresh. Sync and Reminders use this when touching many files.
+    func performMutationBatch(_ operation: () -> Void) {
+        mutationBatchDepth += 1
+        operation()
+        mutationBatchDepth -= 1
+        if mutationBatchDepth == 0, mutationPending {
+            mutationPending = false
+            publishMutation()
+        }
+    }
+
     // MARK: - Helpers
 
     private func didMutateRepo() {
+        if mutationBatchDepth > 0 { mutationPending = true; return }
+        publishMutation()
+    }
+
+    private func publishMutation() {
         revision &+= 1
         // WidgetKit reads the shared Agenda snapshot rather than the app's
         // Documents mirror. Refresh it after every local or synced mutation.

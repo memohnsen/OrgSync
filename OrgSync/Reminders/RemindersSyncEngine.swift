@@ -54,7 +54,7 @@ final class RemindersSyncEngine {
             let list = try orgSyncList()
             var mappings = loadMappings()
             ensurePersistentIDs(repo: repo)
-            let inboundItems = allTodoItems(repo: repo)
+            let inboundItems = repo.allTodoItems()
             var byKey = Dictionary(uniqueKeysWithValues: inboundItems.map { (key($0), $0) })
             // Migrate title-path keys written by older releases.
             for item in inboundItems where item.persistentID != nil {
@@ -74,7 +74,7 @@ final class RemindersSyncEngine {
                 guard let mapKey = mappings.first(where: { $0.value == reminderID })?.key,
                       let item = byKey[mapKey] else {
                     if !reminder.isCompleted, let outline = createInboxTodo(from: reminder, repo: repo) {
-                        if let item = allTodoItems(repo: repo).first(where: { $0.outline == outline }) {
+                        if let item = repo.allTodoItems().first(where: { $0.outline == outline }) {
                             mappings[key(item)] = reminderID
                         }
                     }
@@ -97,7 +97,7 @@ final class RemindersSyncEngine {
 
             // Re-read the notes after inbound mutations, then mirror their
             // current state out to Reminders.
-            let items = allTodoItems(repo: repo)
+            let items = repo.allTodoItems()
             for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item)] != nil {
                 let mapKey = key(item)
                 let reminder = mappings[mapKey].flatMap { store.calendarItem(withIdentifier: $0) as? EKReminder }
@@ -139,22 +139,14 @@ final class RemindersSyncEngine {
         }
     }
 
-    private func allTodoItems(repo: RepoStore) -> [OrgTodoItem] {
-        guard let e = FileManager.default.enumerator(at: repo.repoURL, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [] }
-        return e.compactMap { $0 as? URL }.filter { $0.pathExtension.lowercased() == "org" }.compactMap { url in
-            let root = repo.repoURL.path + "/"; let path = url.path.hasPrefix(root) ? String(url.path.dropFirst(root.count)) : url.lastPathComponent
-            return repo.item(forRelativePath: path)
-        }.flatMap { repo.document(of: $0).todoItems(filePath: $0.relativePath) }
-    }
-
     private func ensurePersistentIDs(repo: RepoStore) {
-        guard let e = FileManager.default.enumerator(at: repo.repoURL, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return }
-        for case let url as URL in e where url.pathExtension.lowercased() == "org" {
-            let root = repo.repoURL.path + "/"
-            let path = url.path.hasPrefix(root) ? String(url.path.dropFirst(root.count)) : url.lastPathComponent
-            guard let file = repo.item(forRelativePath: path) else { continue }
-            var document = repo.document(of: file)
-            if document.ensurePersistentIDsForTodoHeadlines() { _ = repo.write(document.serialize(), to: file) }
+        repo.performMutationBatch {
+            for file in repo.allOrgFiles() {
+                var document = repo.document(of: file)
+                if document.ensurePersistentIDsForTodoHeadlines() {
+                    _ = repo.write(document.serialize(), to: file)
+                }
+            }
         }
     }
 

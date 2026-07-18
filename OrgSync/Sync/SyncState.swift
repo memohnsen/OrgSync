@@ -44,13 +44,12 @@ struct SyncRepoState: Codable, Equatable {
     }
 }
 
-/// Result of a status check: local working-tree changes plus how far the local
-/// baseline is ahead of / behind the remote branch head.
+/// Result of a status check: local working-tree changes plus whether the local
+/// baseline differs from the remote branch head.
 struct SyncStatus: Equatable {
     var modified: [String] = []
     var added: [String] = []
     var deleted: [String] = []
-    var ahead = 0
     var behind = 0
 
     var hasLocalChanges: Bool { !modified.isEmpty || !added.isEmpty || !deleted.isEmpty }
