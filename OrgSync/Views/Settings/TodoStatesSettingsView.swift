@@ -21,8 +21,7 @@ struct TodoStatesSettingsView: View {
 
     var body: some View {
         List {
-            statusSection(title: "Active Statuses", isDone: false,
-                          footer: "All statuses except DONE are active. Active statuses appear in Agenda and cycle toward completion.")
+            statusSection(title: "Active Statuses", isDone: false)
             statusSection(title: "Completed Statuses", isDone: true)
 
         }
