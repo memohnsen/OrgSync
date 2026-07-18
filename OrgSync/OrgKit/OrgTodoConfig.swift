@@ -30,10 +30,13 @@ public struct OrgTodoConfig: Sendable, Hashable {
         self.sequences = sequences
     }
 
-    /// The built-in default (`TODO` / `DONE`).
+    /// The built-in workflow: to do, in progress, waiting, and complete.
     public static let `default` = OrgTodoConfig(
-        sequences: [OrgTodoSequence(notDone: ["TODO"], done: ["DONE"])]
+        sequences: [OrgTodoSequence(notDone: ["TODO", "PROGRESS", "WAITING"], done: ["DONE"])]
     )
+
+    /// The editable setting representation of the built-in workflow.
+    public static let defaultPreference = "TODO PROGRESS WAITING | DONE"
 
     public var allKeywords: [String] { sequences.flatMap(\.all) }
     public var doneKeywords: Set<String> { Set(sequences.flatMap(\.done)) }

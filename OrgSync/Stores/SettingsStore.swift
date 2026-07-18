@@ -88,7 +88,7 @@ final class SettingsStore {
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"
-        todoKeywords = defaults.string(forKey: Key.todoKeywords) ?? "TODO | DONE"
+        todoKeywords = defaults.string(forKey: Key.todoKeywords) ?? OrgTodoConfig.defaultPreference
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }

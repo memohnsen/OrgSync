@@ -106,6 +106,7 @@ struct AgendaView: View {
     private func rowContent(_ item: OrgTodoItem) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
+                statusChip(for: item)
                 if let priority = item.priority {
                     Text("#\(String(priority))")
                         .font(.caption2.weight(.bold))
@@ -133,6 +134,16 @@ struct AgendaView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel(for: item))
         .accessibilityHint("Swipe right to complete or left to reschedule. Double tap to open note.")
+    }
+
+    private func statusChip(for item: OrgTodoItem) -> some View {
+        let color = statusColor(for: item)
+        return Text(item.keyword)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(color.opacity(0.18), in: Capsule())
+            .foregroundStyle(color)
+            .accessibilityLabel("Status \(item.keyword)")
     }
 
     // MARK: - Data
@@ -249,8 +260,15 @@ struct AgendaView: View {
         return date < Calendar.current.startOfDay(for: .now) ? .red : .secondary
     }
 
+    private func statusColor(for item: OrgTodoItem) -> Color {
+        guard let file = repo.item(forRelativePath: item.outline.filePath) else {
+            return .todoStatus(item.keyword, configuration: .default)
+        }
+        return .todoStatus(item.keyword, configuration: repo.document(of: file).todoConfig)
+    }
+
     private func accessibilityLabel(for item: OrgTodoItem) -> String {
-        var parts = [item.title]
+        var parts = [item.keyword, item.title]
         if let priority = item.priority { parts.append("priority \(priority)") }
         if let dateLabel = dateLabel(for: item) { parts.append(dateLabel) }
         if !item.tags.isEmpty { parts.append("tags \(item.tags.joined(separator: ", "))") }

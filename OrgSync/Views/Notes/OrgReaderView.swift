@@ -233,7 +233,7 @@ struct OrgHeadlineView: View {
     }
 
     private func todoColor(_ keyword: String) -> Color {
-        config.isDone(keyword) ? .secondary : .red
+        .todoStatus(keyword, configuration: config)
     }
 
     private func priorityColor(_ priority: Character) -> Color {

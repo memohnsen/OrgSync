@@ -66,7 +66,7 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.appearance")
                 } header: { Text("Preferences") } footer: {
-                    Text("TODO keywords use org syntax, for example “TODO NEXT | DONE CANCELLED”.")
+                    Text("Default: “TODO PROGRESS WAITING | DONE”. Add your own statuses with org syntax; each gets a color automatically.")
                 }
 
                 ConnectRepositoryView()

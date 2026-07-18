@@ -180,9 +180,24 @@ import Foundation
 @Suite struct OrgTodoConfigTests {
     @Test func defaultConfig() {
         let c = OrgTodoConfig.default
-        #expect(c.isKeyword("TODO"))
+        #expect(c.allKeywords == ["TODO", "PROGRESS", "WAITING", "DONE"])
         #expect(c.isDone("DONE"))
         #expect(!c.isDone("TODO"))
+    }
+
+    @Test func statusPaletteUsesBuiltInsAndTenCustomColors() {
+        let builtIn = OrgTodoConfig.default
+        #expect(OrgTodoStatusPalette.hex(for: "TODO", configuration: builtIn) == "F59E0B")
+        #expect(OrgTodoStatusPalette.hex(for: "PROGRESS", configuration: builtIn) == "3B82F6")
+        #expect(OrgTodoStatusPalette.hex(for: "WAITING", configuration: builtIn) == "8B5CF6")
+        #expect(OrgTodoStatusPalette.hex(for: "DONE", configuration: builtIn) == "22C55E")
+
+        let custom = OrgTodoConfig(sequences: [OrgTodoConfig.parseSequence(
+            "TODO PROGRESS WAITING NEXT BLOCKED REVIEW LATER MAYBE HOLD SOMEDAY PAUSED DELEGATED CANCELLED | DONE"
+        )])
+        let customKeywords = ["NEXT", "BLOCKED", "REVIEW", "LATER", "MAYBE", "HOLD", "SOMEDAY", "PAUSED", "DELEGATED", "CANCELLED"]
+        #expect(customKeywords.map { OrgTodoStatusPalette.hex(for: $0, configuration: custom) }
+            == Array(OrgTodoStatusPalette.customHex.prefix(customKeywords.count)))
     }
 
     @Test func parsesCustomSequenceWithSeparator() {

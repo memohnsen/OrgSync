@@ -146,5 +146,6 @@ import Testing
         #expect(restored.autoSync)
         #expect(restored.pullOnOpen)
         #expect(restored.pushOnClose)
+        #expect(restored.todoKeywords == OrgTodoConfig.defaultPreference)
     }
 }
