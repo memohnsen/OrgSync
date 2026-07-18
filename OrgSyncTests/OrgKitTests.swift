@@ -557,6 +557,17 @@ import Foundation
         #expect(outlines[1].index == 1)
     }
 
+    @Test func mutatesHeadlineByOutline() {
+        var doc = OrgParser.parse("* TODO First\n* TODO Second\n")
+        let outline = OrgOutline(filePath: "x.org", headingPath: ["Second"], index: 0)
+        let didMutate = doc.mutateHeadline(at: outline) { headline in
+            headline.setPriority("A")
+        }
+        #expect(didMutate)
+        #expect(doc.headlines[0].priority == nil)
+        #expect(doc.headlines[1].priority == "A")
+    }
+
     @Test func collectsAllTimestamps() {
         let text = """
         * TODO Task

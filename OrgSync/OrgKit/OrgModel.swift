@@ -270,7 +270,7 @@ public struct OrgOutline: Sendable, Hashable, Codable {
 }
 
 /// A TODO headline surfaced by document queries, with its outline address.
-public struct OrgTodoItem: Sendable, Hashable {
+public struct OrgTodoItem: Sendable, Hashable, Identifiable {
     public var outline: OrgOutline
     public var keyword: String
     public var isDone: Bool
@@ -279,6 +279,8 @@ public struct OrgTodoItem: Sendable, Hashable {
     public var tags: [String]
     public var scheduled: OrgTimestamp?
     public var deadline: OrgTimestamp?
+
+    public var id: OrgOutline { outline }
 
     public init(outline: OrgOutline, keyword: String, isDone: Bool, priority: Character?,
                 title: String, tags: [String], scheduled: OrgTimestamp?, deadline: OrgTimestamp?) {
