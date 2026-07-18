@@ -71,9 +71,12 @@ extension OrgDocument {
 
         func visit(_ headline: OrgHeadline, path: [String]) {
             let here = path + [headline.title]
+            // Keep this occurrence count aligned with `allOutlines` and the
+            // outline mutation helper. Non-TODO headings must still consume an
+            // index when their title path matches a later TODO.
+            let index = seenPaths[here, default: 0]
+            seenPaths[here] = index + 1
             if let keyword = headline.todoKeyword, todoConfig.isKeyword(keyword) {
-                let index = seenPaths[here, default: 0]
-                seenPaths[here] = index + 1
                 let outline = OrgOutline(filePath: filePath, headingPath: here, index: index)
                 items.append(OrgTodoItem(
                     outline: outline,

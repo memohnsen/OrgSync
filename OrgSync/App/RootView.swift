@@ -18,6 +18,7 @@ struct RootView: View {
     @State private var sync: SyncEngine
     @State private var reminders: RemindersSyncEngine
     @State private var selectedTab = "notes"
+    @State private var openedNotePath: String?
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -33,7 +34,7 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Notes", systemImage: "note.text", value: "notes") {
-                NotesView()
+                NotesView(openNotePath: $openedNotePath)
             }
             Tab("Agenda", systemImage: "calendar", value: "agenda") {
                 AgendaView()
@@ -54,20 +55,27 @@ struct RootView: View {
             // Widgets use orgsync://agenda and orgsync://note/<repo path>.
             // Note links land in the Notes tab; the user can then open the
             // named file in the existing native browser.
-            selectedTab = url.host == "agenda" ? "agenda" : "notes"
+            if url.host == "agenda" {
+                selectedTab = "agenda"
+            } else {
+                selectedTab = "notes"
+                openedNotePath = url.path.removingPercentEncoding?.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            }
         }
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
     }
 
     private func handleScenePhase(_ phase: ScenePhase) {
-        guard settings.autoSync, sync.isConnected else { return }
         switch phase {
         case .active:
-            if settings.pullOnOpen {
+            if settings.remindersSync {
+                Task { await reminders.sync(repo: repo) }
+            }
+            if settings.autoSync, sync.isConnected, settings.pullOnOpen {
                 Task { await sync.pullNow(); await reminders.sync(repo: repo); repo.refresh() }
             }
         case .background:
-            if settings.pushOnClose {
+            if settings.autoSync, sync.isConnected, settings.pushOnClose {
                 pushInBackground()
             }
         default:

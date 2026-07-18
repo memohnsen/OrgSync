@@ -100,6 +100,9 @@ final class SyncEngine {
         let head = try await client.getRef(branch: branch).object.sha
         let commit = try await client.getCommit(sha: head)
         let tree = try await client.getTree(sha: commit.tree.sha, recursive: true)
+        guard !tree.truncated else {
+            throw GitHubError.decoding("repository tree is too large for a safe initial clone")
+        }
         let blobs = tree.tree.filter { $0.type == "blob" }
 
         let hasLocalFiles = !enumerateWorkingFiles().isEmpty
@@ -319,6 +322,13 @@ final class SyncEngine {
     private func commitAndPush(message: String?, allowRetry: Bool) async throws {
         guard let state else { throw GitHubError.notConfigured }
         let client = try makeClient(for: state)
+
+        // A conflict sidecar is intentionally left beside the local file for
+        // review. Do not turn the next ordinary Sync into an implicit
+        // local-wins force overwrite; require the user to resolve/remove it.
+        if enumerateWorkingFiles().keys.contains(where: { $0.contains(" (conflict ") }) {
+            throw GitHubError.server(status: 409, message: "Resolve conflict copies before committing and pushing")
+        }
 
         let changes = localChanges(against: state)
         guard changes.hasLocalChanges else {

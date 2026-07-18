@@ -11,9 +11,11 @@ import SwiftUI
 
 struct NotesView: View {
     @Environment(RepoStore.self) private var repo
+    @Binding var openNotePath: String?
+    @State private var navigationPath: [FileItem] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             FolderView(directory: repo.repoURL, title: "Notes", isRoot: true)
                 .navigationDestination(for: FileItem.self) { item in
                     if item.isDirectory {
@@ -23,11 +25,16 @@ struct NotesView: View {
                     }
                 }
         }
+        .onChange(of: openNotePath) { _, path in
+            guard let path, let item = repo.item(forRelativePath: path), !item.isDirectory else { return }
+            navigationPath = [item]
+            openNotePath = nil
+        }
     }
 }
 
 #Preview {
-    NotesView()
+    NotesView(openNotePath: .constant(nil))
         .environment(RepoStore())
         .environment(FavoritesStore())
 }

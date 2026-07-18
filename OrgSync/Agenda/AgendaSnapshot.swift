@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import WidgetKit
 
 struct AgendaSnapshot: Codable {
     static let appGroupIdentifier = "group.com.memohnsen.OrgSync"
@@ -43,6 +44,7 @@ enum AgendaSnapshotWriter {
             forSecurityApplicationGroupIdentifier: AgendaSnapshot.appGroupIdentifier
         ) else { return }
         try? data.write(to: directory.appendingPathComponent(AgendaSnapshot.fileName), options: .atomic)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

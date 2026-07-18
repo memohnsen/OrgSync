@@ -124,7 +124,15 @@ final class RepoStore {
 
     /// Parse a file into an `OrgDocument`.
     func document(of item: FileItem) -> OrgDocument {
-        OrgParser.parse(text(of: item))
+        var document = OrgParser.parse(text(of: item))
+        // A document-local #+TODO remains authoritative; otherwise apply the
+        // user's global preference as the default TODO vocabulary.
+        let hasLocalConfig = document.keywords.contains { OrgTodoConfig.keywordNames.contains($0.key.uppercased()) }
+        if !hasLocalConfig,
+           let value = UserDefaults.standard.string(forKey: "settings.todo.keywords"), !value.isEmpty {
+            document.todoConfig = OrgTodoConfig(sequences: [OrgTodoConfig.parseSequence(value)])
+        }
+        return document
     }
 
     /// Overwrite a file's contents with `text`. Used by the note editor and by

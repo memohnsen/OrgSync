@@ -51,26 +51,11 @@ final class RemindersSyncEngine {
         do {
             let list = try orgSyncList()
             var mappings = loadMappings()
-            let items = allTodoItems(repo: repo)
-            let byKey = Dictionary(uniqueKeysWithValues: items.map { (key($0.outline), $0) })
+            let inboundItems = allTodoItems(repo: repo)
+            let byKey = Dictionary(uniqueKeysWithValues: inboundItems.map { (key($0.outline), $0) })
 
-            // Org -> Reminders (new, changed, and completed).
-            for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item.outline)] != nil {
-                let mapKey = key(item.outline)
-                let reminder = mappings[mapKey].flatMap { store.calendarItem(withIdentifier: $0) as? EKReminder }
-                    ?? EKReminder(eventStore: store)
-                reminder.calendar = list
-                reminder.title = item.title
-                reminder.notes = noteMetadata(item.outline)
-                reminder.priority = priority(item.priority)
-                reminder.dueDateComponents = dueComponents(item)
-                reminder.isCompleted = item.isDone
-                try store.save(reminder, commit: false)
-                mappings[mapKey] = reminder.calendarItemIdentifier
-            }
-            try store.commit()
-
-            // Reminders -> Org: completion and due-date edits on mapped reminders.
+            // Reminders -> Org comes first. Otherwise outbound writes would
+            // overwrite a completion or due-date edit before we could observe it.
             let predicate = store.predicateForReminders(in: [list])
             for reminder in await fetchReminders(predicate) {
                 let reminderID = reminder.calendarItemIdentifier
@@ -95,6 +80,24 @@ final class RemindersSyncEngine {
                     }
                 }
             }
+
+            // Re-read the notes after inbound mutations, then mirror their
+            // current state out to Reminders.
+            let items = allTodoItems(repo: repo)
+            for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item.outline)] != nil {
+                let mapKey = key(item.outline)
+                let reminder = mappings[mapKey].flatMap { store.calendarItem(withIdentifier: $0) as? EKReminder }
+                    ?? EKReminder(eventStore: store)
+                reminder.calendar = list
+                reminder.title = item.title
+                reminder.notes = noteMetadata(item.outline)
+                reminder.priority = priority(item.priority)
+                reminder.dueDateComponents = dueComponents(item)
+                reminder.isCompleted = item.isDone
+                try store.save(reminder, commit: false)
+                mappings[mapKey] = reminder.calendarItemIdentifier
+            }
+            try store.commit()
             saveMappings(mappings)
             repo.refresh()
         } catch { lastError = error.localizedDescription }
