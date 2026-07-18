@@ -25,12 +25,7 @@ struct GitChangesView: View {
                 } else {
                     ForEach(diffs) { diff in
                         Section {
-                            if let original = diff.original {
-                                content(original, label: diff.kind == .deleted ? "Deleted content" : "Original", color: .red)
-                            }
-                            if let current = diff.current {
-                                content(current, label: diff.kind == .added ? "Added content" : "Current", color: .green)
-                            }
+                            inlineDiff(for: diff)
                         } header: {
                             HStack {
                                 Text(diff.path)
@@ -48,14 +43,36 @@ struct GitChangesView: View {
         }
     }
 
-    private func content(_ text: String, label: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.caption.weight(.semibold)).foregroundStyle(color)
-            Text(text.isEmpty ? "(empty)" : text)
+    private func inlineDiff(for diff: GitFileDiff) -> some View {
+        let lines = GitInlineDiff.lines(original: diff.original, current: diff.current)
+        return VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(marker(for: line.kind))
+                        .foregroundStyle(color(for: line.kind))
+                        .frame(width: 12)
+                    Text(line.text.isEmpty ? " " : line.text)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 .font(.system(.caption, design: .monospaced))
                 .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(color(for: line.kind).opacity(backgroundOpacity(for: line.kind)), in: RoundedRectangle(cornerRadius: 3))
+            }
         }
+    }
+
+    private func marker(for kind: GitInlineDiff.Line.Kind) -> String {
+        switch kind { case .unchanged: return " "; case .removed: return "−"; case .added: return "+" }
+    }
+
+    private func color(for kind: GitInlineDiff.Line.Kind) -> Color {
+        switch kind { case .unchanged: return .primary; case .removed: return .red; case .added: return .green }
+    }
+
+    private func backgroundOpacity(for kind: GitInlineDiff.Line.Kind) -> Double {
+        switch kind { case .unchanged: return 0; case .removed, .added: return 0.16 }
     }
 
     private func load() async {
