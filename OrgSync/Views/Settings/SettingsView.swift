@@ -43,14 +43,6 @@ struct SettingsView: View {
                 } header: { Text("Preferences") }
 
                 Section {
-                    Toggle("Pull Git on Open", isOn: $settings.pullOnOpen)
-                        .accessibilityIdentifier("settings.pullOnOpen")
-                        .accessibilityHint("Pulls remote changes when the app becomes active.")
-                } header: {
-                    Text("Sync")
-                }
-
-                Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                         .disabled(reminders.access != .granted)
                         .accessibilityIdentifier("settings.remindersSync")

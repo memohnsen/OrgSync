@@ -20,13 +20,14 @@ struct ConnectRepositoryView: View {
     @State private var workingLabel = ""
     @State private var errorMessage: String?
     @State private var showDisconnect = false
+    @State private var showConnectSheet = false
 
     var body: some View {
         Group {
             if sync.isConnected {
                 connectedSection
             } else {
-                connectFlow
+                disconnectedSection
             }
         }
     }
@@ -35,9 +36,13 @@ struct ConnectRepositoryView: View {
 
     @ViewBuilder
     private var connectedSection: some View {
+        @Bindable var settings = settings
         Section {
             LabeledContent("Repository", value: sync.connectedRepoName ?? "—")
             LabeledContent("Branch", value: sync.connectedBranch ?? "—")
+            Toggle("Git Pull on Open", isOn: $settings.pullOnOpen)
+                .accessibilityIdentifier("settings.pullOnOpen")
+                .accessibilityHint("Pulls remote changes when the app becomes active.")
             Button(role: .destructive) {
                 showDisconnect = true
             } label: {
@@ -53,6 +58,31 @@ struct ConnectRepositoryView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Stop syncing with GitHub. You can keep the downloaded notes on this device or remove them.")
+        }
+    }
+
+    @ViewBuilder
+    private var disconnectedSection: some View {
+        Section {
+            Button("Connect & Clone") { showConnectSheet = true }
+                .accessibilityIdentifier("settings.connectRepository")
+                .accessibilityHint("Enter GitHub repository details, validate them, and clone the selected branch.")
+                .sheet(isPresented: $showConnectSheet) {
+                    NavigationStack {
+                        Form {
+                            connectFlow
+                        }
+                        .navigationTitle("Connect & Clone")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Cancel") { showConnectSheet = false }
+                            }
+                        }
+                    }
+                }
+        } header: {
+            Text("GitHub")
         }
     }
 
@@ -118,7 +148,7 @@ struct ConnectRepositoryView: View {
                     }
                 }
                 .disabled(isWorking || selectedBranch.isEmpty)
-                .accessibilityIdentifier("settings.connectRepository")
+                .accessibilityIdentifier("settings.confirmConnectRepository")
                 .accessibilityHint("Downloads the selected branch to this device and enables sync.")
             }
         } header: {
@@ -165,6 +195,7 @@ struct ConnectRepositoryView: View {
         do {
             settings.branch = selectedBranch
             try await sync.connect(branch: selectedBranch)
+            showConnectSheet = false
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
