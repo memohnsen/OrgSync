@@ -468,13 +468,13 @@ import Foundation
         #expect(h.planning.closed == nil)
     }
 
-    @Test func cyclesThroughCustomSequence() {
+    @Test func cyclesThroughCustomSequenceAndWrapsToTodo() {
         let config = OrgTodoConfig(sequences: [OrgTodoConfig.parseSequence("TODO NEXT | DONE")])
         var h = OrgHeadline(level: 1, todoKeyword: nil, title: "Task")
         h.cycleTodo(config: config); #expect(h.todoKeyword == "TODO")
         h.cycleTodo(config: config); #expect(h.todoKeyword == "NEXT")
         h.cycleTodo(config: config); #expect(h.todoKeyword == "DONE")
-        h.cycleTodo(config: config); #expect(h.todoKeyword == nil)
+        h.cycleTodo(config: config); #expect(h.todoKeyword == "TODO")
     }
 
     @Test func repeaterAdvancesInsteadOfCompleting() {

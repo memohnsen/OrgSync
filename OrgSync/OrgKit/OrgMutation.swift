@@ -108,13 +108,13 @@ extension OrgHeadline {
         planning.raw = nil
     }
 
-    /// Cycle to the next state in the keyword's sequence
-    /// (…none → first → … → last → none…).
+    /// Cycle to the next state in the keyword's sequence, wrapping from the
+    /// final state back to the first. Clearing a TODO is an explicit action.
     public mutating func cycleTodo(config: OrgTodoConfig, now: Date = Date()) {
         let seq = todoKeyword.flatMap(config.sequence(for:)) ?? config.sequences.first
-        guard let sequence = seq else { return }
-        let order: [String?] = sequence.all.map { Optional($0) } + [nil]
-        let currentIndex = order.firstIndex(where: { $0 == todoKeyword }) ?? (order.count - 1)
+        guard let sequence = seq, !sequence.all.isEmpty else { return }
+        let order = sequence.all
+        let currentIndex = order.firstIndex(of: todoKeyword ?? "") ?? (order.count - 1)
         let next = order[(currentIndex + 1) % order.count]
         setTodoKeyword(next, config: config, now: now)
     }
