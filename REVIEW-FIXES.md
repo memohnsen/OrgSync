@@ -45,6 +45,6 @@ notes (permanent, unpushed edits unrecoverable).
 `KeychainHelper`: set `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` on add
 and update; migrate existing items on write.
 
-## Step 9 — [ ] Cleanup: reminders/agenda rule duplication
+## Step 9 — [x] Cleanup: reminders/agenda rule duplication
 Point AgendaView's done-keyword / relevant-date / reschedule logic at
 `ReminderSyncRules` so the rules live in one place.

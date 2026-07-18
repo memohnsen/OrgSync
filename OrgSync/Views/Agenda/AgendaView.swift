@@ -192,9 +192,7 @@ struct AgendaView: View {
 
     private func complete(_ item: OrgTodoItem) {
         mutate(item) { headline, document in
-            let done = document.todoConfig.sequences.first(where: { $0.all.contains(item.keyword) })?.done.first
-                ?? document.todoConfig.sequences.first?.done.first
-            headline.setTodoKeyword(done, config: document.todoConfig)
+            ReminderSyncRules.complete(&headline, item: item, document: document)
         }
     }
 
@@ -205,11 +203,7 @@ struct AgendaView: View {
 
     private func reschedule(_ item: OrgTodoItem, to date: Date) {
         mutate(item) { headline, _ in
-            if headline.planning.deadline != nil && headline.planning.scheduled == nil {
-                headline.setDeadline(date: date)
-            } else {
-                headline.setScheduled(date: date)
-            }
+            ReminderSyncRules.applyIncomingDueDate(date, to: &headline)
         }
         rescheduling = nil
     }
@@ -227,7 +221,7 @@ struct AgendaView: View {
     // MARK: - Date logic
 
     private func relevantDate(_ item: OrgTodoItem) -> Date? {
-        [item.deadline?.date(), item.scheduled?.date()].compactMap { $0 }.min()
+        ReminderSyncRules.relevantDate(for: item)
     }
 
     private func isTodayOrOverdue(_ item: OrgTodoItem, relativeTo today: Date) -> Bool {
