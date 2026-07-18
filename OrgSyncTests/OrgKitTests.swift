@@ -237,6 +237,13 @@ import Foundation
         #expect(OrgTodoStatusConfiguration.removing(onlyOpen[0], from: onlyOpen) == onlyOpen)
     }
 
+    @Test func statusEditorTreatsOnlyDoneAsCompleted() {
+        let statuses = OrgTodoStatusConfiguration.statuses(from: "TODO | PROGRESS WAITING DONE CANCELLED")
+        #expect(statuses.filter { !$0.isDone }.map(\.name) == ["TODO", "PROGRESS", "WAITING", "CANCELLED"])
+        #expect(statuses.filter(\.isDone).map(\.name) == ["DONE"])
+        #expect(OrgTodoStatusConfiguration.preference(from: statuses) == "TODO PROGRESS WAITING CANCELLED | DONE")
+    }
+
     @Test func parsesCustomSequenceWithSeparator() {
         let seq = OrgTodoConfig.parseSequence("TODO NEXT | DONE CANCELLED")
         #expect(seq.notDone == ["TODO", "NEXT"])

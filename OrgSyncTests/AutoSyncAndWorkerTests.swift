@@ -159,4 +159,14 @@ import Testing
         let settings = SettingsStore(defaults: defaults)
         #expect(settings.todoKeywords == OrgTodoConfig.defaultPreference)
     }
+
+    @Test func normalizesImportedStatusesToKeepOnlyDoneCompleted() {
+        let suiteName = "OrgSyncTests.Settings.Import.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("TODO | PROGRESS WAITING DONE CANCELLED", forKey: "settings.todo.keywords")
+
+        let settings = SettingsStore(defaults: defaults)
+        #expect(settings.todoKeywords == "TODO PROGRESS WAITING CANCELLED | DONE")
+    }
 }

@@ -93,12 +93,13 @@ final class SettingsStore {
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"
         let storedKeywords = defaults.string(forKey: Key.todoKeywords)
-        // Earlier builds accidentally classified PROGRESS and WAITING as
-        // completed. Repair that exact legacy default without touching a
-        // person's intentionally customized workflow.
-        todoKeywords = storedKeywords == "TODO | PROGRESS WAITING DONE"
-            ? OrgTodoConfig.defaultPreference
-            : storedKeywords ?? OrgTodoConfig.defaultPreference
+        // Normalize imported and earlier app configurations so only the
+        // literal DONE status is completed; every other status stays active.
+        todoKeywords = storedKeywords.map {
+            OrgTodoStatusConfiguration.preference(
+                from: OrgTodoStatusConfiguration.statuses(from: $0)
+            )
+        } ?? OrgTodoConfig.defaultPreference
         todoStatusColors = defaults.dictionary(forKey: Key.todoStatusColors) as? [String: String] ?? [:]
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }

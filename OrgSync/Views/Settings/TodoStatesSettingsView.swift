@@ -10,7 +10,6 @@ struct TodoStatesSettingsView: View {
     @Binding var preference: String
     @State private var statuses: [OrgTodoStatus]
     @State private var newStatus = ""
-    @State private var newStatusIsDone = false
     @State private var newStatusColor = OrgTodoStatusPalette.customColors[0].hex
     @State private var validationMessage: String?
     @State private var showingAddStatus = false
@@ -23,7 +22,7 @@ struct TodoStatesSettingsView: View {
     var body: some View {
         List {
             statusSection(title: "Active Statuses", isDone: false,
-                          footer: "TODO, PROGRESS, and WAITING are active by default. Active statuses appear in Agenda and cycle toward completion.")
+                          footer: "All statuses except DONE are active. Active statuses appear in Agenda and cycle toward completion.")
             statusSection(title: "Completed Statuses", isDone: true)
 
         }
@@ -33,7 +32,6 @@ struct TodoStatesSettingsView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     newStatus = ""
-                    newStatusIsDone = false
                     newStatusColor = OrgTodoStatusPalette.customColors[0].hex
                     validationMessage = nil
                     showingAddStatus = true
@@ -51,10 +49,6 @@ struct TodoStatesSettingsView: View {
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
                         .accessibilityIdentifier("todoStatuses.newName")
-                    Picker("Status type", selection: $newStatusIsDone) {
-                        Text("Active").tag(false)
-                        Text("Completed").tag(true)
-                    }
                     Picker("Color", selection: $newStatusColor) {
                         ForEach(OrgTodoStatusPalette.customColors) { color in
                             HStack {
@@ -124,7 +118,7 @@ struct TodoStatesSettingsView: View {
     }
 
     private func addStatus() {
-        guard let updated = OrgTodoStatusConfiguration.adding(newStatus, isDone: newStatusIsDone, to: statuses) else {
+        guard let updated = OrgTodoStatusConfiguration.adding(newStatus, isDone: false, to: statuses) else {
             validationMessage = "Use a unique, single-word status name."
             return
         }

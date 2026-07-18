@@ -21,8 +21,12 @@ public struct OrgTodoStatus: Identifiable, Equatable, Hashable, Sendable {
 public enum OrgTodoStatusConfiguration {
     public static func statuses(from preference: String) -> [OrgTodoStatus] {
         let sequence = OrgTodoConfig.parseSequence(preference)
-        return sequence.notDone.map { OrgTodoStatus(name: $0, isDone: false) }
-            + sequence.done.map { OrgTodoStatus(name: $0, isDone: true) }
+        // `DONE` is OrgSync's sole completed status. Imported org sequences
+        // may put other words after `|`; keep those as active workflow states.
+        return sequence.all.map {
+            OrgTodoStatus(name: $0,
+                          isDone: $0.caseInsensitiveCompare("DONE") == .orderedSame)
+        }
     }
 
     public static func preference(from statuses: [OrgTodoStatus]) -> String {
