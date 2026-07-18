@@ -15,7 +15,8 @@ struct OrgEditorTextInsertion: Equatable {
     static func applying(_ command: OrgEditorCommand,
                          to text: String,
                          selection: NSRange,
-                         timestamp: String) -> OrgEditorTextInsertion {
+                         timestamp: String,
+                         todoKeywords: Set<String> = []) -> OrgEditorTextInsertion {
         switch command {
         case .headline:
             insertAtLineStart("* ", into: text, selection: selection)
@@ -30,7 +31,7 @@ struct OrgEditorTextInsertion: Equatable {
         case .deadline:
             insert("DEADLINE: \(timestamp)", into: text, selection: selection, separatesFromLineContent: true)
         case .priority:
-            insert("[#A] ", into: text, selection: selection, separatesFromLineContent: true)
+            insertPriority(into: text, selection: selection, todoKeywords: todoKeywords)
         case .tag:
             insert(":tag:", into: text, selection: selection, caretOffsetFromEnd: 1, separatesFromLineContent: true)
         case .bold:
@@ -58,9 +59,13 @@ struct OrgEditorTextInsertion: Equatable {
                                caretOffsetFromEnd: Int = 0,
                                separatesFromLineContent: Bool = false) -> OrgEditorTextInsertion {
         let range = validRange(selection, in: text)
-        let separator = separatesFromLineContent && range.length == 0
+        let rawSeparator = separatesFromLineContent && range.length == 0
             ? inlineSeparators(in: text, at: range.location)
             : (before: "", after: "")
+        let separator = (
+            before: snippet.first?.isWhitespace == true ? "" : rawSeparator.before,
+            after: snippet.last?.isWhitespace == true ? "" : rawSeparator.after
+        )
         let replacement = separator.before + snippet + separator.after
         let replaced = (text as NSString).replacingCharacters(in: range, with: replacement)
         let caret = range.location + (separator.before as NSString).length + (snippet as NSString).length - caretOffsetFromEnd
@@ -75,6 +80,40 @@ struct OrgEditorTextInsertion: Equatable {
             before: left.isEmpty || left.unicodeScalars.allSatisfy(CharacterSet.whitespacesAndNewlines.contains) ? "" : " ",
             after: right.isEmpty || right.unicodeScalars.allSatisfy(CharacterSet.whitespacesAndNewlines.contains) ? "" : " "
         )
+    }
+
+    private static func insertPriority(into text: String,
+                                       selection: NSRange,
+                                       todoKeywords: Set<String>) -> OrgEditorTextInsertion {
+        let range = validRange(selection, in: text)
+        if range.length > 0 {
+            return insert("[#A] ", into: text, selection: range)
+        }
+        guard range.length == 0,
+              let statusEnd = statusEndInCurrentHeadline(text, caret: range.location, todoKeywords: todoKeywords) else {
+            return insert("[#A]", into: text, selection: range, separatesFromLineContent: true)
+        }
+        return insert("[#A]", into: text, selection: NSRange(location: statusEnd, length: 0), separatesFromLineContent: true)
+    }
+
+    private static func statusEndInCurrentHeadline(_ text: String,
+                                                   caret: Int,
+                                                   todoKeywords: Set<String>) -> Int? {
+        let nsText = text as NSString
+        let lineRange = nsText.lineRange(for: NSRange(location: caret, length: 0))
+        let line = nsText.substring(with: lineRange)
+        let scalars = Array(line.unicodeScalars)
+        var index = 0
+        while index < scalars.count, scalars[index] == "*" { index += 1 }
+        guard index > 0 else { return nil }
+        while index < scalars.count, CharacterSet.whitespaces.contains(scalars[index]) { index += 1 }
+        let statusStart = index
+        while index < scalars.count, !CharacterSet.whitespaces.contains(scalars[index]) { index += 1 }
+        guard statusStart < index else { return nil }
+        let status = String(String.UnicodeScalarView(scalars[statusStart..<index]))
+        guard todoKeywords.contains(status) else { return nil }
+        let prefix = String(String.UnicodeScalarView(scalars[0..<index]))
+        return lineRange.location + (prefix as NSString).length
     }
 
     private static func wrapSelection(_ open: String,

@@ -16,6 +16,7 @@ struct NoteDetailView: View {
 
     @Environment(RepoStore.self) private var repo
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(SettingsStore.self) private var settings
 
     @State private var document = OrgDocument()
     @State private var isEditing = false
@@ -38,6 +39,7 @@ struct NoteDetailView: View {
                 OrgSourceEditor(
                     text: $editText,
                     commands: toolbarCommands,
+                    todoKeywords: Set(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).map(\.name)),
                     isShowingToolbarCustomization: $isCustomizingToolbar
                 )
                     .ignoresSafeArea(.container, edges: .bottom)

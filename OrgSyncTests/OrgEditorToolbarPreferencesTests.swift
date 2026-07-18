@@ -145,6 +145,31 @@ import Testing
         #expect(second.text == "* TODO Write report SCHEDULED: \(timestamp) DEADLINE: \(timestamp)")
     }
 
+    @Test func priorityInsertsImmediatelyAfterAHeadlineStatus() {
+        let result = OrgEditorTextInsertion.applying(
+            .priority,
+            to: "* TODO Write the release notes",
+            selection: NSRange(location: 28, length: 0),
+            timestamp: "<2026-07-18 Sat>",
+            todoKeywords: ["TODO", "PROGRESS", "WAITING", "DONE"]
+        )
+
+        #expect(result.text == "* TODO [#A] Write the release notes")
+        #expect(result.selection == NSRange(location: 11, length: 0))
+    }
+
+    @Test func priorityKeepsCaretBasedInsertionWhenTheLineHasNoRecognizedStatus() {
+        let result = OrgEditorTextInsertion.applying(
+            .priority,
+            to: "Meeting notes",
+            selection: NSRange(location: 7, length: 0),
+            timestamp: "<2026-07-18 Sat>",
+            todoKeywords: ["TODO"]
+        )
+
+        #expect(result.text == "Meeting [#A] notes")
+    }
+
     @Test func allFormattingCommandsWrapAnExistingSelectionAndPlaceTheCaretAfterIt() {
         let cases: [(OrgEditorCommand, String)] = [
             (.bold, "*"), (.italic, "/"), (.underline, "_"), (.strike, "+"), (.code, "~"),

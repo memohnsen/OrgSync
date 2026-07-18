@@ -15,6 +15,7 @@ import UIKit
 struct OrgSourceEditor: UIViewRepresentable {
     @Binding var text: String
     let commands: [OrgEditorCommand]
+    let todoKeywords: Set<String>
     @Binding var isShowingToolbarCustomization: Bool
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -104,7 +105,8 @@ struct OrgSourceEditor: UIViewRepresentable {
                 command,
                 to: textBeforeCommand,
                 selection: textView.selectedRange,
-                timestamp: todayStamp()
+                timestamp: todayStamp(),
+                todoKeywords: parent.todoKeywords
             )
             textView.text = insertion.text
             textView.selectedRange = insertion.selection
