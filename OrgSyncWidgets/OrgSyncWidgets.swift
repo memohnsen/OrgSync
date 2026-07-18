@@ -72,7 +72,12 @@ struct WidgetNoteList: View {
                 }
             }
             Spacer(minLength: 0)
-        }.containerBackground(for: .widget) { Color.clear }
+        }
+        // WidgetKit centers a view that does not claim the available space in
+        // medium and large families. Fill that space and pin content to the
+        // same leading edge used by the small widget.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .containerBackground(for: .widget) { Color.clear }
     }
 }
 
