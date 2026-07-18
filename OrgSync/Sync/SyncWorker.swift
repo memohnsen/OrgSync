@@ -107,7 +107,7 @@ actor SyncWorker {
         let tree = try await client.createTree(baseTree: baseCommit.tree.sha, entries: entries)
         let count = pendingChanges.count
         let commitSHA = try await client.createCommit(
-            message: message ?? "OrgSync: update \(count) file\(count == 1 ? "" : "s")",
+            message: message ?? OrgSyncCommitMessage.automatic(changeCount: count),
             tree: tree,
             parents: [initialState.baseCommitSHA]
         )
@@ -248,7 +248,7 @@ actor SyncWorker {
         let tree = try await client.createTree(baseTree: baseCommit.tree.sha, entries: entries)
         let count = changes.localChangeCount
         let commit = try await client.createCommit(
-            message: message ?? "OrgSync: update \(count) file\(count == 1 ? "" : "s")",
+            message: message ?? OrgSyncCommitMessage.automatic(changeCount: count),
             tree: tree, parents: [state.baseCommitSHA]
         )
         do {

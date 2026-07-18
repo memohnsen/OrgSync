@@ -18,6 +18,15 @@ private func makeWorkingCopy() throws -> URL {
     return root
 }
 
+@Suite struct OrgSyncCommitMessageTests {
+    @Test func automaticMessageIncludesTimestampAndChangeCount() {
+        let date = Date(timeIntervalSince1970: 1_784_304_000)
+        let message = OrgSyncCommitMessage.automatic(changeCount: 2, date: date)
+        #expect(message.hasPrefix("OrgSync update — "))
+        #expect(message.hasSuffix("(2 files)"))
+    }
+}
+
 @Suite struct SyncWorkerPullTests {
     @Test func localDeletionSurvivesUnrelatedRemoteCommitAndIsPushed() async throws {
         let remote = FakeGitHubRepo()

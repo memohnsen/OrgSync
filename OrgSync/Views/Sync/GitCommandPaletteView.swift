@@ -52,7 +52,7 @@ struct GitCommandPaletteView: View {
                         .accessibilityHint("Selects every current local change for the next commit.")
 
                         Button {
-                            commitMessage = ""
+                            commitMessage = OrgSyncCommitMessage.automatic()
                             showCommitPrompt = true
                         } label: {
                             Label("Commit Staged Changes", systemImage: "checkmark.seal")
@@ -124,7 +124,7 @@ struct GitCommandPaletteView: View {
                 _ = try? await sync.refreshStatus()
             }
             .alert("Commit Staged Changes", isPresented: $showCommitPrompt) {
-                TextField("Commit message (optional)", text: $commitMessage)
+                TextField("Commit message", text: $commitMessage)
                 Button("Cancel", role: .cancel) {}
                 Button("Commit") {
                     let message = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
