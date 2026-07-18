@@ -4,15 +4,7 @@ OrgSync is a native, local-first iOS app for writing and organizing =.org=
 files. It includes an org-mode reader and editor, Agenda views, widgets,
 two-way Reminders integration, and optional GitHub synchronization.
 
-#+begin_export html
-<p align="center">
-  <img src="gh_assets/home.jpeg" alt="Notes" width="17%" />
-  <img src="gh_assets/note_preview.jpeg" alt="Note preview" width="17%" />
-  <img src="gh_assets/note.jpeg" alt="Org editor" width="17%" />
-  <img src="gh_assets/agenda.jpeg" alt="Agenda" width="17%" />
-  <img src="gh_assets/git.jpeg" alt="Git commands" width="17%" />
-</p>
-#+end_export
+[[./gh_assets/home.jpeg]] [[./gh_assets/note_preview.jpeg]] [[./gh_assets/note.jpeg]] [[./gh_assets/agenda.jpeg]] [[./gh_assets/git.jpeg]]
 
 * Privacy first
 
