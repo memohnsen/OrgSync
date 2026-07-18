@@ -22,33 +22,7 @@ struct SettingsView: View {
 
         NavigationStack {
             Form {
-                Section {
-                    TextField("Repository URL", text: $settings.repoURL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .disabled(sync.isConnected)
-                        .accessibilityIdentifier("settings.repositoryURL")
-                        .accessibilityLabel("Repository URL")
-                        .accessibilityHint("GitHub HTTPS repository URL. Disabled while connected.")
-                    TextField("Branch", text: $settings.branch)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .disabled(sync.isConnected)
-                        .accessibilityIdentifier("settings.branch")
-                        .accessibilityLabel("Branch")
-                        .accessibilityHint("Git branch to sync. Disabled while connected.")
-                    SecureField("Personal Access Token", text: $settings.token)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .accessibilityIdentifier("settings.personalAccessToken")
-                        .accessibilityLabel("Personal Access Token")
-                        .accessibilityHint("Fine-grained GitHub Personal Access Token. Stored securely in the Keychain.")
-                } header: {
-                    Text("GitHub")
-                } footer: {
-                    Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
-                }
+                ConnectRepositoryView()
 
                 Section {
                     NavigationLink {
@@ -70,8 +44,6 @@ struct SettingsView: View {
                 } header: { Text("Preferences") } footer: {
                     Text("Default: TODO, PROGRESS, WAITING, and DONE. Each state has its own color.")
                 }
-
-                ConnectRepositoryView()
 
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)

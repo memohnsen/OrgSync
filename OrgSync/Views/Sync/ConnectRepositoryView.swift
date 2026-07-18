@@ -75,7 +75,27 @@ struct ConnectRepositoryView: View {
 
     @ViewBuilder
     private var connectFlow: some View {
+        @Bindable var settings = settings
         Section {
+            TextField("Repository URL", text: $settings.repoURL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .accessibilityIdentifier("settings.repositoryURL")
+                .accessibilityLabel("Repository URL")
+                .accessibilityHint("GitHub HTTPS repository URL.")
+            TextField("Branch", text: $settings.branch)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .accessibilityIdentifier("settings.branch")
+                .accessibilityLabel("Branch")
+                .accessibilityHint("Git branch to sync.")
+            SecureField("Personal Access Token", text: $settings.token)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .accessibilityIdentifier("settings.personalAccessToken")
+                .accessibilityLabel("Personal Access Token")
+                .accessibilityHint("Fine-grained GitHub Personal Access Token. Stored securely in the Keychain.")
             Button {
                 Task { await validate() }
             } label: {
@@ -88,9 +108,13 @@ struct ConnectRepositoryView: View {
             .disabled(isWorking || settings.repoURL.isEmpty || settings.token.isEmpty)
             .accessibilityIdentifier("settings.validateRepository")
             .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
+        } header: {
+            Text("GitHub")
         } footer: {
             if settings.repoURL.isEmpty || settings.token.isEmpty {
-                Text("Enter a repository URL and Personal Access Token above to continue.")
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
+            } else {
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
             }
         }
 
