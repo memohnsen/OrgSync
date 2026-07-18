@@ -50,6 +50,7 @@ struct NoteDetailView: View {
         }
         .navigationTitle(item.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
