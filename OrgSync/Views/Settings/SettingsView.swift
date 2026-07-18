@@ -99,6 +99,8 @@ struct SettingsView: View {
                         Text("OrgSync • Version 1.0")
                             .frame(maxWidth: .infinity)
                             .multilineTextAlignment(.center)
+                            .padding(.top, 10)
+                            .padding(.bottom, 6)
                     }
                 }
                 if let error = reminders.lastError {
