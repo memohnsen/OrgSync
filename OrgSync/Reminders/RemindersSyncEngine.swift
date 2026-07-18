@@ -36,6 +36,8 @@ final class RemindersSyncEngine {
         if access == .granted { lists = store.calendars(for: .reminder) }
     }
 
+    func clearError() { lastError = nil }
+
     func requestAccess() async {
         do {
             let granted = try await store.requestFullAccessToReminders()

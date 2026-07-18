@@ -25,6 +25,7 @@ final class RepoStore {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         repoURL = documents.appendingPathComponent("repo", isDirectory: true)
         bootstrap()
+        AgendaSnapshotWriter.write(repo: self)
     }
 
     // MARK: - Listing
@@ -221,6 +222,9 @@ final class RepoStore {
 
     private func didMutateRepo() {
         revision &+= 1
+        // WidgetKit reads the shared Agenda snapshot rather than the app's
+        // Documents mirror. Refresh it after every local or synced mutation.
+        AgendaSnapshotWriter.write(repo: self)
     }
 
     private func relativePath(for url: URL) -> String {

@@ -27,6 +27,27 @@ struct AgendaSnapshotItem: Codable, Identifiable {
 }
 
 enum AgendaSnapshotWriter {
+    /// Regenerates the widget payload from the authoritative local mirror.
+    /// Keeping this here ensures widgets refresh after any note edit, pull,
+    /// merge, Agenda action, or Reminders reconciliation—not only after the
+    /// Agenda screen happens to be opened.
+    static func write(repo: RepoStore) {
+        guard let enumerator = FileManager.default.enumerator(
+            at: repo.repoURL,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else { return }
+        let root = repo.repoURL.path + "/"
+        let items = enumerator.compactMap { $0 as? URL }
+            .filter { $0.pathExtension.lowercased() == "org" }
+            .compactMap { url -> FileItem? in
+                let path = url.path.hasPrefix(root) ? String(url.path.dropFirst(root.count)) : url.lastPathComponent
+                return repo.item(forRelativePath: path)
+            }
+            .flatMap { repo.document(of: $0).todoItems(filePath: $0.relativePath).filter { !$0.isDone } }
+        write(items)
+    }
+
     static func write(_ items: [OrgTodoItem]) {
         let snapshot = AgendaSnapshot(generatedAt: .now, items: items.map { item in
             AgendaSnapshotItem(

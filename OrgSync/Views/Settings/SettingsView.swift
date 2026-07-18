@@ -68,6 +68,17 @@ struct SettingsView: View {
                     Text("Auto-Sync pulls when the app opens and commits & pushes when it closes, each toggleable above. Requires a connected repository.")
                 }
 
+                if sync.isConnected {
+                    Section("Sync Health") {
+                        LabeledContent("Local Changes", value: "\(sync.status.localChangeCount)")
+                        LabeledContent("Remote Updates", value: sync.status.behind == 0 ? "Up to date" : "Available")
+                        if let last = sync.lastSyncDate {
+                            LabeledContent("Last Sync") { Text(last, format: .relative(presentation: .named)) }
+                        }
+                        Button("Refresh Sync Status") { Task { _ = try? await sync.refreshStatus() } }
+                    }
+                }
+
                 Section("About") {
                     LabeledContent("OrgSync", value: "Version 1.0")
                     Text("Local-first org notes, GitHub sync, Agenda, widgets, and Reminders.")
@@ -92,6 +103,12 @@ struct SettingsView: View {
                     Text("Reminders")
                 } footer: {
                     Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+                }
+                if let error = reminders.lastError {
+                    Section("Reminders Sync Error") {
+                        Text(error).foregroundStyle(.red)
+                        Button("Dismiss") { reminders.clearError() }
+                    }
                 }
             }
             .navigationTitle("Settings")

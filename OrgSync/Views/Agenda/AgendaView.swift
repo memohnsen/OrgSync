@@ -177,6 +177,8 @@ struct AgendaView: View {
             repo.document(of: file).todoItems(filePath: file.relativePath).filter { !$0.isDone }
         }
         items = discovered
+        // Snapshot refresh is centralized in RepoStore mutations; retain this
+        // direct write for an Agenda refresh when nothing has changed locally.
         AgendaSnapshotWriter.write(discovered)
     }
 

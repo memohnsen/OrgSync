@@ -68,10 +68,11 @@ struct RootView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         switch phase {
         case .active:
-            if settings.remindersSync {
+            let willPull = settings.autoSync && sync.isConnected && settings.pullOnOpen
+            if settings.remindersSync && !willPull {
                 Task { await reminders.sync(repo: repo) }
             }
-            if settings.autoSync, sync.isConnected, settings.pullOnOpen {
+            if willPull {
                 Task { await sync.pullNow(); await reminders.sync(repo: repo); repo.refresh() }
             }
         case .background:
