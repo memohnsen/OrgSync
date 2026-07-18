@@ -45,7 +45,7 @@ system colors, standard navigation).
   reschedule.
 - Unit tests in OrgSyncTests covering parse + round-trip.
 
-### Phase 3 — Note viewing & editing — [ ] PENDING
+### Phase 3 — Note viewing & editing — [x] COMPLETE
 - Note view: rendered org document — styled headlines by level, folding
   (tap headline to collapse subtree), checkboxes tappable, tables, code blocks,
   clickable links, timestamps rendered as native-styled pills.

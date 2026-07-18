@@ -114,9 +114,25 @@ final class RepoStore {
         )
     }
 
-    /// Raw text contents of a file (used by the placeholder note detail view).
+    /// Raw text contents of a file.
     func text(of item: FileItem) -> String {
         (try? String(contentsOf: item.url, encoding: .utf8)) ?? ""
+    }
+
+    /// Parse a file into an `OrgDocument`.
+    func document(of item: FileItem) -> OrgDocument {
+        OrgParser.parse(text(of: item))
+    }
+
+    /// Overwrite a file's contents with `text`. Used by the note editor and by
+    /// rendered-view mutations (checkbox toggles, TODO/priority changes).
+    @discardableResult
+    func write(_ text: String, to item: FileItem) -> Bool {
+        guard (try? text.write(to: item.url, atomically: true, encoding: .utf8)) != nil else {
+            return false
+        }
+        didMutateRepo()
+        return true
     }
 
     // MARK: - Mutations

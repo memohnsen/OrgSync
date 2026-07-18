@@ -2,8 +2,11 @@
 //  NoteDetailView.swift
 //  OrgSync
 //
-//  Placeholder note detail: shows the raw text of an `.org` file. Phase 3
-//  replaces this with a rendered, foldable, editable org document view.
+//  Note detail: a rendered, foldable org document with tappable checkboxes and
+//  TODO/priority quick actions, plus an Edit mode that swaps in a syntax-
+//  highlighted plain-text editor. Reader mutations and editor changes both
+//  persist to disk through `RepoStore` (debounced autosave in edit mode; on-exit
+//  and on-disappear flushes guarantee nothing is lost).
 //
 
 import SwiftUI
@@ -14,27 +17,119 @@ struct NoteDetailView: View {
     @Environment(RepoStore.self) private var repo
     @Environment(FavoritesStore.self) private var favorites
 
+    @State private var document = OrgDocument()
+    @State private var isEditing = false
+    @State private var editText = ""
+    @State private var collapsed: Set<[Int]> = []
+    @State private var autosaveTask: Task<Void, Never>?
+    @State private var loaded = false
+
     var body: some View {
-        ScrollView {
-            Text(repo.text(of: item))
-                .font(.system(.body, design: .monospaced))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-                .padding()
+        Group {
+            if isEditing {
+                OrgSourceEditor(text: $editText)
+                    .ignoresSafeArea(.container, edges: .bottom)
+                    .onChange(of: editText) { _, _ in scheduleAutosave() }
+            } else {
+                OrgReaderView(document: document, collapsed: $collapsed, actions: readerActions)
+            }
         }
         .navigationTitle(item.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     favorites.toggle(item)
                 } label: {
-                    let isFav = favorites.isFavorite(item)
-                    Image(systemName: isFav ? "star.fill" : "star")
+                    Image(systemName: favorites.isFavorite(item) ? "star.fill" : "star")
                 }
                 .accessibilityLabel(favorites.isFavorite(item) ? "Unfavorite" : "Favorite")
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                if isEditing {
+                    Button("Done") { exitEditMode() }
+                } else {
+                    Button("Edit") { enterEditMode() }
+                }
+            }
         }
+        .task(id: item.id) { loadFromDisk() }
+        .onDisappear { flushOnDisappear() }
+    }
+
+    // MARK: - Loading & saving
+
+    private func loadFromDisk() {
+        guard !loaded else { return }
+        document = repo.document(of: item)
+        loaded = true
+    }
+
+    private func enterEditMode() {
+        editText = document.serialize()
+        withAnimation { isEditing = true }
+    }
+
+    private func exitEditMode() {
+        autosaveTask?.cancel()
+        document = OrgParser.parse(editText)
+        repo.write(editText, to: item)
+        withAnimation { isEditing = false }
+    }
+
+    private func scheduleAutosave() {
+        autosaveTask?.cancel()
+        let snapshot = editText
+        autosaveTask = Task {
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            if Task.isCancelled { return }
+            await MainActor.run { _ = repo.write(snapshot, to: item) }
+        }
+    }
+
+    private func flushOnDisappear() {
+        autosaveTask?.cancel()
+        if isEditing {
+            repo.write(editText, to: item)
+        }
+    }
+
+    // MARK: - Reader mutations
+
+    private var readerActions: OrgReaderActions {
+        OrgReaderActions(
+            cycleTodo: { path in
+                mutateHeadline(at: path) { $0.cycleTodo(config: document.todoConfig) }
+            },
+            setTodo: { path, keyword in
+                mutateHeadline(at: path) { $0.setTodoKeyword(keyword, config: document.todoConfig) }
+            },
+            setPriority: { path, priority in
+                mutateHeadline(at: path) { $0.setPriority(priority) }
+            },
+            toggleCheckbox: { path, contentIndex, itemPath in
+                var updated = document
+                updated.toggleCheckbox(headlinePath: path, contentIndex: contentIndex, itemPath: itemPath)
+                commit(updated)
+            },
+            togglePreambleCheckbox: { contentIndex, itemPath in
+                var updated = document
+                updated.togglePreambleCheckbox(contentIndex: contentIndex, itemPath: itemPath)
+                commit(updated)
+            }
+        )
+    }
+
+    private func mutateHeadline(at path: [Int], _ transform: (inout OrgHeadline) -> Void) {
+        var updated = document
+        updated.mutateHeadline(at: path, transform)
+        commit(updated)
+    }
+
+    /// Adopt a mutated document and persist it.
+    private func commit(_ updated: OrgDocument) {
+        document = updated
+        repo.write(updated.serialize(), to: item)
     }
 }
 
