@@ -100,12 +100,6 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("About") {
-                    LabeledContent("OrgSync", value: "Version 1.0")
-                    Text("Local-first org notes, GitHub sync, Agenda, widgets, and Reminders.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-
                 Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                         .disabled(reminders.access != .granted)
@@ -128,7 +122,10 @@ struct SettingsView: View {
                 } header: {
                     Text("Reminders")
                 } footer: {
-                    Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+                        Text("OrgSync • Version 1.0 • Local-first notes. Your data stays on this device unless you connect your own GitHub repository or Reminders list.")
+                    }
                 }
                 if let error = reminders.lastError {
                     Section("Reminders Sync Error") {
