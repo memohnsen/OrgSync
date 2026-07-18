@@ -31,9 +31,14 @@ struct GitCommandPaletteView: View {
                     )
                 } else {
                     Section("Repository") {
-                        LabeledContent("Branch", value: sync.connectedBranch ?? "—")
                         LabeledContent("Local Changes", value: "\(sync.status.localChangeCount)")
                         LabeledContent("Staged", value: "\(sync.stagedChangeCount)")
+                        Button { showChanges = true } label: {
+                            Text("View Changes").foregroundStyle(canViewChanges ? .primary : .secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!canViewChanges)
+                        .accessibilityHint("Shows local additions, edits, and deletions compared with the last synced version.")
                         Button { showCommitLog = true } label: {
                             Text("Commit Log").foregroundStyle(.primary)
                         }
@@ -42,13 +47,6 @@ struct GitCommandPaletteView: View {
                     }
 
                     Section("Commands") {
-                        Button { showChanges = true } label: {
-                            commandLabel("View Changes", systemImage: "doc.text.magnifyingglass", enabled: canViewChanges)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canViewChanges)
-                        .accessibilityHint("Shows local additions, edits, and deletions compared with the last synced version.")
-
                         Button {
                             Task { await sync.pullNow(); repo.refresh() }
                         } label: {
