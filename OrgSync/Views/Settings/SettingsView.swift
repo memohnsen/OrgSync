@@ -27,7 +27,7 @@ struct SettingsView: View {
                     NavigationLink {
                         TodoStatesSettingsView(preference: $settings.todoKeywords)
                     } label: {
-                        LabeledContent("TODO Statuses", value: "\(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).count)")
+                        LabeledContent("Statuses", value: "\(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).count)")
                     }
                     .accessibilityIdentifier("settings.todoStates")
                     .accessibilityHint("Add or delete active and completed TODO statuses.")
