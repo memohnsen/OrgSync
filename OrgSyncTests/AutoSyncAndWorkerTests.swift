@@ -12,47 +12,21 @@ import Testing
         for autoSync in [false, true] {
             for connected in [false, true] {
                 for pullOnOpen in [false, true] {
-                    for pushOnClose in [false, true] {
-                        for reminders in [false, true] {
-                            let actions = AutoSyncPolicy.actions(
-                                for: .active,
-                                autoSyncEnabled: autoSync,
-                                isConnected: connected,
-                                pullOnOpen: pullOnOpen,
-                                pushOnClose: pushOnClose,
-                                remindersSyncEnabled: reminders
-                            )
-                            let expected: [AutoSyncAction]
-                            if autoSync && connected && pullOnOpen {
-                                expected = reminders ? [.pullThenSyncReminders] : [.pull]
-                            } else {
-                                expected = reminders ? [.syncReminders] : []
-                            }
-                            #expect(actions == expected, "active: auto=\(autoSync), connected=\(connected), pull=\(pullOnOpen), push=\(pushOnClose), reminders=\(reminders)")
+                    for reminders in [false, true] {
+                        let actions = AutoSyncPolicy.actions(
+                            for: .active,
+                            autoSyncEnabled: autoSync,
+                            isConnected: connected,
+                            pullOnOpen: pullOnOpen,
+                            remindersSyncEnabled: reminders
+                        )
+                        let expected: [AutoSyncAction]
+                        if autoSync && connected && pullOnOpen {
+                            expected = reminders ? [.pullThenSyncReminders] : [.pull]
+                        } else {
+                            expected = reminders ? [.syncReminders] : []
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    @Test func backgroundLifecycleCoversEverySettingsCombination() {
-        for autoSync in [false, true] {
-            for connected in [false, true] {
-                for pullOnOpen in [false, true] {
-                    for pushOnClose in [false, true] {
-                        for reminders in [false, true] {
-                            let actions = AutoSyncPolicy.actions(
-                                for: .background,
-                                autoSyncEnabled: autoSync,
-                                isConnected: connected,
-                                pullOnOpen: pullOnOpen,
-                                pushOnClose: pushOnClose,
-                                remindersSyncEnabled: reminders
-                            )
-                            let expected: [AutoSyncAction] = autoSync && connected && pushOnClose ? [.push] : []
-                            #expect(actions == expected, "background: auto=\(autoSync), connected=\(connected), pull=\(pullOnOpen), push=\(pushOnClose), reminders=\(reminders)")
-                        }
+                        #expect(actions == expected, "active: auto=\(autoSync), connected=\(connected), pull=\(pullOnOpen), reminders=\(reminders)")
                     }
                 }
             }
@@ -65,7 +39,6 @@ import Testing
             autoSyncEnabled: true,
             isConnected: true,
             pullOnOpen: true,
-            pushOnClose: true,
             remindersSyncEnabled: true
         ).isEmpty)
     }
@@ -138,14 +111,12 @@ import Testing
         settings.branch = "release"
         settings.autoSync = true
         settings.pullOnOpen = true
-        settings.pushOnClose = true
 
         let restored = SettingsStore(defaults: defaults)
         #expect(restored.repoURL == "owner/repository")
         #expect(restored.branch == "release")
         #expect(restored.autoSync)
         #expect(restored.pullOnOpen)
-        #expect(restored.pushOnClose)
         #expect(restored.todoKeywords == OrgTodoConfig.defaultPreference)
         #expect(restored.todoStatusColors.isEmpty)
     }

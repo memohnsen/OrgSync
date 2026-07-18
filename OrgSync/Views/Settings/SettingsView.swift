@@ -45,19 +45,15 @@ struct SettingsView: View {
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)
                         .accessibilityIdentifier("settings.autoSync")
-                        .accessibilityHint("Enables automatic pull on open and commit and push on close when their individual settings are on.")
+                        .accessibilityHint("Enables automatic pull on open when the individual setting is on.")
                     Toggle("Pull on Open", isOn: $settings.pullOnOpen)
                         .disabled(!settings.autoSync)
                         .accessibilityIdentifier("settings.pullOnOpen")
                         .accessibilityHint("Pulls remote changes when the app becomes active.")
-                    Toggle("Commit & Push on Close", isOn: $settings.pushOnClose)
-                        .disabled(!settings.autoSync)
-                        .accessibilityIdentifier("settings.pushOnClose")
-                        .accessibilityHint("Commits and pushes local changes when the app enters the background.")
                 } header: {
                     Text("Sync")
                 } footer: {
-                    Text("Auto-Sync pulls when the app opens and commits & pushes when it closes, each toggleable above. Requires a connected repository.")
+                    Text("Auto-Sync pulls when the app opens. Requires a connected repository.")
                 }
 
                 Section {

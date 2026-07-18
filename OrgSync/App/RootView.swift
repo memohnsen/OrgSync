@@ -5,11 +5,10 @@
 //  Top-level tab shell: Notes, Agenda, Settings. Owns the app's shared stores
 //  and injects them into the environment for the tab content to consume. Also
 //  drives the optional auto-sync behaviour off the scene lifecycle: pull when
-//  the app becomes active, commit & push when it goes to the background.
+//  the app becomes active.
 //
 
 import SwiftUI
-import UIKit
 
 struct RootView: View {
     @State private var repo: RepoStore
@@ -106,7 +105,7 @@ struct RootView: View {
         let event: AutoSyncLifecycleEvent
         switch phase {
         case .active: event = .active
-        case .background: event = .background
+        case .background: return
         default: event = .inactive
         }
         for action in AutoSyncPolicy.actions(
@@ -114,7 +113,6 @@ struct RootView: View {
             autoSyncEnabled: settings.autoSync,
             isConnected: sync.isConnected,
             pullOnOpen: settings.pullOnOpen,
-            pushOnClose: settings.pushOnClose,
             remindersSyncEnabled: settings.remindersSync
         ) {
             switch action {
@@ -124,20 +122,7 @@ struct RootView: View {
                 Task { await sync.pullNow(); await reminders.sync(repo: repo); repo.refresh() }
             case .syncReminders:
                 Task { await reminders.sync(repo: repo) }
-            case .push:
-                pushInBackground()
             }
-        }
-    }
-
-    /// Kicks off a commit & push wrapped in a UIKit background task so it has a
-    /// chance to finish after the scene backgrounds.
-    private func pushInBackground() {
-        let taskID = UIApplication.shared.beginBackgroundTask(withName: "OrgSyncPush")
-        guard taskID != .invalid else { return }
-        Task {
-            await sync.pushOnCloseNow()
-            await MainActor.run { UIApplication.shared.endBackgroundTask(taskID) }
         }
     }
 }

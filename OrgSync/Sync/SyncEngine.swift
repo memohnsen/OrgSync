@@ -60,12 +60,6 @@ final class SyncEngine {
     func syncNow() async { await run("Syncing…") { try await self.sync() } }
     func pullNow() async { await run("Pulling…") { try await self.pull() } }
     func pushNow(message: String? = nil) async { await run("Pushing…") { try await self.commitAndPush(message: message) } }
-    func pushOnCloseNow() async {
-        await run("Committing and pushing…") {
-            guard let state = self.state else { throw GitHubError.notConfigured }
-            self.apply(try await self.worker.stageCommitAndPush(state: state, client: try self.makeClient(for: state)))
-        }
-    }
     func stageAllNow() async {
         await run("Staging…") {
             guard let state = self.state else { throw GitHubError.notConfigured }

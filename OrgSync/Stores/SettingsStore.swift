@@ -22,7 +22,6 @@ final class SettingsStore {
         static let branch = "settings.github.branch"
         static let autoSync = "settings.sync.autoSync"
         static let pullOnOpen = "settings.sync.pullOnOpen"
-        static let pushOnClose = "settings.sync.pushOnClose"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
         static let agendaDays = "settings.agenda.days"
@@ -61,9 +60,6 @@ final class SettingsStore {
         didSet { defaults.set(pullOnOpen, forKey: Key.pullOnOpen) }
     }
 
-    var pushOnClose: Bool {
-        didSet { defaults.set(pushOnClose, forKey: Key.pushOnClose) }
-    }
 
     // MARK: - Reminders
 
@@ -87,7 +83,6 @@ final class SettingsStore {
         branch = defaults.string(forKey: Key.branch) ?? "main"
         autoSync = defaults.bool(forKey: Key.autoSync)
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
-        pushOnClose = defaults.bool(forKey: Key.pushOnClose)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)

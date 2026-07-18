@@ -10,7 +10,6 @@ import Foundation
 
 nonisolated enum AutoSyncLifecycleEvent: Sendable {
     case active
-    case background
     case inactive
 }
 
@@ -18,7 +17,6 @@ nonisolated enum AutoSyncAction: Equatable, Sendable {
     case pull
     case pullThenSyncReminders
     case syncReminders
-    case push
 }
 
 nonisolated enum AutoSyncPolicy {
@@ -27,7 +25,6 @@ nonisolated enum AutoSyncPolicy {
         autoSyncEnabled: Bool,
         isConnected: Bool,
         pullOnOpen: Bool,
-        pushOnClose: Bool,
         remindersSyncEnabled: Bool
     ) -> [AutoSyncAction] {
         switch event {
@@ -37,8 +34,6 @@ nonisolated enum AutoSyncPolicy {
                 return remindersSyncEnabled ? [.pullThenSyncReminders] : [.pull]
             }
             return remindersSyncEnabled ? [.syncReminders] : []
-        case .background:
-            return autoSyncEnabled && isConnected && pushOnClose ? [.push] : []
         case .inactive:
             return []
         }
