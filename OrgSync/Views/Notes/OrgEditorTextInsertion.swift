@@ -24,15 +24,15 @@ struct OrgEditorTextInsertion: Equatable {
         case .checkbox:
             insertAtLineStart("- [ ] ", into: text, selection: selection)
         case .timestamp:
-            insert(timestamp, into: text, selection: selection)
+            insert(timestamp, into: text, selection: selection, separatesFromLineContent: true)
         case .scheduled:
-            insert("SCHEDULED: \(timestamp)", into: text, selection: selection)
+            insert("SCHEDULED: \(timestamp)", into: text, selection: selection, separatesFromLineContent: true)
         case .deadline:
-            insert("DEADLINE: \(timestamp)", into: text, selection: selection)
+            insert("DEADLINE: \(timestamp)", into: text, selection: selection, separatesFromLineContent: true)
         case .priority:
-            insert("[#A] ", into: text, selection: selection)
+            insert("[#A] ", into: text, selection: selection, separatesFromLineContent: true)
         case .tag:
-            insert(":tag:", into: text, selection: selection, caretOffsetFromEnd: 1)
+            insert(":tag:", into: text, selection: selection, caretOffsetFromEnd: 1, separatesFromLineContent: true)
         case .bold:
             wrapSelection("*", "*", in: text, selection: selection)
         case .italic:
@@ -44,7 +44,7 @@ struct OrgEditorTextInsertion: Equatable {
         case .code:
             wrapSelection("~", "~", in: text, selection: selection)
         case .link:
-            insert("[[][]]", into: text, selection: selection, caretOffsetFromEnd: 4)
+            insert("[[][]]", into: text, selection: selection, caretOffsetFromEnd: 4, separatesFromLineContent: true)
         case .comment:
             insertAtLineStart("# ", into: text, selection: selection)
         case .sourceBlock:
@@ -55,11 +55,26 @@ struct OrgEditorTextInsertion: Equatable {
     private static func insert(_ snippet: String,
                                into text: String,
                                selection: NSRange,
-                               caretOffsetFromEnd: Int = 0) -> OrgEditorTextInsertion {
+                               caretOffsetFromEnd: Int = 0,
+                               separatesFromLineContent: Bool = false) -> OrgEditorTextInsertion {
         let range = validRange(selection, in: text)
-        let replaced = (text as NSString).replacingCharacters(in: range, with: snippet)
-        let caret = range.location + (snippet as NSString).length - caretOffsetFromEnd
+        let separator = separatesFromLineContent && range.length == 0
+            ? inlineSeparators(in: text, at: range.location)
+            : (before: "", after: "")
+        let replacement = separator.before + snippet + separator.after
+        let replaced = (text as NSString).replacingCharacters(in: range, with: replacement)
+        let caret = range.location + (separator.before as NSString).length + (snippet as NSString).length - caretOffsetFromEnd
         return OrgEditorTextInsertion(text: replaced, selection: NSRange(location: caret, length: 0))
+    }
+
+    private static func inlineSeparators(in text: String, at location: Int) -> (before: String, after: String) {
+        let nsText = text as NSString
+        let left = location > 0 ? nsText.substring(with: nsText.rangeOfComposedCharacterSequence(at: location - 1)) : ""
+        let right = location < nsText.length ? nsText.substring(with: nsText.rangeOfComposedCharacterSequence(at: location)) : ""
+        return (
+            before: left.isEmpty || left.unicodeScalars.allSatisfy(CharacterSet.whitespacesAndNewlines.contains) ? "" : " ",
+            after: right.isEmpty || right.unicodeScalars.allSatisfy(CharacterSet.whitespacesAndNewlines.contains) ? "" : " "
+        )
     }
 
     private static func wrapSelection(_ open: String,

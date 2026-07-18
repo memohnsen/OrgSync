@@ -37,14 +37,22 @@ import Testing
     @Test func untouchedInsertionIsEligibleForReplacementByADifferentCommand() {
         let pending = OrgEditorToolbarInsertionPolicy.pendingInsertion(
             command: .headline,
-            before: "Inbox",
-            after: "* Inbox"
+            before: "",
+            after: "* "
         )!
 
         #expect(pending.range == NSRange(location: 0, length: 2))
-        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* Inbox") == .replace)
-        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .headline, currentText: "* Inbox") == .remove)
-        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* Inbox edited") == .none)
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* ") == .replace)
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .headline, currentText: "* ") == .remove)
+        #expect(OrgEditorToolbarInsertionPolicy.action(pending: pending, with: .checkbox, currentText: "* edited") == .none)
+    }
+
+    @Test func populatedLinesNeverMarkToolbarInsertionsAsReplaceable() {
+        #expect(OrgEditorToolbarInsertionPolicy.pendingInsertion(
+            command: .scheduled,
+            before: "* TODO Write report",
+            after: "* TODO Write report SCHEDULED: <2026-07-18 Sat>"
+        ) == nil)
     }
 
     @Test func everyInlineInsertionCommandReplacesTheSelectionAndPlacesTheCaretIntentionally() {
@@ -105,8 +113,8 @@ import Testing
             selection: NSRange(location: caret, length: 0),
             timestamp: timestamp
         )
-        #expect(scheduled.text == "* TODO WriteSCHEDULED: \(timestamp) report")
-        #expect(scheduled.selection.location == caret + ("SCHEDULED: \(timestamp)" as NSString).length)
+        #expect(scheduled.text == "* TODO Write SCHEDULED: \(timestamp) report")
+        #expect(scheduled.selection.location == caret + 1 + ("SCHEDULED: \(timestamp)" as NSString).length)
 
         let deadline = OrgEditorTextInsertion.applying(
             .deadline,
@@ -114,8 +122,27 @@ import Testing
             selection: NSRange(location: caret, length: 0),
             timestamp: timestamp
         )
-        #expect(deadline.text == "* TODO WriteDEADLINE: \(timestamp) report")
-        #expect(deadline.selection.location == caret + ("DEADLINE: \(timestamp)" as NSString).length)
+        #expect(deadline.text == "* TODO Write DEADLINE: \(timestamp) report")
+        #expect(deadline.selection.location == caret + 1 + ("DEADLINE: \(timestamp)" as NSString).length)
+    }
+
+    @Test func consecutivePlanningInsertionsOnAPopulatedLineAreAdditiveAndSeparated() {
+        let timestamp = "<2026-07-18 Sat>"
+        let original = "* TODO Write report"
+        let first = OrgEditorTextInsertion.applying(
+            .scheduled,
+            to: original,
+            selection: NSRange(location: (original as NSString).length, length: 0),
+            timestamp: timestamp
+        )
+        let second = OrgEditorTextInsertion.applying(
+            .deadline,
+            to: first.text,
+            selection: first.selection,
+            timestamp: timestamp
+        )
+
+        #expect(second.text == "* TODO Write report SCHEDULED: \(timestamp) DEADLINE: \(timestamp)")
     }
 
     @Test func allFormattingCommandsWrapAnExistingSelectionAndPlaceTheCaretAfterIt() {
@@ -162,7 +189,7 @@ import Testing
             timestamp: "<2026-07-18 Sat>"
         )
 
-        #expect(result.text == "🦄 :tag:café")
+        #expect(result.text == "🦄 :tag: café")
         #expect(result.selection == NSRange(location: selection.location + 4, length: 0))
     }
 
@@ -174,7 +201,7 @@ import Testing
             timestamp: "<2026-07-18 Sat>"
         )
 
-        #expect(result.text == "Inbox<2026-07-18 Sat>")
+        #expect(result.text == "Inbox <2026-07-18 Sat>")
         #expect(result.selection == NSRange(location: (result.text as NSString).length, length: 0))
     }
 }

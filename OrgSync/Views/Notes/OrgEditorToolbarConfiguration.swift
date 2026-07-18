@@ -122,11 +122,12 @@ enum OrgEditorToolbarInsertionPolicy {
             prefixLength += 1
         }
 
-        return OrgEditorToolbarPendingInsertion(
+        let pending = OrgEditorToolbarPendingInsertion(
             command: command,
             range: NSRange(location: prefixLength, length: afterLength - beforeLength),
             expectedText: after
         )
+        return isOnlyContentOnLine(pending, in: after) ? pending : nil
     }
 
     static func action(pending: OrgEditorToolbarPendingInsertion,
@@ -134,5 +135,13 @@ enum OrgEditorToolbarInsertionPolicy {
                        currentText: String) -> Action {
         guard pending.expectedText == currentText else { return .none }
         return pending.command == nextCommand ? .remove : .replace
+    }
+
+    private static func isOnlyContentOnLine(_ pending: OrgEditorToolbarPendingInsertion, in text: String) -> Bool {
+        let nsText = text as NSString
+        let lineRange = nsText.lineRange(for: NSRange(location: pending.range.location, length: 0))
+        let line = nsText.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
+        let insertion = nsText.substring(with: pending.range).trimmingCharacters(in: .whitespacesAndNewlines)
+        return !insertion.isEmpty && line == insertion
     }
 }
