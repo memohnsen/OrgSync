@@ -76,3 +76,44 @@ private func makeWorkingCopy() throws -> URL {
                 "a skipped path must not be misreported as a local deletion")
     }
 }
+
+@Suite struct SyncWorkerPushBaselineTests {
+    @Test func editsAndCreationsDuringPushSurviveTheNextPull() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: [
+            "a.org": Data("v1\n".utf8),
+            "b.org": Data("b1\n".utf8),
+        ])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        var result = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+
+        // Local edit to push.
+        try Data("v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        // While the push uploads that blob, the user keeps typing (a.org -> v3)
+        // and creates a brand-new note.
+        remote.onCreateBlob = {
+            try? Data("v3\n".utf8).write(to: root.appendingPathComponent("a.org"))
+            try? Data("new\n".utf8).write(to: root.appendingPathComponent("c.org"))
+        }
+        result = try await worker.commitAndPush(state: result.state, client: client, message: nil)
+        remote.onCreateBlob = nil
+
+        // The remote received v2; the mid-push edits must remain local changes.
+        #expect(remote.filesAtHead(branch: "main")["a.org"] == Data("v2\n".utf8))
+        #expect(result.status.modified == ["a.org"])
+        #expect(result.status.added == ["c.org"])
+
+        // An unrelated remote commit then a pull must not clobber v3 or delete c.org.
+        remote.seedCommit(branch: "main", changes: ["b.org": Data("b2\n".utf8)])
+        result = try await worker.pull(state: result.state, client: client)
+        #expect(try Data(contentsOf: root.appendingPathComponent("a.org")) == Data("v3\n".utf8),
+                "an edit made during the push must not be overwritten by the pushed version")
+        #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("c.org").path),
+                "a file created during the push must not be deleted on the next pull")
+        #expect(result.status.modified == ["a.org"])
+        #expect(result.status.added == ["c.org"])
+    }
+}

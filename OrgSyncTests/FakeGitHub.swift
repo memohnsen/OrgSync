@@ -24,6 +24,11 @@ final class FakeGitHubRepo: @unchecked Sendable {
     private var blobs: [String: Data] = [:]
     private var objectCounter = 0
 
+    /// Test hook fired when the client uploads a blob, before it is stored.
+    /// Lets a test mutate the local working copy mid-push to simulate edits
+    /// racing an in-flight push. Must not call back into this repo (deadlock).
+    var onCreateBlob: (@Sendable () -> Void)?
+
     init() {
         repo = "repo-\(UUID().uuidString)"
         FakeGitHubProtocol.register(self, key: "\(owner)/\(repo)")
@@ -77,6 +82,7 @@ final class FakeGitHubRepo: @unchecked Sendable {
     // MARK: Request handling (called by the protocol)
 
     fileprivate func handle(method: String, gitPath: [String], body: Data?) -> (status: Int, json: Any) {
+        if method == "POST", gitPath.first == "blobs" { onCreateBlob?() }
         lock.lock(); defer { lock.unlock() }
         switch (method, gitPath.first) {
         case ("GET", "ref"):

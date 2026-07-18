@@ -9,7 +9,7 @@ case with an unchanged remote, keep the deletion tracked (`newFiles[path] = base
 so `localChanges` still reports it and the delete gets pushed. Preserve `skippedPaths`
 entries across pulls. Add regression test in `SyncTests.swift`.
 
-## Step 2 — [ ] Fix: post-push `rebase` loses edits made during the push
+## Step 2 — [x] Fix: post-push `rebase` loses edits made during the push
 `SyncWorker.commitAndPush`: build the new baseline from the blob SHAs actually
 uploaded (as `pushPending` does with `pendingCommit.changes`) instead of re-scanning
 the disk after the push. Files edited or created mid-push must remain visible as

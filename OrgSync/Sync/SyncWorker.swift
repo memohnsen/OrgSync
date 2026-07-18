@@ -221,11 +221,17 @@ actor SyncWorker {
         guard changes.hasLocalChanges else { return Result(state: state, status: changes) }
         let working = enumerateWorkingFiles()
         var entries: [TreeEntryInput] = []
+        var applied: [PendingGitCommit.Change] = []
         for path in changes.modified + changes.added {
             guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
-            entries.append(TreeEntryInput(path: path, sha: try await client.createBlob(data: data)))
+            let blobSHA = try await client.createBlob(data: data)
+            entries.append(TreeEntryInput(path: path, sha: blobSHA))
+            applied.append(.init(path: path, blobSHA: blobSHA))
         }
-        for path in changes.deleted { entries.append(TreeEntryInput(path: path, sha: nil)) }
+        for path in changes.deleted {
+            entries.append(TreeEntryInput(path: path, sha: nil))
+            applied.append(.init(path: path, blobSHA: nil))
+        }
 
         let baseCommit = try await client.getCommit(sha: state.baseCommitSHA)
         let tree = try await client.createTree(baseTree: baseCommit.tree.sha, entries: entries)
@@ -240,8 +246,16 @@ actor SyncWorker {
             let pulled = try await pull(state: state, client: client)
             return try await commitAndPush(state: pulled.state, client: client, message: message, allowRetry: false)
         }
+        // The new baseline reflects exactly the blobs that were uploaded — never
+        // a fresh disk scan, which would absorb files edited or created while
+        // the push was in flight and later clobber or delete them on pull.
         var rebased = state
-        rebase(&rebased, to: commit)
+        for change in applied {
+            if let blobSHA = change.blobSHA { rebased.files[change.path] = blobSHA }
+            else { rebased.files.removeValue(forKey: change.path) }
+        }
+        rebased.baseCommitSHA = commit
+        rebased.lastSyncDate = Date()
         rebased.stagedPaths = []
         persist(rebased)
         return Result(state: rebased, status: localChanges(against: rebased))
@@ -302,18 +316,6 @@ actor SyncWorker {
         for path in state.files.keys where working[path] == nil && !state.skippedPaths.contains(path) { result.deleted.append(path) }
         result.modified.sort(); result.added.sort(); result.deleted.sort()
         return result
-    }
-
-    private func rebase(_ state: inout SyncRepoState, to commit: String) {
-        let working = enumerateWorkingFiles()
-        var files: [String: String] = [:]
-        for path in state.skippedPaths { files[path] = state.files[path] }
-        for (path, url) in working where !state.skippedPaths.contains(path) {
-            if let data = try? Data(contentsOf: url) { files[path] = GitBlob.sha1(for: data) }
-        }
-        state.files = files
-        state.baseCommitSHA = commit
-        state.lastSyncDate = Date()
     }
 
     private func enumerateWorkingFiles() -> [String: URL] {
