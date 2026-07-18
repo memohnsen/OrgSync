@@ -32,7 +32,7 @@ enum AgendaSnapshotWriter {
     /// merge, Agenda action, or Reminders reconciliation—not only after the
     /// Agenda screen happens to be opened.
     static func write(repo: RepoStore) {
-        write(repo.allTodoItems().filter { !$0.isDone })
+        write(repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) })
     }
 
     static func write(_ items: [OrgTodoItem]) {

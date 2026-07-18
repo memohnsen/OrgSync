@@ -38,7 +38,9 @@ enum ReminderSyncRules {
     }
 
     static func complete(_ headline: inout OrgHeadline, item: OrgTodoItem, document: OrgDocument, now: Date = .now) {
-        let done = document.todoConfig.sequences.first(where: { $0.all.contains(item.keyword) })?.done.first
+        let done = document.todoConfig.allKeywords.first {
+            $0.caseInsensitiveCompare("DONE") == .orderedSame
+        } ?? document.todoConfig.sequences.first(where: { $0.all.contains(item.keyword) })?.done.first
             ?? document.todoConfig.sequences.first?.done.first
         headline.setTodoKeyword(done, config: document.todoConfig, now: now)
     }

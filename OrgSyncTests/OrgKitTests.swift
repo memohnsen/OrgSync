@@ -210,6 +210,19 @@ import Foundation
         #expect(!OrgTodoStatusPalette.shouldStrikeThrough(nil))
     }
 
+    @Test func onlyDoneIsTreatedAsCompletedTask() {
+        let document = OrgParser.parse("#+TODO: TODO | DONE CANCELLED\n* CANCELLED Archived\n* DONE Finished\n")
+        let items = document.todoItems(filePath: "tasks.org")
+        #expect(items.map(\.keyword) == ["CANCELLED", "DONE"])
+        #expect(items.map(\.isDone) == [false, true])
+
+        var headline = OrgHeadline(level: 1, todoKeyword: "CANCELLED", title: "Archived")
+        headline.setTodoKeyword("CANCELLED", config: document.todoConfig, now: Date(timeIntervalSince1970: 0))
+        #expect(headline.planning.closed == nil)
+        headline.setTodoKeyword("DONE", config: document.todoConfig, now: Date(timeIntervalSince1970: 0))
+        #expect(headline.planning.closed != nil)
+    }
+
     @Test func statusEditorAddsDeletesAndSerializesSafely() {
         var statuses = OrgTodoStatusConfiguration.statuses(from: OrgTodoConfig.defaultPreference)
         statuses = OrgTodoStatusConfiguration.adding("blocked", isDone: false, to: statuses)!

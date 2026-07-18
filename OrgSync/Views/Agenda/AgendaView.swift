@@ -192,7 +192,7 @@ struct AgendaView: View {
     }
 
     private func reload() {
-        let discovered = repo.allTodoItems().filter { !$0.isDone }
+        let discovered = repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) }
         items = discovered
         // Snapshot refresh is centralized in RepoStore mutations; retain this
         // direct write for an Agenda refresh when nothing has changed locally.

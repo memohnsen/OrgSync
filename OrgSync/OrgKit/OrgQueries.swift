@@ -10,8 +10,8 @@
 import Foundation
 
 extension OrgHeadline {
-    public func isDone(config: OrgTodoConfig) -> Bool {
-        todoKeyword.map(config.isDone) ?? false
+    public func isDone(config _: OrgTodoConfig) -> Bool {
+        OrgTodoStatusPalette.isCompleted(todoKeyword)
     }
 
     /// Timestamps directly on this headline (planning + inline in title/body),
@@ -81,7 +81,7 @@ extension OrgDocument {
                 items.append(OrgTodoItem(
                     outline: outline,
                     keyword: keyword,
-                    isDone: todoConfig.isDone(keyword),
+                    isDone: OrgTodoStatusPalette.isCompleted(keyword),
                     priority: headline.priority,
                     title: headline.title,
                     tags: headline.tags,

@@ -85,8 +85,8 @@ extension OrgHeadline {
     /// Apply a transition to `newKeyword`, handling CLOSED and repeaters.
     public mutating func setTodoKeyword(_ newKeyword: String?, config: OrgTodoConfig,
                                         now: Date = Date()) {
-        let wasDone = todoKeyword.map(config.isDone) ?? false
-        let willBeDone = newKeyword.map(config.isDone) ?? false
+        let wasDone = OrgTodoStatusPalette.isCompleted(todoKeyword)
+        let willBeDone = OrgTodoStatusPalette.isCompleted(newKeyword)
 
         if willBeDone, hasRepeater {
             // Repeating task: advance the schedule instead of completing.
@@ -123,7 +123,7 @@ extension OrgHeadline {
     public mutating func toggleTodo(config: OrgTodoConfig, now: Date = Date()) {
         let seq = todoKeyword.flatMap(config.sequence(for:)) ?? config.sequences.first
         guard let sequence = seq else { return }
-        let currentlyDone = todoKeyword.map(config.isDone) ?? false
+        let currentlyDone = OrgTodoStatusPalette.isCompleted(todoKeyword)
         let target = currentlyDone ? sequence.notDone.first : sequence.done.first
         setTodoKeyword(target, config: config, now: now)
     }

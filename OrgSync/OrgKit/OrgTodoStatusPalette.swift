@@ -67,6 +67,14 @@ public enum OrgTodoStatusPalette {
     /// `DONE` is the only visual state that strikes out a title. Other org
     /// completion keywords can still be meaningful workflow states.
     public static func shouldStrikeThrough(_ keyword: String?) -> Bool {
+        isCompleted(keyword)
+    }
+
+    /// OrgSync reserves the literal DONE status for completed-task behavior:
+    /// hiding from Agenda, closing a headline, and completing a Reminder.
+    /// Other configured statuses remain workflow states, even if positioned
+    /// after `|` in an imported org sequence.
+    public static func isCompleted(_ keyword: String?) -> Bool {
         keyword?.caseInsensitiveCompare("DONE") == .orderedSame
     }
 }

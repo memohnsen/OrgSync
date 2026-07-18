@@ -100,6 +100,15 @@ import Testing
         #expect(document.headlines[0].planning.closed?.day == 18)
     }
 
+    @Test func completingTaskUsesDoneInsteadOfAnotherConfiguredCompletionState() {
+        var document = OrgParser.parse("#+TODO: TODO | CANCELLED DONE\n* TODO Task\n")
+        let item = document.todoItems(filePath: "tasks.org")[0]
+        ReminderSyncRules.complete(&document.headlines[0], item: item, document: document,
+                                   now: date(year: 2026, month: 7, day: 18))
+        #expect(document.headlines[0].todoKeyword == "DONE")
+        #expect(document.headlines[0].planning.closed != nil)
+    }
+
     @Test func completingCatchUpRecurringTaskMovesPastToday() {
         var document = OrgParser.parse("* TODO Catch up\nSCHEDULED: <2026-07-01 Wed ++1w>\n")
         let item = document.todoItems(filePath: "catchup.org")[0]
