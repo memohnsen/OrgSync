@@ -44,7 +44,7 @@ struct GitChangesView: View {
     }
 
     private func inlineDiff(for diff: GitFileDiff) -> some View {
-        let lines = GitInlineDiff.lines(original: diff.original, current: diff.current)
+        let lines = GitInlineDiff.displayLines(original: diff.original, current: diff.current)
         return VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -64,15 +64,15 @@ struct GitChangesView: View {
     }
 
     private func marker(for kind: GitInlineDiff.Line.Kind) -> String {
-        switch kind { case .unchanged: return " "; case .removed: return "−"; case .added: return "+" }
+        switch kind { case .unchanged: return " "; case .removed: return "−"; case .added: return "+"; case .collapsed: return "⋯" }
     }
 
     private func color(for kind: GitInlineDiff.Line.Kind) -> Color {
-        switch kind { case .unchanged: return .primary; case .removed: return .red; case .added: return .green }
+        switch kind { case .unchanged: return .primary; case .removed: return .red; case .added: return .green; case .collapsed: return .secondary }
     }
 
     private func backgroundOpacity(for kind: GitInlineDiff.Line.Kind) -> Double {
-        switch kind { case .unchanged: return 0; case .removed, .added: return 0.16 }
+        switch kind { case .unchanged, .collapsed: return 0; case .removed, .added: return 0.16 }
     }
 
     private func load() async {

@@ -9,7 +9,7 @@ import Foundation
 
 enum GitInlineDiff {
     struct Line: Equatable, Sendable {
-        enum Kind: Equatable, Sendable { case unchanged, removed, added }
+        enum Kind: Equatable, Sendable { case unchanged, removed, added, collapsed }
         var kind: Kind
         var text: String
     }
@@ -50,6 +50,36 @@ enum GitInlineDiff {
                 result.append(Line(kind: .added, text: after[j]))
                 j += 1
             }
+        }
+        return result
+    }
+
+    /// Limits unchanged context around each changed hunk to keep long notes readable.
+    /// Changed lines are never omitted.
+    static func displayLines(original: String?, current: String?, context: Int = 2) -> [Line] {
+        let source = lines(original: original, current: current)
+        let changedOffsets = source.indices.filter { source[$0].kind != .unchanged }
+        guard !changedOffsets.isEmpty else { return source }
+
+        var result: [Line] = []
+        var hiddenCount = 0
+        for index in source.indices {
+            let line = source[index]
+            let keepsContext = line.kind != .unchanged || changedOffsets.contains { abs($0 - index) <= context }
+            if keepsContext {
+                if hiddenCount > 0 {
+                    let noun = hiddenCount == 1 ? "line" : "lines"
+                    result.append(Line(kind: .collapsed, text: "⋯ \(hiddenCount) unchanged \(noun) folded"))
+                    hiddenCount = 0
+                }
+                result.append(line)
+            } else {
+                hiddenCount += 1
+            }
+        }
+        if hiddenCount > 0 {
+            let noun = hiddenCount == 1 ? "line" : "lines"
+            result.append(Line(kind: .collapsed, text: "⋯ \(hiddenCount) unchanged \(noun) folded"))
         }
         return result
     }
