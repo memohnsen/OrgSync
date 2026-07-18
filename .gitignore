@@ -1,3 +1,4 @@
 .env
 .orgsync-live-git-enabled
 .DS_Store
+.build/

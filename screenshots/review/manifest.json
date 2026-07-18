@@ -1,0 +1,169 @@
+{
+  "generated_at": "2026-07-18T23:56:04Z",
+  "raw_dir": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw",
+  "framed_dir": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload",
+  "output_dir": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/review",
+  "approval_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/review/approved.json",
+  "summary": {
+    "total": 8,
+    "ready": 8,
+    "missing_raw": 0,
+    "invalid_size": 0,
+    "approved": 0,
+    "pending_approval": 8
+  },
+  "entries": [
+    {
+      "key": "|ipad-13|01-notes",
+      "screenshot_id": "01-notes",
+      "device": "ipad-13",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/ipad-13/01-notes.png",
+      "framed_relative_path": "ipad-13/01-notes.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/ipad-13/01-notes.png",
+      "raw_relative_path": "ipad-13/01-notes.png",
+      "width": 2064,
+      "height": 2752,
+      "display_types": [
+        "APP_IPAD_PRO_129",
+        "APP_IPAD_PRO_3GEN_129"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|ipad-13|02-agenda",
+      "screenshot_id": "02-agenda",
+      "device": "ipad-13",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/ipad-13/02-agenda.png",
+      "framed_relative_path": "ipad-13/02-agenda.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/ipad-13/02-agenda.png",
+      "raw_relative_path": "ipad-13/02-agenda.png",
+      "width": 2064,
+      "height": 2752,
+      "display_types": [
+        "APP_IPAD_PRO_129",
+        "APP_IPAD_PRO_3GEN_129"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|ipad-13|03-org-reader",
+      "screenshot_id": "03-org-reader",
+      "device": "ipad-13",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/ipad-13/03-org-reader.png",
+      "framed_relative_path": "ipad-13/03-org-reader.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/ipad-13/03-org-reader.png",
+      "raw_relative_path": "ipad-13/03-org-reader.png",
+      "width": 2064,
+      "height": 2752,
+      "display_types": [
+        "APP_IPAD_PRO_129",
+        "APP_IPAD_PRO_3GEN_129"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iphone-69|01-notes",
+      "screenshot_id": "01-notes",
+      "device": "iphone-69",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/iphone-69/01-notes.png",
+      "framed_relative_path": "iphone-69/01-notes.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/iphone-69/01-notes.png",
+      "raw_relative_path": "iphone-69/01-notes.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67",
+        "APP_IPHONE_69"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iphone-69|02-agenda",
+      "screenshot_id": "02-agenda",
+      "device": "iphone-69",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/iphone-69/02-agenda.png",
+      "framed_relative_path": "iphone-69/02-agenda.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/iphone-69/02-agenda.png",
+      "raw_relative_path": "iphone-69/02-agenda.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67",
+        "APP_IPHONE_69"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iphone-69|03-org-reader",
+      "screenshot_id": "03-org-reader",
+      "device": "iphone-69",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/iphone-69/03-org-reader.png",
+      "framed_relative_path": "iphone-69/03-org-reader.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/iphone-69/03-org-reader.png",
+      "raw_relative_path": "iphone-69/03-org-reader.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67",
+        "APP_IPHONE_69"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iphone-69|04-org-editor",
+      "screenshot_id": "04-org-editor",
+      "device": "iphone-69",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/iphone-69/04-org-editor.png",
+      "framed_relative_path": "iphone-69/04-org-editor.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/iphone-69/04-org-editor.png",
+      "raw_relative_path": "iphone-69/04-org-editor.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67",
+        "APP_IPHONE_69"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iphone-69|05-settings",
+      "screenshot_id": "05-settings",
+      "device": "iphone-69",
+      "framed_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/upload/iphone-69/05-settings.png",
+      "framed_relative_path": "iphone-69/05-settings.png",
+      "raw_path": "/Users/maddisenmohnsen/dev/OrgSync/screenshots/raw/iphone-69/05-settings.png",
+      "raw_relative_path": "iphone-69/05-settings.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67",
+        "APP_IPHONE_69"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    }
+  ]
+}

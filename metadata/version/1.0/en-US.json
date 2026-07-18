@@ -1,0 +1,8 @@
+{
+  "description": "OrgSync is a native, local-first home for your .org files. Capture notes, organize projects, and work from a focused agenda—without giving up ownership of your data.\n\nWRITE IN ORG MODE\nBrowse, read, and edit plain-text .org files with support for headings, TODO states, priorities, tags, timestamps, checkboxes, tables, links, source blocks, drawers, and inline formatting.\n\nTURN NOTES INTO A PLAN\nUse the Agenda to see what is due today, what is coming up, and every open task. Add new items directly to your inbox with a state, schedule, deadline, and tags.\n\nMAKE IT YOURS\nCustomize TODO states and colors, choose an appearance, keep favorite notes close, and use Home Screen widgets for favorites and upcoming work.\n\nOPTIONAL, ON YOUR TERMS\nConnect a GitHub repository with your own fine-grained Personal Access Token to clone, pull, review changes, resolve conflicts, commit, and push. Or sync scheduled and deadline items two ways with one Reminders list you choose.\n\nPRIVATE BY DEFAULT\nOrgSync collects, tracks, analyzes, and sells no data. There is no account system, analytics SDK, advertising, telemetry, or OrgSync-operated server. Your notes stay on your device unless you explicitly enable GitHub or Reminders integration.",
+  "keywords": "org mode,notes,todo,agenda,reminders,github,git,plain text,privacy,productivity",
+  "marketingUrl": "https://github.com/memohnsen/OrgSync",
+  "promotionalText": "Your .org files, always local, always yours.",
+  "supportUrl": "https://github.com/memohnsen/OrgSync/issues",
+  "whatsNew": "Welcome to OrgSync. Capture notes, manage .org tasks, work from Agenda, and optionally sync with GitHub or Reminders."
+}
