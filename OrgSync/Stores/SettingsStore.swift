@@ -25,6 +25,9 @@ final class SettingsStore {
         static let pushOnClose = "settings.sync.pushOnClose"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
+        static let agendaDays = "settings.agenda.days"
+        static let appearance = "settings.appearance"
+        static let todoKeywords = "settings.todo.keywords"
     }
 
     private let defaults: UserDefaults
@@ -70,6 +73,9 @@ final class SettingsStore {
     var remindersListID: String {
         didSet { defaults.set(remindersListID, forKey: Key.remindersListID) }
     }
+    var agendaDays: Int { didSet { defaults.set(agendaDays, forKey: Key.agendaDays) } }
+    var appearance: String { didSet { defaults.set(appearance, forKey: Key.appearance) } }
+    var todoKeywords: String { didSet { defaults.set(todoKeywords, forKey: Key.todoKeywords) } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -80,6 +86,9 @@ final class SettingsStore {
         pushOnClose = defaults.bool(forKey: Key.pushOnClose)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
+        agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
+        appearance = defaults.string(forKey: Key.appearance) ?? "system"
+        todoKeywords = defaults.string(forKey: Key.todoKeywords) ?? "TODO | DONE"
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }

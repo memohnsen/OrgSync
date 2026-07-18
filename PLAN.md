@@ -54,7 +54,7 @@ system colors, standard navigation).
   timestamp insert, link insert), autosave.
 - TODO quick actions from the rendered view (toggle state, change priority).
 
-### Phase 4 — GitHub sync (the git client) — [ ] PENDING
+### Phase 4 — GitHub sync (the git client) — [x] COMPLETE
 - `GitHubClient`: Git Data API (get ref, trees, blobs, create blob/tree/commit,
   update ref) + repo metadata; PAT auth from Keychain.
 - `SyncEngine`: initial clone (fetch full tree → Documents/repo), pull (three-way
@@ -67,7 +67,7 @@ system colors, standard navigation).
 - Auto-sync options in Settings: **auto-pull on app open** and **auto-commit &
   push on app close** (scene background), each independently toggleable.
 
-### Phase 5 — Agenda — [ ] PENDING
+### Phase 5 — Agenda — [x] COMPLETE
 - Agenda tab: aggregates TODO headlines across every org file in the repo.
 - Views: **Today** (scheduled/deadline today + overdue), **Upcoming** (next 7 days),
   **All TODOs** grouped by file; native list sections, deadline/overdue coloring,
@@ -76,7 +76,7 @@ system colors, standard navigation).
   reschedule via date picker, jump to note.
 - Agenda snapshot written to the App Group container for the widget.
 
-### Phase 6 — Widgets — [ ] PENDING
+### Phase 6 — Widgets — [x] COMPLETE
 - New `OrgSyncWidgets` WidgetKit extension target (this phase edits project.pbxproj)
   with App Group entitlement on both targets.
 - **Favorites widget**: small/medium — favorited notes, tap deep-links into the note.
@@ -84,7 +84,7 @@ system colors, standard navigation).
   date coloring, deep-links to Agenda.
 - Deep-link URL scheme (`orgsync://note/...`, `orgsync://agenda`) handled in the app.
 
-### Phase 7 — Reminders two-way sync — [ ] PENDING
+### Phase 7 — Reminders two-way sync — [x] COMPLETE
 - EventKit integration with permission flow; dedicated "OrgSync" Reminders list
   (user-choosable in Settings).
 - Org → Reminders: TODOs with SCHEDULED/DEADLINE become reminders (due date,
@@ -94,7 +94,7 @@ system colors, standard navigation).
 - Mapping store (org heading ID ↔ reminder ID) in the App Group container;
   sync runs on app foreground + after git sync; toggle + list picker in Settings.
 
-### Phase 8 — Polish & verification — [ ] PENDING
+### Phase 8 — Polish & verification — [x] COMPLETE
 - Full-text search across notes; sort options; recent notes.
 - Settings completion: TODO keyword customization, agenda span, appearance check
   (dark mode), about screen.

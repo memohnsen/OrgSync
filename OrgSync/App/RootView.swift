@@ -56,6 +56,7 @@ struct RootView: View {
             // named file in the existing native browser.
             selectedTab = url.host == "agenda" ? "agenda" : "notes"
         }
+        .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
     }
 
     private func handleScenePhase(_ phase: ScenePhase) {

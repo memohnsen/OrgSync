@@ -66,8 +66,8 @@ final class RepoStore {
         }
     }
 
-    /// All `.org` files anywhere under `directory` whose name matches `query`.
-    /// Used to power recursive filename search.
+    /// All `.org` files anywhere under `directory` whose filename or text
+    /// contents match `query`. Used for recursive full-text note search.
     func search(_ query: String, under directory: URL) -> [FileItem] {
         _ = revision
 
@@ -88,7 +88,10 @@ final class RepoStore {
             let values = try? url.resourceValues(forKeys: Set(keys))
             let isDirectory = values?.isDirectory ?? false
             guard !isDirectory, url.pathExtension.lowercased() == "org" else { continue }
-            guard url.lastPathComponent.localizedCaseInsensitiveContains(trimmed) else { continue }
+            let matchesName = url.lastPathComponent.localizedCaseInsensitiveContains(trimmed)
+            let matchesText = (try? String(contentsOf: url, encoding: .utf8))?
+                .localizedCaseInsensitiveContains(trimmed) ?? false
+            guard matchesName || matchesText else { continue }
             results.append(FileItem(
                 url: url,
                 relativePath: relativePath(for: url),

@@ -41,6 +41,19 @@ struct SettingsView: View {
                     Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
                 }
 
+                Section {
+                    TextField("TODO keywords", text: $settings.todoKeywords)
+                        .textInputAutocapitalization(.characters)
+                    Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
+                    Picker("Appearance", selection: $settings.appearance) {
+                        Text("System").tag("system")
+                        Text("Light").tag("light")
+                        Text("Dark").tag("dark")
+                    }
+                } header: { Text("Preferences") } footer: {
+                    Text("TODO keywords use org syntax, for example “TODO NEXT | DONE CANCELLED”.")
+                }
+
                 ConnectRepositoryView()
 
                 Section {
@@ -53,6 +66,12 @@ struct SettingsView: View {
                     Text("Sync")
                 } footer: {
                     Text("Auto-Sync pulls when the app opens and commits & pushes when it closes, each toggleable above. Requires a connected repository.")
+                }
+
+                Section("About") {
+                    LabeledContent("OrgSync", value: "Version 1.0")
+                    Text("Local-first org notes, GitHub sync, Agenda, widgets, and Reminders.")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
 
                 Section {

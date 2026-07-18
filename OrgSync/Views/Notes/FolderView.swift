@@ -24,6 +24,7 @@ struct FolderView: View {
     @Environment(RemindersSyncEngine.self) private var reminders: RemindersSyncEngine?
 
     @State private var searchText = ""
+    @State private var sortBy: Sort = .name
     @State private var syncErrorShown = false
 
     // Create dialogs
@@ -47,7 +48,7 @@ struct FolderView: View {
                     }
                 }
                 Section {
-                    let items = repo.contents(of: directory)
+                    let items = sorted(repo.contents(of: directory))
                     if items.isEmpty {
                         ContentUnavailableView("No Notes", systemImage: "note.text",
                                                description: Text("Use the + button to create a note or folder."))
@@ -60,7 +61,7 @@ struct FolderView: View {
                     }
                 }
             } else {
-                let results = repo.search(searchText, under: directory)
+                let results = sorted(repo.search(searchText, under: directory))
                 if results.isEmpty {
                     ContentUnavailableView.search(text: searchText)
                 } else {
@@ -77,6 +78,14 @@ struct FolderView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     syncMenu(sync)
                 }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Sort", selection: $sortBy) {
+                        ForEach(Sort.allCases) { Text($0.title).tag($0) }
+                    }
+                } label: { Image(systemName: "arrow.up.arrow.down") }
+                .accessibilityLabel("Sort notes")
             }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -122,6 +131,11 @@ struct FolderView: View {
             Button("Cancel", role: .cancel) { renameTarget = nil }
             Button("Rename") { commitRename() }
         }
+    }
+
+    private enum Sort: String, CaseIterable, Identifiable { case name, recent; var id: String { rawValue }; var title: String { self == .name ? "Name" : "Most Recent" } }
+    private func sorted(_ items: [FileItem]) -> [FileItem] {
+        sortBy == .name ? items : items.sorted { $0.modifiedDate > $1.modifiedDate }
     }
 
     // MARK: - Sync UI

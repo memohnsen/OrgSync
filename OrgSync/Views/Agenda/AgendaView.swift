@@ -18,6 +18,7 @@ struct AgendaView: View {
     }
 
     @Environment(RepoStore.self) private var repo
+    @Environment(SettingsStore.self) private var settings
     @State private var scope: Scope = .today
     @State private var items: [OrgTodoItem] = []
     @State private var rescheduling: OrgTodoItem?
@@ -144,12 +145,12 @@ struct AgendaView: View {
         case .upcoming:
             let calendar = Calendar.current
             let start = calendar.startOfDay(for: .now)
-            let end = calendar.date(byAdding: .day, value: 8, to: start)!
+            let end = calendar.date(byAdding: .day, value: settings.agendaDays + 1, to: start)!
             let due = items.filter { item in
                 guard let date = relevantDate(item) else { return false }
                 return date >= start && date < end
             }.sorted(by: agendaSort)
-            return due.isEmpty ? [] : [AgendaSection(title: "Next 7 Days", items: due)]
+            return due.isEmpty ? [] : [AgendaSection(title: "Next \(settings.agendaDays) Days", items: due)]
         case .all:
             let grouped = Dictionary(grouping: items, by: \.outline.filePath)
             return grouped.keys.sorted().map { path in
