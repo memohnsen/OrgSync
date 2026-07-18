@@ -55,7 +55,10 @@ final class RemindersSyncEngine {
             var mappings = loadMappings()
             ensurePersistentIDs(repo: repo)
             let inboundItems = repo.allTodoItems()
-            var byKey = Dictionary(uniqueKeysWithValues: inboundItems.map { (key($0), $0) })
+            // Duplicate keys are possible (a duplicated file or copy-pasted
+            // subtree carries its :ID: along) — keep the first occurrence
+            // rather than trapping.
+            var byKey = Dictionary(inboundItems.map { (key($0), $0) }, uniquingKeysWith: { first, _ in first })
             // Migrate title-path keys written by older releases.
             for item in inboundItems where item.persistentID != nil {
                 let stable = key(item)
@@ -71,13 +74,22 @@ final class RemindersSyncEngine {
             let predicate = store.predicateForReminders(in: [list])
             for reminder in await fetchReminders(predicate) {
                 let reminderID = reminder.calendarItemIdentifier
-                guard let mapKey = mappings.first(where: { $0.value == reminderID })?.key,
-                      let item = byKey[mapKey] else {
+                guard let mapKey = mappings.first(where: { $0.value == reminderID })?.key else {
+                    // Truly unmapped: a reminder created directly in the
+                    // dedicated list becomes a TODO in the local inbox.
                     if !reminder.isCompleted, let outline = createInboxTodo(from: reminder, repo: repo) {
                         if let item = repo.allTodoItems().first(where: { $0.outline == outline }) {
                             mappings[key(item)] = reminderID
                         }
                     }
+                    continue
+                }
+                guard let item = byKey[mapKey] else {
+                    // The mapped org TODO no longer exists (deleted note or
+                    // subtree). Prune the pair instead of treating the reminder
+                    // as new, which would resurrect the deleted TODO every sync.
+                    mappings.removeValue(forKey: mapKey)
+                    try? store.remove(reminder, commit: false)
                     continue
                 }
                 if reminder.isCompleted && !item.isDone {

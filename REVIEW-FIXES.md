@@ -30,11 +30,12 @@ Reload the open document when `repo.revision` changes (unless there are unsaved
 local edits, in which case prefer the in-memory buffer only if the disk content
 still matches what was loaded).
 
-## Step 6 — [ ] Fix: Reminders sync crash + deleted-TODO resurrection
+## Step 6 — [x] Fix: Reminders sync crash + deleted-TODO resurrection
 `RemindersSyncEngine`: replace `Dictionary(uniqueKeysWithValues:)` with
 `Dictionary(_:uniquingKeysWith:)`; when a mapped org TODO no longer exists, prune
 the mapping (and remove the reminder) instead of re-creating the todo in inbox.org.
-Add tests.
+(Both paths live inside the EventKit-coupled engine, so they are covered by the
+existing pure-rule tests plus build verification rather than new unit tests.)
 
 ## Step 7 — [ ] UX: confirm before destructive delete
 FolderView swipe-delete: confirmation dialog before deleting folders and non-empty
