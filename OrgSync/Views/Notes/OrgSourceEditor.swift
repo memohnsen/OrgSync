@@ -176,59 +176,54 @@ struct OrgSourceEditor: UIViewRepresentable {
     }
 }
 
-private final class OrgEditorAccessoryView: UIView {
+private final class OrgEditorAccessoryView: UIToolbar {
     private let scrollView = UIScrollView()
-    private let commandStack = UIStackView()
     private let commandAction: (OrgEditorCommand) -> Void
     private let editAction: () -> Void
     private var displayedCommands: [OrgEditorCommand] = []
+    private var controls: [UIView] = []
 
     init(commands: [OrgEditorCommand],
          commandAction: @escaping (OrgEditorCommand) -> Void,
          editAction: @escaping () -> Void) {
         self.commandAction = commandAction
         self.editAction = editAction
-        super.init(frame: .zero)
+        super.init(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 52))
 
-        backgroundColor = .secondarySystemBackground
-        autoresizingMask = .flexibleWidth
-        commandStack.axis = .horizontal
-        commandStack.alignment = .center
-        commandStack.spacing = 8
+        autoresizingMask = [.flexibleWidth, .flexibleHeight]
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.alwaysBounceHorizontal = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        commandStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
-        scrollView.addSubview(commandStack)
-        NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 58),
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            commandStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 12),
-            commandStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -12),
-            commandStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
-            commandStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -8),
-            commandStack.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -16),
-        ])
         update(commands: commands)
     }
 
     required init?(coder: NSCoder) { nil }
 
     override var intrinsicContentSize: CGSize {
-        CGSize(width: UIView.noIntrinsicMetric, height: 58)
+        CGSize(width: UIView.noIntrinsicMetric, height: 52)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        scrollView.frame = bounds.insetBy(dx: 4, dy: 4)
+
+        var x: CGFloat = 8
+        let height = scrollView.bounds.height
+        for control in controls {
+            let width: CGFloat = control.accessibilityIdentifier == "editor.command.editToolbar" ? 84 :
+                control.accessibilityIdentifier == "editor.command.separator" ? 1 : 44
+            let controlHeight = control.accessibilityIdentifier == "editor.command.separator" ? 26 : height
+            control.frame = CGRect(x: x, y: (height - controlHeight) / 2, width: width, height: controlHeight)
+            x += width + (control.accessibilityIdentifier == "editor.command.separator" ? 10 : 8)
+        }
+        scrollView.contentSize = CGSize(width: x, height: height)
     }
 
     func update(commands: [OrgEditorCommand]) {
         guard commands != displayedCommands else { return }
         displayedCommands = commands
-        commandStack.arrangedSubviews.forEach {
-            commandStack.removeArrangedSubview($0)
-            $0.removeFromSuperview()
-        }
+        controls.forEach { $0.removeFromSuperview() }
+        controls.removeAll()
 
         for command in commands {
             var configuration = UIButton.Configuration.tinted()
@@ -236,22 +231,21 @@ private final class OrgEditorAccessoryView: UIView {
             configuration.buttonSize = .medium
             configuration.cornerStyle = .capsule
             configuration.baseForegroundColor = .label
-            configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
             let button = UIButton(configuration: configuration, primaryAction: UIAction { [weak self] _ in
                 self?.commandAction(command)
             })
             button.accessibilityLabel = command.title
             button.accessibilityHint = "Inserts \(command.title.lowercased()) org syntax."
             button.accessibilityIdentifier = "editor.command.\(command.rawValue)"
-            commandStack.addArrangedSubview(button)
+            scrollView.addSubview(button)
+            controls.append(button)
         }
 
         let separator = UIView()
         separator.backgroundColor = .separator
-        separator.translatesAutoresizingMaskIntoConstraints = false
-        separator.widthAnchor.constraint(equalToConstant: 1).isActive = true
-        separator.heightAnchor.constraint(equalToConstant: 26).isActive = true
-        commandStack.addArrangedSubview(separator)
+        separator.accessibilityIdentifier = "editor.command.separator"
+        scrollView.addSubview(separator)
+        controls.append(separator)
 
         var editConfiguration = UIButton.Configuration.tinted()
         editConfiguration.title = "Edit"
@@ -266,7 +260,9 @@ private final class OrgEditorAccessoryView: UIView {
         editButton.accessibilityLabel = "Edit toolbar"
         editButton.accessibilityHint = "Choose, remove, and reorder editor commands."
         editButton.accessibilityIdentifier = "editor.command.editToolbar"
-        commandStack.addArrangedSubview(editButton)
+        scrollView.addSubview(editButton)
+        controls.append(editButton)
+        setNeedsLayout()
     }
 }
 

@@ -24,6 +24,11 @@ struct NoteDetailView: View {
     @State private var autosaveTask: Task<Void, Never>?
     @State private var loaded = false
     @State private var originalEditText = ""
+    /// The file text this view last loaded from or wrote to disk. Lets a repo
+    /// revision bump (background pull, Reminders sync) be recognized as an
+    /// external change so the stale in-memory document isn't written back
+    /// over it by the next reader mutation.
+    @State private var diskText = ""
     @State private var toolbarCommands = OrgEditorToolbarPreferences.load()
     @State private var isCustomizingToolbar = false
 
@@ -66,6 +71,7 @@ struct NoteDetailView: View {
             }
         }
         .task(id: item.id) { loadFromDisk() }
+        .onChange(of: repo.revision) { _, _ in reloadIfDiskChanged() }
         .onDisappear { flushOnDisappear() }
         .onChange(of: toolbarCommands) { _, commands in
             OrgEditorToolbarPreferences.save(commands)
@@ -79,8 +85,26 @@ struct NoteDetailView: View {
 
     private func loadFromDisk() {
         guard !loaded else { return }
+        diskText = repo.text(of: item)
         document = repo.document(of: item)
         loaded = true
+    }
+
+    /// Adopts changes another writer (pull, Reminders sync) made to this file
+    /// while it is open, so reader mutations and the editor don't serialize a
+    /// stale document over them. An edit buffer with unsaved changes is kept:
+    /// those keystrokes win as an ordinary local change.
+    private func reloadIfDiskChanged() {
+        guard loaded else { return }
+        let current = repo.text(of: item)
+        guard current != diskText else { return }
+        if isEditing {
+            guard editText == originalEditText else { return }
+            editText = current
+            originalEditText = current
+        }
+        diskText = current
+        document = repo.document(of: item)
     }
 
     private func enterEditMode() {
@@ -102,7 +126,9 @@ struct NoteDetailView: View {
         autosaveTask = Task {
             try? await Task.sleep(nanoseconds: 800_000_000)
             if Task.isCancelled { return }
-            await MainActor.run { _ = repo.write(snapshot, to: item) }
+            await MainActor.run {
+                if repo.write(snapshot, to: item) { diskText = snapshot }
+            }
         }
     }
 
@@ -116,6 +142,7 @@ struct NoteDetailView: View {
     private func saveEditedTextAndRecordReviewIfNeeded() {
         let changed = editText != originalEditText
         guard repo.write(editText, to: item) else { return }
+        diskText = editText
         originalEditText = editText
         if changed { AppReviewPrompter.recordEditedNote(path: item.relativePath) }
     }
@@ -155,7 +182,8 @@ struct NoteDetailView: View {
     /// Adopt a mutated document and persist it.
     private func commit(_ updated: OrgDocument) {
         document = updated
-        repo.write(updated.serialize(), to: item)
+        let text = updated.serialize()
+        if repo.write(text, to: item) { diskText = text }
     }
 }
 

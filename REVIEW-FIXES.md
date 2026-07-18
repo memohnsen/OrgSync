@@ -25,7 +25,7 @@ It exists but is unreachable. Link it from the Git command palette and show a
 "Resolve Conflicts" affordance in the Notes browser when `sync.conflictCopies()`
 is non-empty.
 
-## Step 5 — [ ] Fix: NoteDetailView overwrites background pulls with stale content
+## Step 5 — [x] Fix: NoteDetailView overwrites background pulls with stale content
 Reload the open document when `repo.revision` changes (unless there are unsaved
 local edits, in which case prefer the in-memory buffer only if the disk content
 still matches what was loaded).
