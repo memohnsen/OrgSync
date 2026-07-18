@@ -62,8 +62,8 @@ struct ConnectRepositoryView: View {
             }
         }
         .confirmationDialog("Disconnect Repository", isPresented: $showDisconnect, titleVisibility: .visible) {
-            Button("Keep Local Files", role: .none) { sync.disconnect(deleteLocalFiles: false) }
-            Button("Delete Local Files", role: .destructive) { sync.disconnect(deleteLocalFiles: true) }
+            Button("Keep Local Files", role: .none) { Task { await sync.disconnect(deleteLocalFiles: false) } }
+            Button("Delete Local Files", role: .destructive) { Task { await sync.disconnect(deleteLocalFiles: true) } }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Stop syncing with GitHub. You can keep the downloaded notes on this device or remove them.")

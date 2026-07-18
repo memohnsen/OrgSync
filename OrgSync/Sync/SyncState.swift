@@ -14,7 +14,7 @@
 import Foundation
 
 /// On-disk sync baseline. Codable so it round-trips to `state.json`.
-struct SyncRepoState: Codable, Equatable {
+nonisolated struct SyncRepoState: Codable, Equatable, Sendable {
     var owner: String
     var repo: String
     var branch: String
@@ -46,7 +46,7 @@ struct SyncRepoState: Codable, Equatable {
 
 /// Result of a status check: local working-tree changes plus whether the local
 /// baseline differs from the remote branch head.
-struct SyncStatus: Equatable {
+nonisolated struct SyncStatus: Equatable, Sendable {
     var modified: [String] = []
     var added: [String] = []
     var deleted: [String] = []

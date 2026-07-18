@@ -17,7 +17,7 @@ import Foundation
 
 // MARK: - Errors
 
-enum GitHubError: LocalizedError, Equatable {
+enum GitHubError: LocalizedError, Equatable, Sendable {
     case notConfigured
     case invalidRepositoryURL(String)
     case authenticationFailed
@@ -59,7 +59,7 @@ enum GitHubError: LocalizedError, Equatable {
 // MARK: - Response models
 
 extension GitHubClient {
-    struct RepoInfo: Decodable {
+    struct RepoInfo: Decodable, Sendable {
         let name: String
         let fullName: String
         let description: String?
@@ -75,53 +75,53 @@ extension GitHubClient {
         }
     }
 
-    struct BranchRef: Decodable { let name: String }
+    struct BranchRef: Decodable, Sendable { let name: String }
 
-    struct GitObject: Decodable { let sha: String; let type: String? }
-    struct Ref: Decodable { let ref: String; let object: GitObject }
+    struct GitObject: Decodable, Sendable { let sha: String; let type: String? }
+    struct Ref: Decodable, Sendable { let ref: String; let object: GitObject }
 
-    struct TreePointer: Decodable { let sha: String }
-    struct Commit: Decodable {
+    struct TreePointer: Decodable, Sendable { let sha: String }
+    struct Commit: Decodable, Sendable {
         let sha: String
         let tree: TreePointer
         let message: String
     }
 
-    struct TreeEntry: Decodable {
+    struct TreeEntry: Decodable, Sendable {
         let path: String
         let mode: String
         let type: String
         let sha: String
         let size: Int?
     }
-    struct Tree: Decodable {
+    struct Tree: Decodable, Sendable {
         let sha: String
         let tree: [TreeEntry]
         let truncated: Bool
     }
 
-    struct Blob: Decodable {
+    struct Blob: Decodable, Sendable {
         let sha: String
         let content: String
         let encoding: String
     }
 
-    struct CreatedObject: Decodable { let sha: String }
+    struct CreatedObject: Decodable, Sendable { let sha: String }
 
-    struct CommitListItem: Decodable {
+    struct CommitListItem: Decodable, Sendable {
         let sha: String
         let commit: Detail
-        struct Detail: Decodable {
+        struct Detail: Decodable, Sendable {
             let message: String
             let author: Author
-            struct Author: Decodable { let name: String; let date: Date }
+            struct Author: Decodable, Sendable { let name: String; let date: Date }
         }
     }
 }
 
 /// One entry in a tree-creation request. `sha == nil` deletes the path (only
 /// meaningful when `base_tree` is supplied).
-struct TreeEntryInput {
+struct TreeEntryInput: Sendable {
     var path: String
     var mode: String = "100644"
     var type: String = "blob"

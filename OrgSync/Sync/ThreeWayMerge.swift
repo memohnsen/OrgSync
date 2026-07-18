@@ -15,7 +15,7 @@
 
 import Foundation
 
-enum ThreeWayMerge {
+nonisolated enum ThreeWayMerge {
     struct Result {
         var lines: [String]
         var hasConflict: Bool

@@ -12,7 +12,7 @@
 import Foundation
 import CryptoKit
 
-enum GitBlob {
+nonisolated enum GitBlob {
     /// The git blob SHA-1 (40-char lowercase hex) for the given raw bytes.
     static func sha1(for data: Data) -> String {
         var hasher = Insecure.SHA1()
