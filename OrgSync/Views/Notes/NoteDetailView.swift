@@ -23,6 +23,7 @@ struct NoteDetailView: View {
     @State private var collapsed: Set<[Int]> = []
     @State private var autosaveTask: Task<Void, Never>?
     @State private var loaded = false
+    @State private var originalEditText = ""
 
     var body: some View {
         Group {
@@ -72,13 +73,14 @@ struct NoteDetailView: View {
 
     private func enterEditMode() {
         editText = document.serialize()
+        originalEditText = editText
         withAnimation { isEditing = true }
     }
 
     private func exitEditMode() {
         autosaveTask?.cancel()
         document = OrgParser.parse(editText)
-        repo.write(editText, to: item)
+        saveEditedTextAndRecordReviewIfNeeded()
         withAnimation { isEditing = false }
     }
 
@@ -95,8 +97,15 @@ struct NoteDetailView: View {
     private func flushOnDisappear() {
         autosaveTask?.cancel()
         if isEditing {
-            repo.write(editText, to: item)
+            saveEditedTextAndRecordReviewIfNeeded()
         }
+    }
+
+    private func saveEditedTextAndRecordReviewIfNeeded() {
+        let changed = editText != originalEditText
+        guard repo.write(editText, to: item) else { return }
+        originalEditText = editText
+        if changed { AppReviewPrompter.recordEditedNote(path: item.relativePath) }
     }
 
     // MARK: - Reader mutations

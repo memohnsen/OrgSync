@@ -114,6 +114,7 @@ final class SyncEngine {
             apply(try await worker.connect(branch: branch, owner: client.owner, repo: client.repo, client: client))
             repo.refresh()
             phase = .idle
+            AppReviewPrompter.requestAfterRepositoryConnection()
         } catch {
             phase = .idle
             throw error
