@@ -33,7 +33,7 @@ system colors, standard navigation).
   toggles for auto-sync and Reminders sync.
 - Sample org files seeded on first launch so the app is usable before sync is set up.
 
-### Phase 2 — OrgKit: parser & document model — [ ] PENDING
+### Phase 2 — OrgKit: parser & document model — [x] COMPLETE
 - Full org syntax data model + parser: headlines (stars, TODO/DONE + custom keywords,
   priority `[#A]`, tags `:tag:`), SCHEDULED/DEADLINE/plain/inactive timestamps with
   repeaters, PROPERTIES drawers, plain/ordered/checkbox lists `[ ]`/`[X]`/`[-]`,
