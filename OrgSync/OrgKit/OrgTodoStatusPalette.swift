@@ -43,4 +43,10 @@ public enum OrgTodoStatusPalette {
         }
         return customHex[index]
     }
+
+    /// `DONE` is the only visual state that strikes out a title. Other org
+    /// completion keywords can still be meaningful workflow states.
+    public static func shouldStrikeThrough(_ keyword: String?) -> Bool {
+        keyword?.caseInsensitiveCompare("DONE") == .orderedSame
+    }
 }

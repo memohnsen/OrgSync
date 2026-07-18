@@ -151,7 +151,7 @@ struct OrgHeadlineView: View {
 
     private var titleAttributed: AttributedString {
         var attr = OrgInlineRenderer.attributed(headline.titleInlines)
-        if headline.isDone(config: config) {
+        if OrgTodoStatusPalette.shouldStrikeThrough(headline.todoKeyword) {
             attr.strikethroughStyle = Text.LineStyle.single
             attr.foregroundColor = .secondary
         }

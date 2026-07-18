@@ -200,6 +200,14 @@ import Foundation
             == Array(OrgTodoStatusPalette.customHex.prefix(customKeywords.count)))
     }
 
+    @Test func onlyDoneStatusStrikesThroughTitles() {
+        #expect(OrgTodoStatusPalette.shouldStrikeThrough("DONE"))
+        #expect(OrgTodoStatusPalette.shouldStrikeThrough("done"))
+        #expect(!OrgTodoStatusPalette.shouldStrikeThrough("CANCELLED"))
+        #expect(!OrgTodoStatusPalette.shouldStrikeThrough("WAITING"))
+        #expect(!OrgTodoStatusPalette.shouldStrikeThrough(nil))
+    }
+
     @Test func parsesCustomSequenceWithSeparator() {
         let seq = OrgTodoConfig.parseSequence("TODO NEXT | DONE CANCELLED")
         #expect(seq.notDone == ["TODO", "NEXT"])
