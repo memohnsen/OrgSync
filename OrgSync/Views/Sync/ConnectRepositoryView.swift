@@ -108,18 +108,8 @@ struct ConnectRepositoryView: View {
             .disabled(isWorking || settings.repoURL.isEmpty || settings.token.isEmpty)
             .accessibilityIdentifier("settings.validateRepository")
             .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
-        } header: {
-            Text("GitHub")
-        } footer: {
-            if settings.repoURL.isEmpty || settings.token.isEmpty {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
-            } else {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
-            }
-        }
 
-        if let validated {
-            Section {
+            if let validated {
                 LabeledContent("Repository", value: validated.fullName)
                 if let description = validated.description, !description.isEmpty {
                     LabeledContent("About", value: description)
@@ -130,11 +120,6 @@ struct ConnectRepositoryView: View {
                         ForEach(branches, id: \.self) { Text($0).tag($0) }
                     }
                 }
-            } header: {
-                Text("Repository Found")
-            }
-
-            Section {
                 Button {
                     Task { await connect() }
                 } label: {
@@ -150,8 +135,14 @@ struct ConnectRepositoryView: View {
                 .disabled(isWorking || selectedBranch.isEmpty)
                 .accessibilityIdentifier("settings.connectRepository")
                 .accessibilityHint("Downloads the selected branch to this device and enables sync.")
-            } footer: {
-                Text("Downloads the branch into this device. Existing sample notes are backed up to a pre-sync-backup folder first.")
+            }
+        } header: {
+            Text("GitHub")
+        } footer: {
+            if settings.repoURL.isEmpty || settings.token.isEmpty {
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
+            } else {
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
             }
         }
 
