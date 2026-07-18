@@ -58,10 +58,13 @@ struct SettingsView: View {
 
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)
+                        .accessibilityIdentifier("settings.autoSync")
                     Toggle("Pull on Open", isOn: $settings.pullOnOpen)
                         .disabled(!settings.autoSync)
+                        .accessibilityIdentifier("settings.pullOnOpen")
                     Toggle("Commit & Push on Close", isOn: $settings.pushOnClose)
                         .disabled(!settings.autoSync)
+                        .accessibilityIdentifier("settings.pushOnClose")
                 } header: {
                     Text("Sync")
                 } footer: {

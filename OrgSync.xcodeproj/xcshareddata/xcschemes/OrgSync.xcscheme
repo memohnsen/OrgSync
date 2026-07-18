@@ -41,7 +41,7 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped="YES">
+            skipped="NO">
             <BuildableReference
                BuildableIdentifier="primary"
                BlueprintIdentifier="714B5441300BB52600C2F7A9"

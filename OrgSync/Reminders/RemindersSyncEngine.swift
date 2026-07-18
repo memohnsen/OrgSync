@@ -82,15 +82,13 @@ final class RemindersSyncEngine {
                 }
                 if reminder.isCompleted && !item.isDone {
                     mutate(item, repo: repo) { headline, document in
-                        let done = document.todoConfig.sequences.first(where: { $0.all.contains(item.keyword) })?.done.first
-                        headline.setTodoKeyword(done, config: document.todoConfig)
+                        ReminderSyncRules.complete(&headline, item: item, document: document)
                     }
                 }
                 if let due = reminder.dueDateComponents, let date = Calendar.current.date(from: due),
-                   !Calendar.current.isDate(date, inSameDayAs: relevantDate(item) ?? date) {
+                   ReminderSyncRules.shouldApplyIncomingDueDate(date, to: item) {
                     mutate(item, repo: repo) { headline, _ in
-                        if headline.planning.deadline != nil && headline.planning.scheduled == nil { headline.setDeadline(date: date) }
-                        else { headline.setScheduled(date: date) }
+                        ReminderSyncRules.applyIncomingDueDate(date, to: &headline)
                     }
                 }
             }
@@ -105,8 +103,8 @@ final class RemindersSyncEngine {
                 reminder.calendar = list
                 reminder.title = item.title
                 reminder.notes = noteMetadata(item.outline)
-                reminder.priority = priority(item.priority)
-                reminder.dueDateComponents = dueComponents(item)
+                reminder.priority = ReminderSyncRules.priority(for: item.priority)
+                reminder.dueDateComponents = ReminderSyncRules.dueDateComponents(for: item)
                 reminder.isCompleted = item.isDone
                 try store.save(reminder, commit: false)
                 mappings[mapKey] = reminder.calendarItemIdentifier
@@ -167,7 +165,7 @@ final class RemindersSyncEngine {
         if !text.hasSuffix("\n") { text += "\n" }
         text += "\n* TODO \(title)\n"
         if let components = reminder.dueDateComponents, let date = Calendar.current.date(from: components) {
-            text += "SCHEDULED: \(OrgTimestamp(date: date, isActive: true, includeTime: false).serialize())\n"
+            text += "SCHEDULED: \(ReminderSyncRules.inboxScheduledTimestamp(for: date).serialize())\n"
         }
         guard repo.write(text, to: file) else { return nil }
         return repo.document(of: file).todoItems(filePath: file.relativePath)
@@ -181,7 +179,4 @@ final class RemindersSyncEngine {
     private func loadMappings() -> [String: String] { defaults.dictionary(forKey: mappingKey) as? [String: String] ?? [:] }
     private func saveMappings(_ value: [String: String]) { defaults.set(value, forKey: mappingKey) }
     private func noteMetadata(_ outline: OrgOutline) -> String { "OrgSync\nfile: \(outline.filePath)\nheading: \(outline.headingPath.joined(separator: " / "))" }
-    private func relevantDate(_ item: OrgTodoItem) -> Date? { [item.deadline?.date(), item.scheduled?.date()].compactMap { $0 }.min() }
-    private func dueComponents(_ item: OrgTodoItem) -> DateComponents? { relevantDate(item).map { Calendar.current.dateComponents([.year, .month, .day], from: $0) } }
-    private func priority(_ p: Character?) -> Int { p == "A" ? 1 : p == "B" ? 5 : p == "C" ? 9 : 0 }
 }

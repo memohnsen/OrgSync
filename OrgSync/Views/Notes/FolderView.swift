@@ -218,6 +218,7 @@ struct FolderView: View {
                     .foregroundStyle(item.isDirectory ? Color.accentColor : Color.secondary)
             }
         }
+        .accessibilityIdentifier("note.row.\(item.relativePath)")
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 delete(item)
