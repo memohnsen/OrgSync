@@ -81,7 +81,7 @@ struct ConnectRepositoryView: View {
                 .autocorrectionDisabled()
                 .accessibilityIdentifier("settings.personalAccessToken")
                 .accessibilityLabel("Personal Access Token")
-                .accessibilityHint("Fine-grained GitHub Personal Access Token. Stored securely in the Keychain.")
+                .accessibilityHint("Fine-grained GitHub Personal Access Token with Contents permission set to Read and write for this repository.")
 
             Button {
                 Task { await connect() }
@@ -102,11 +102,7 @@ struct ConnectRepositoryView: View {
         } header: {
             Text("GitHub")
         } footer: {
-            if settings.repoURL.isEmpty || settings.token.isEmpty {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
-            } else {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
-            }
+            Text("Fine-grained PAT required: Contents permission set to Read and write for this repository.")
         }
 
         if let errorMessage {
