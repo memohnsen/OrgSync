@@ -13,8 +13,6 @@ struct ConnectRepositoryView: View {
     @Environment(SyncEngine.self) private var sync
     @Environment(SettingsStore.self) private var settings
 
-    @State private var validated: GitHubClient.RepoInfo?
-    @State private var selectedBranch = ""
     @State private var isWorking = false
     @State private var workingLabel = ""
     @State private var errorMessage: String?
@@ -84,34 +82,22 @@ struct ConnectRepositoryView: View {
                 .accessibilityIdentifier("settings.personalAccessToken")
                 .accessibilityLabel("Personal Access Token")
                 .accessibilityHint("Fine-grained GitHub Personal Access Token. Stored securely in the Keychain.")
-            Button {
-                Task { await validate() }
-            } label: {
-                if isWorking && validated == nil {
-                    HStack { ProgressView(); Text("Validating…") }
-                } else {
-                    Text("Validate Repository")
-                }
-            }
-            .disabled(isWorking || settings.repoURL.isEmpty || settings.token.isEmpty)
-            .accessibilityIdentifier("settings.validateRepository")
-            .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
 
             Button {
                 Task { await connect() }
             } label: {
-                if isWorking && validated != nil {
+                if isWorking {
                     HStack {
                         ProgressView()
-                        Text(workingLabel.isEmpty ? "Connecting…" : workingLabel)
+                        Text(workingLabel)
                     }
                 } else {
                     Text("Connect & Clone")
                 }
             }
-            .disabled(isWorking || validated == nil || selectedBranch.isEmpty)
+            .disabled(isWorking || settings.repoURL.isEmpty || settings.token.isEmpty)
             .accessibilityIdentifier("settings.connectRepository")
-            .accessibilityHint("Downloads the chosen branch to this device after the repository is validated.")
+            .accessibilityHint("Validates the repository, then downloads its selected branch to this device.")
 
         } header: {
             Text("GitHub")
@@ -133,29 +119,17 @@ struct ConnectRepositoryView: View {
 
     // MARK: - Actions
 
-    private func validate() async {
-        isWorking = true
-        errorMessage = nil
-        validated = nil
-        defer { isWorking = false }
-        do {
-            let info = try await sync.validateRepository()
-            validated = info
-            let preferred = settings.branch.isEmpty ? info.defaultBranch : settings.branch
-            selectedBranch = preferred
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
     private func connect() async {
         isWorking = true
         errorMessage = nil
-        workingLabel = "Connecting…"
+        workingLabel = "Validating…"
         defer { isWorking = false }
         do {
-            settings.branch = selectedBranch
-            try await sync.connect(branch: selectedBranch)
+            let info = try await sync.validateRepository()
+            let branch = settings.branch.isEmpty ? info.defaultBranch : settings.branch
+            workingLabel = "Connecting…"
+            settings.branch = branch
+            try await sync.connect(branch: branch)
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
