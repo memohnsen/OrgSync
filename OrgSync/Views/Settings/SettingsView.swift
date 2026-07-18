@@ -12,6 +12,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(SyncEngine.self) private var sync
 
     var body: some View {
         @Bindable var settings = settings
@@ -23,9 +24,11 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
+                        .disabled(sync.isConnected)
                     TextField("Branch", text: $settings.branch)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .disabled(sync.isConnected)
                     SecureField("Personal Access Token", text: $settings.token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -35,14 +38,18 @@ struct SettingsView: View {
                     Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
                 }
 
+                ConnectRepositoryView()
+
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)
                     Toggle("Pull on Open", isOn: $settings.pullOnOpen)
+                        .disabled(!settings.autoSync)
                     Toggle("Commit & Push on Close", isOn: $settings.pushOnClose)
+                        .disabled(!settings.autoSync)
                 } header: {
                     Text("Sync")
                 } footer: {
-                    Text("Sync is not active yet. These preferences are saved for when GitHub sync is enabled.")
+                    Text("Auto-Sync pulls when the app opens and commits & pushes when it closes, each toggleable above. Requires a connected repository.")
                 }
 
                 Section {
@@ -60,6 +67,9 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
-        .environment(SettingsStore())
+    let repo = RepoStore()
+    let settings = SettingsStore()
+    return SettingsView()
+        .environment(settings)
+        .environment(SyncEngine(repo: repo, settings: settings))
 }

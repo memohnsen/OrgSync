@@ -200,6 +200,12 @@ final class RepoStore {
         return true
     }
 
+    /// Forces observing views to re-list the directory. Called after a sync
+    /// writes files directly to disk (bypassing the mutation helpers above).
+    func refresh() {
+        didMutateRepo()
+    }
+
     // MARK: - Helpers
 
     private func didMutateRepo() {

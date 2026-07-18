@@ -20,8 +20,10 @@ struct FolderView: View {
 
     @Environment(RepoStore.self) private var repo
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(SyncEngine.self) private var sync: SyncEngine?
 
     @State private var searchText = ""
+    @State private var syncErrorShown = false
 
     // Create dialogs
     @State private var showNewNote = false
@@ -51,6 +53,10 @@ struct FolderView: View {
                     } else {
                         ForEach(items) { row($0) }
                     }
+                } footer: {
+                    if isRoot, let sync, sync.isConnected {
+                        lastSyncedCaption(sync)
+                    }
                 }
             } else {
                 let results = repo.search(searchText, under: directory)
@@ -64,7 +70,13 @@ struct FolderView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
         .searchable(text: $searchText, prompt: "Search notes")
+        .refreshableIfRoot(isRoot: isRoot, sync: sync)
         .toolbar {
+            if isRoot, let sync, sync.isConnected {
+                ToolbarItem(placement: .topBarLeading) {
+                    syncMenu(sync)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button {
@@ -84,6 +96,14 @@ struct FolderView: View {
                 }
             }
         }
+        .onChange(of: syncError(sync)) { _, newValue in
+            syncErrorShown = newValue != nil
+        }
+        .alert("Sync Failed", isPresented: $syncErrorShown) {
+            Button("OK", role: .cancel) { sync?.lastError = nil }
+        } message: {
+            Text(syncError(sync) ?? "")
+        }
         .alert("New Note", isPresented: $showNewNote) {
             TextField("Name", text: $newName)
                 .textInputAutocapitalization(.words)
@@ -101,6 +121,60 @@ struct FolderView: View {
             Button("Cancel", role: .cancel) { renameTarget = nil }
             Button("Rename") { commitRename() }
         }
+    }
+
+    // MARK: - Sync UI
+
+    @ViewBuilder
+    private func syncMenu(_ sync: SyncEngine) -> some View {
+        Menu {
+            Button {
+                Task { await sync.syncNow(); repo.refresh() }
+            } label: {
+                Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .disabled(sync.phase.isBusy)
+            Button {
+                Task { await sync.pullNow(); repo.refresh() }
+            } label: {
+                Label("Pull", systemImage: "arrow.down.circle")
+            }
+            .disabled(sync.phase.isBusy)
+            Button {
+                Task { await sync.pushNow(); repo.refresh() }
+            } label: {
+                Label("Commit & Push", systemImage: "arrow.up.circle")
+            }
+            .disabled(sync.phase.isBusy)
+            Divider()
+            NavigationLink {
+                CommitLogView()
+            } label: {
+                Label("Commit Log", systemImage: "clock.arrow.circlepath")
+            }
+        } label: {
+            if sync.phase.isBusy {
+                ProgressView()
+            } else {
+                Image(systemName: "arrow.triangle.2.circlepath")
+            }
+        }
+        .accessibilityLabel("Sync")
+    }
+
+    @ViewBuilder
+    private func lastSyncedCaption(_ sync: SyncEngine) -> some View {
+        if case let .syncing(label) = sync.phase {
+            Text(label)
+        } else if let date = sync.lastSyncDate {
+            Text("Last synced \(date.formatted(.relative(presentation: .named)))")
+        } else {
+            Text("Not synced yet")
+        }
+    }
+
+    private func syncError(_ sync: SyncEngine?) -> String? {
+        sync?.lastError
     }
 
     // MARK: - Rows
@@ -187,10 +261,26 @@ struct FolderView: View {
     }
 }
 
+private extension View {
+    /// Adds pull-to-refresh that runs a full sync, but only at the repo root and
+    /// only when a repository is connected.
+    @ViewBuilder
+    func refreshableIfRoot(isRoot: Bool, sync: SyncEngine?) -> some View {
+        if isRoot, let sync, sync.isConnected {
+            self.refreshable { await sync.syncNow() }
+        } else {
+            self
+        }
+    }
+}
+
 #Preview {
-    NavigationStack {
-        FolderView(directory: RepoStore().repoURL, title: "Notes", isRoot: true)
-            .environment(RepoStore())
+    let repo = RepoStore()
+    let settings = SettingsStore()
+    return NavigationStack {
+        FolderView(directory: repo.repoURL, title: "Notes", isRoot: true)
+            .environment(repo)
             .environment(FavoritesStore())
+            .environment(SyncEngine(repo: repo, settings: settings))
     }
 }
