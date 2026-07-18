@@ -52,10 +52,13 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    TextField("TODO keywords", text: $settings.todoKeywords)
-                        .textInputAutocapitalization(.characters)
-                        .accessibilityIdentifier("settings.todoKeywords")
-                        .accessibilityLabel("TODO keywords")
+                    NavigationLink {
+                        TodoStatesSettingsView(preference: $settings.todoKeywords)
+                    } label: {
+                        LabeledContent("TODO States", value: "\(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).count)")
+                    }
+                    .accessibilityIdentifier("settings.todoStates")
+                    .accessibilityHint("Add or delete active and completed TODO states.")
                     Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
                         .accessibilityIdentifier("settings.agendaDays")
                         .accessibilityHint("Sets how many days appear in the Upcoming agenda.")
@@ -66,7 +69,7 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.appearance")
                 } header: { Text("Preferences") } footer: {
-                    Text("Default: “TODO PROGRESS WAITING | DONE”. Add your own statuses with org syntax; each gets a color automatically.")
+                    Text("Default: TODO, PROGRESS, WAITING, and DONE. Each state has its own color.")
                 }
 
                 ConnectRepositoryView()

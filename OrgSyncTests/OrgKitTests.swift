@@ -208,6 +208,20 @@ import Foundation
         #expect(!OrgTodoStatusPalette.shouldStrikeThrough(nil))
     }
 
+    @Test func statusEditorAddsDeletesAndSerializesSafely() {
+        var statuses = OrgTodoStatusConfiguration.statuses(from: OrgTodoConfig.defaultPreference)
+        statuses = OrgTodoStatusConfiguration.adding("blocked", isDone: false, to: statuses)!
+        #expect(statuses.map(\.name) == ["TODO", "PROGRESS", "WAITING", "DONE", "BLOCKED"])
+        #expect(OrgTodoStatusConfiguration.preference(from: statuses) == "TODO PROGRESS WAITING BLOCKED | DONE")
+        #expect(OrgTodoStatusConfiguration.adding("two words", isDone: false, to: statuses) == nil)
+        #expect(OrgTodoStatusConfiguration.adding("todo", isDone: false, to: statuses) == nil)
+
+        let withoutProgress = OrgTodoStatusConfiguration.removing(statuses[1], from: statuses)
+        #expect(!withoutProgress.contains { $0.name == "PROGRESS" })
+        let onlyOpen = [OrgTodoStatus(name: "TODO", isDone: false), OrgTodoStatus(name: "DONE", isDone: true)]
+        #expect(OrgTodoStatusConfiguration.removing(onlyOpen[0], from: onlyOpen) == onlyOpen)
+    }
+
     @Test func parsesCustomSequenceWithSeparator() {
         let seq = OrgTodoConfig.parseSequence("TODO NEXT | DONE CANCELLED")
         #expect(seq.notDone == ["TODO", "NEXT"])
