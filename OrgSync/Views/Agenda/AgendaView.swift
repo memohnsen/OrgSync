@@ -33,6 +33,9 @@ struct AgendaView: View {
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .accessibilityIdentifier("agenda.scope")
+                .accessibilityLabel("Agenda View")
+                .accessibilityHint("Choose today, upcoming, or all open tasks.")
 
                 if visibleSections.isEmpty {
                     ContentUnavailableView(emptyTitle, systemImage: "calendar",
@@ -49,12 +52,14 @@ struct AgendaView: View {
                 }
             }
             .navigationTitle("Agenda")
+            .accessibilityIdentifier("agenda.screen")
             .refreshable { reload() }
             .task(id: repo.revision) { reload() }
             .sheet(item: $rescheduling) { item in
                 NavigationStack {
                     Form {
                         DatePicker("Date", selection: $rescheduleDate, displayedComponents: .date)
+                            .accessibilityIdentifier("agenda.rescheduleDate")
                     }
                     .navigationTitle("Reschedule")
                     .navigationBarTitleDisplayMode(.inline)
@@ -124,6 +129,7 @@ struct AgendaView: View {
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel(for: item))
         .accessibilityHint("Swipe right to complete or left to reschedule. Double tap to open note.")
     }
 
@@ -245,6 +251,15 @@ struct AgendaView: View {
     private func dateColor(for item: OrgTodoItem) -> Color {
         guard let date = relevantDate(item) else { return .secondary }
         return date < Calendar.current.startOfDay(for: .now) ? .red : .secondary
+    }
+
+    private func accessibilityLabel(for item: OrgTodoItem) -> String {
+        var parts = [item.title]
+        if let priority = item.priority { parts.append("priority \(priority)") }
+        if let dateLabel = dateLabel(for: item) { parts.append(dateLabel) }
+        if !item.tags.isEmpty { parts.append("tags \(item.tags.joined(separator: ", "))") }
+        parts.append("in \(item.outline.filePath)")
+        return parts.joined(separator: ", ")
     }
 }
 

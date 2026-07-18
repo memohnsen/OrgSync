@@ -15,6 +15,7 @@ struct SplashView: View {
 
             BlueprintGrid()
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
 
             VStack(spacing: 18) {
                 Image("OrgSyncMark")
@@ -23,10 +24,12 @@ struct SplashView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
                     .frame(width: 176, height: 176)
                     .shadow(color: .black.opacity(0.24), radius: 18, y: 10)
+                    .accessibilityHidden(true)
 
                 VStack(spacing: 5) {
                     Text("OrgSync")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .accessibilityAddTraits(.isHeader)
                     Text("Your notes, in sync.")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white.opacity(0.72))
@@ -34,7 +37,6 @@ struct SplashView: View {
                 .foregroundStyle(.white)
             }
         }
-        .accessibilityIdentifier("splashScreen")
     }
 }
 

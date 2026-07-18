@@ -44,12 +44,17 @@ struct NoteDetailView: View {
                     Image(systemName: favorites.isFavorite(item) ? "star.fill" : "star")
                 }
                 .accessibilityLabel(favorites.isFavorite(item) ? "Unfavorite" : "Favorite")
+                .accessibilityHint("Adds or removes this note from Favorites.")
+                .accessibilityIdentifier("note.favorite")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if isEditing {
                     Button("Done") { exitEditMode() }
+                        .accessibilityIdentifier("note.doneEditing")
                 } else {
                     Button("Edit") { enterEditMode() }
+                        .accessibilityHint("Edit this note as org source text.")
+                        .accessibilityIdentifier("note.edit")
                 }
             }
         }

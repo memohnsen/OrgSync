@@ -45,6 +45,8 @@ final class OrgSyncUITests: XCTestCase {
     func testSyncPreferenceControlsAreAvailable() throws {
         app.tabBars.buttons["Settings"].tap()
         app.swipeUp()
-        XCTAssertGreaterThanOrEqual(app.switches.count, 3)
+        XCTAssertTrue(app.switches["settings.autoSync"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.switches["settings.pullOnOpen"].exists)
+        XCTAssertTrue(app.switches["settings.pushOnClose"].exists)
     }
 }

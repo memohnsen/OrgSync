@@ -46,6 +46,8 @@ struct CommitLogView: View {
                         .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 2)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(commit.title), by \(commit.authorName), \(commit.date.formatted(.relative(presentation: .named))), commit \(commit.shortSHA)")
                 }
             }
         }

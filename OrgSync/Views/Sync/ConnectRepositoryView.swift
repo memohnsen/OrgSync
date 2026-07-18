@@ -60,6 +60,7 @@ struct ConnectRepositoryView: View {
             } label: {
                 Text("Disconnect")
             }
+            .accessibilityHint("Stops syncing this repository. You can choose whether to keep local files.")
         }
         .confirmationDialog("Disconnect Repository", isPresented: $showDisconnect, titleVisibility: .visible) {
             Button("Keep Local Files", role: .none) { Task { await sync.disconnect(deleteLocalFiles: false) } }
@@ -85,6 +86,8 @@ struct ConnectRepositoryView: View {
                 }
             }
             .disabled(isWorking || settings.repoURL.isEmpty || settings.token.isEmpty)
+            .accessibilityIdentifier("settings.validateRepository")
+            .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
         } footer: {
             if settings.repoURL.isEmpty || settings.token.isEmpty {
                 Text("Enter a repository URL and Personal Access Token above to continue.")
@@ -121,6 +124,8 @@ struct ConnectRepositoryView: View {
                     }
                 }
                 .disabled(isWorking || selectedBranch.isEmpty)
+                .accessibilityIdentifier("settings.connectRepository")
+                .accessibilityHint("Downloads the selected branch to this device and enables sync.")
             } footer: {
                 Text("Downloads the branch into this device. Existing sample notes are backed up to a pre-sync-backup folder first.")
             }

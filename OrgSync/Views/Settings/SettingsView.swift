@@ -28,13 +28,22 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .disabled(sync.isConnected)
+                        .accessibilityIdentifier("settings.repositoryURL")
+                        .accessibilityLabel("Repository URL")
+                        .accessibilityHint("GitHub HTTPS repository URL. Disabled while connected.")
                     TextField("Branch", text: $settings.branch)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .disabled(sync.isConnected)
+                        .accessibilityIdentifier("settings.branch")
+                        .accessibilityLabel("Branch")
+                        .accessibilityHint("Git branch to sync. Disabled while connected.")
                     SecureField("Personal Access Token", text: $settings.token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .accessibilityIdentifier("settings.personalAccessToken")
+                        .accessibilityLabel("Personal Access Token")
+                        .accessibilityHint("Fine-grained GitHub Personal Access Token. Stored securely in the Keychain.")
                 } header: {
                     Text("GitHub")
                 } footer: {
@@ -44,12 +53,17 @@ struct SettingsView: View {
                 Section {
                     TextField("TODO keywords", text: $settings.todoKeywords)
                         .textInputAutocapitalization(.characters)
+                        .accessibilityIdentifier("settings.todoKeywords")
+                        .accessibilityLabel("TODO keywords")
                     Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
+                        .accessibilityIdentifier("settings.agendaDays")
+                        .accessibilityHint("Sets how many days appear in the Upcoming agenda.")
                     Picker("Appearance", selection: $settings.appearance) {
                         Text("System").tag("system")
                         Text("Light").tag("light")
                         Text("Dark").tag("dark")
                     }
+                    .accessibilityIdentifier("settings.appearance")
                 } header: { Text("Preferences") } footer: {
                     Text("TODO keywords use org syntax, for example “TODO NEXT | DONE CANCELLED”.")
                 }
@@ -59,12 +73,15 @@ struct SettingsView: View {
                 Section {
                     Toggle("Auto-Sync", isOn: $settings.autoSync)
                         .accessibilityIdentifier("settings.autoSync")
+                        .accessibilityHint("Enables automatic pull on open and commit and push on close when their individual settings are on.")
                     Toggle("Pull on Open", isOn: $settings.pullOnOpen)
                         .disabled(!settings.autoSync)
                         .accessibilityIdentifier("settings.pullOnOpen")
+                        .accessibilityHint("Pulls remote changes when the app becomes active.")
                     Toggle("Commit & Push on Close", isOn: $settings.pushOnClose)
                         .disabled(!settings.autoSync)
                         .accessibilityIdentifier("settings.pushOnClose")
+                        .accessibilityHint("Commits and pushes local changes when the app enters the background.")
                 } header: {
                     Text("Sync")
                 } footer: {
@@ -91,6 +108,8 @@ struct SettingsView: View {
                 Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                         .disabled(reminders.access != .granted)
+                        .accessibilityIdentifier("settings.remindersSync")
+                        .accessibilityHint("Synchronizes scheduled and deadline TODOs with the selected Reminders list.")
                     if reminders.access == .granted {
                         Picker("Reminders List", selection: $settings.remindersListID) {
                             Text("OrgSync (managed)").tag("")
@@ -98,9 +117,12 @@ struct SettingsView: View {
                                 Text(list.title).tag(list.calendarIdentifier)
                             }
                         }
+                        .accessibilityIdentifier("settings.remindersList")
                         Button("Sync Reminders Now") { Task { await reminders.sync(repo: repo) } }
+                            .accessibilityIdentifier("settings.syncRemindersNow")
                     } else {
                         Button("Allow Reminders Access") { Task { await reminders.requestAccess() } }
+                            .accessibilityHint("Opens the system permission prompt for Reminders.")
                     }
                 } header: {
                     Text("Reminders")
@@ -115,6 +137,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .accessibilityIdentifier("settings.screen")
         }
     }
 }

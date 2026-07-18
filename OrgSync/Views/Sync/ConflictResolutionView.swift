@@ -21,8 +21,12 @@ struct ConflictResolutionView: View {
                             HStack {
                                 Button("Keep Local") { sync.resolveConflictKeepingLocal(conflict); reload() }
                                     .buttonStyle(.bordered)
+                                    .accessibilityLabel("Keep local version of \(conflict.fileName)")
+                                    .accessibilityHint("Discards the remote conflicting copy for this file.")
                                 Button("Use Remote", role: .destructive) { sync.resolveConflictUsingRemote(conflict); reload() }
                                     .buttonStyle(.bordered)
+                                    .accessibilityLabel("Use remote version of \(conflict.fileName)")
+                                    .accessibilityHint("Replaces the local file with the remote conflicting copy.")
                             }
                         }.padding(.vertical, 3)
                     }

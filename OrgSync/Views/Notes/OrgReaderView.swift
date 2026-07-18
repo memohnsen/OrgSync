@@ -69,8 +69,6 @@ struct OrgHeadlineView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             header
-                .contentShape(Rectangle())
-                .onTapGesture { toggleFold() }
                 .contextMenu { todoMenu }
 
             if !headline.planning.isEmpty {
@@ -107,6 +105,9 @@ struct OrgHeadlineView: View {
                         .foregroundStyle(todoColor(keyword))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Change TODO state for \(headline.title)")
+                .accessibilityValue(keyword)
+                .accessibilityHint("Double tap to cycle to the next TODO state. Long press for all states.")
             }
             if let priority = headline.priority {
                 Text("#\(String(priority))")
@@ -114,6 +115,7 @@ struct OrgHeadlineView: View {
                     .padding(.horizontal, 5).padding(.vertical, 2)
                     .background(priorityColor(priority).opacity(0.18), in: Capsule())
                     .foregroundStyle(priorityColor(priority))
+                    .accessibilityLabel("Priority \(String(priority))")
             }
             Text(titleAttributed)
                 .font(titleFont)
@@ -128,11 +130,17 @@ struct OrgHeadlineView: View {
 
     @ViewBuilder private var disclosure: some View {
         if hasSubtree {
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .rotationEffect(.degrees(isCollapsed ? 0 : 90))
-                .frame(width: 12)
+            Button(action: toggleFold) {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isCollapsed ? 0 : 90))
+                    .frame(width: 20, height: 24)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(isCollapsed ? "Expand" : "Collapse") \(headline.title)")
+            .accessibilityValue(isCollapsed ? "Collapsed" : "Expanded")
+            .accessibilityHint("Shows or hides this headline's contents.")
         } else {
             Circle()
                 .fill(Color.secondary.opacity(0.5))
@@ -158,6 +166,7 @@ struct OrgHeadlineView: View {
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(Color(.tertiarySystemFill), in: Capsule())
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel("Tag \(tag)")
             }
         }
     }
@@ -251,6 +260,8 @@ struct TimestampPill: View {
         .padding(.horizontal, 7).padding(.vertical, 3)
         .background(color.opacity(0.15), in: Capsule())
         .foregroundStyle(color)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(kindLabel): \(label)")
     }
 
     private var icon: String {
@@ -285,6 +296,15 @@ struct TimestampPill: View {
             text += " " + repeater.text
         }
         return text
+    }
+
+    private var kindLabel: String {
+        switch kind {
+        case .scheduled: return "Scheduled"
+        case .deadline: return isOverdue ? "Overdue deadline" : "Deadline"
+        case .closed: return "Closed"
+        case .plain: return "Date"
+        }
     }
 
     private static let dateFormatter: DateFormatter = {
@@ -426,6 +446,9 @@ struct OrgListItemRow: View {
                     .foregroundStyle(checkbox == .checked ? Color.accentColor : Color.secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(checkbox == .checked ? "Mark \(OrgInlineRenderer.plainText(item.inlines)) incomplete" : "Mark \(OrgInlineRenderer.plainText(item.inlines)) complete")
+            .accessibilityValue(checkbox == .checked ? "Completed" : checkbox == .partial ? "Partially completed" : "Not completed")
+            .accessibilityHint("Toggles this checklist item.")
         } else if item.isOrdered {
             Text(item.bullet)
                 .font(.body.monospacedDigit())
@@ -471,6 +494,9 @@ struct OrgTableView: View {
             .padding(10)
         }
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Table with \(rows.count) rows and \(columnCount) columns")
+        .accessibilityHint("Swipe left or right to view all columns.")
     }
 }
 
@@ -506,5 +532,15 @@ struct OrgBlockView: View {
                     .frame(width: 3)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(blockAccessibilityLabel)
+    }
+
+    private var blockAccessibilityLabel: String {
+        let type = block.type.lowercased()
+        if let language = block.language, !language.isEmpty {
+            return "\(type) block, \(language). \(block.lines.joined(separator: " "))"
+        }
+        return "\(type) block. \(block.lines.joined(separator: " "))"
     }
 }

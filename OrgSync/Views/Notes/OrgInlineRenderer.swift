@@ -29,6 +29,23 @@ enum OrgInlineRenderer {
         return out
     }
 
+    /// A spoken/plain-text representation for controls that render inline org
+    /// markup but require a meaningful accessibility label.
+    static func plainText(_ inlines: [OrgInline]) -> String {
+        inlines.map(plainText).joined()
+    }
+
+    private static func plainText(_ inline: OrgInline) -> String {
+        switch inline {
+        case .text(let value), .verbatim(let value), .code(let value), .plainLink(let value):
+            return value
+        case .link(let target, let description):
+            return description ?? target
+        case .bold(let children), .italic(let children), .underline(let children), .strikethrough(let children):
+            return plainText(children)
+        }
+    }
+
     private static func append(_ node: OrgInline, style: Style, into out: inout AttributedString) {
         switch node {
         case .text(let s):

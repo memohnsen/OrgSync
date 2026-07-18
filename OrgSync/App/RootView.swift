@@ -21,6 +21,8 @@ struct RootView: View {
     @State private var openedNotePath: String?
     @State private var isShowingSplash = true
 
+    private let holdsSplashForUITesting = ProcessInfo.processInfo.arguments.contains("-ui-testing-hold-splash")
+
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -72,6 +74,7 @@ struct RootView: View {
             }
         }
         .task {
+            guard !holdsSplashForUITesting else { return }
             try? await Task.sleep(for: .milliseconds(850))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.25)) {

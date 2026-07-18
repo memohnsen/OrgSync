@@ -70,6 +70,7 @@ struct FolderView: View {
             }
         }
         .navigationTitle(title)
+        .accessibilityIdentifier(isRoot ? "notes.screen" : "folder.screen")
         .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
         .searchable(text: $searchText, prompt: "Search notes")
         .refreshableIfRoot(isRoot: isRoot, sync: sync, reminders: reminders, repo: repo)
@@ -86,6 +87,8 @@ struct FolderView: View {
                     }
                 } label: { Image(systemName: "arrow.up.arrow.down") }
                 .accessibilityLabel("Sort notes")
+                .accessibilityHint("Choose alphabetical or most-recent-first sorting.")
+                .accessibilityIdentifier("notes.sort")
             }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -104,6 +107,8 @@ struct FolderView: View {
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
+                .accessibilityHint("Create a new note or folder.")
+                .accessibilityIdentifier("notes.add")
             }
         }
         .onChange(of: syncError(sync)) { _, newValue in
@@ -182,6 +187,8 @@ struct FolderView: View {
             }
         }
         .accessibilityLabel("Sync")
+        .accessibilityHint("Open sync actions and recent commit history.")
+        .accessibilityIdentifier("notes.sync")
     }
 
     @ViewBuilder
@@ -219,6 +226,10 @@ struct FolderView: View {
             }
         }
         .accessibilityIdentifier("note.row.\(item.relativePath)")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.isDirectory ? "Folder, \(item.displayName)" : "Note, \(item.displayName)")
+        .accessibilityValue(item.isDirectory ? "Folder" : "Modified \(item.modifiedDate.formatted(date: .abbreviated, time: .omitted))")
+        .accessibilityHint(item.isDirectory ? "Double tap to open folder." : "Double tap to open note. Swipe right to favorite; swipe left for rename and delete.")
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 delete(item)

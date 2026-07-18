@@ -29,6 +29,10 @@ struct OrgSourceEditor: UIViewRepresentable {
         textView.backgroundColor = .clear
         textView.alwaysBounceVertical = true
         textView.keyboardDismissMode = .interactive
+        textView.adjustsFontForContentSizeCategory = true
+        textView.accessibilityLabel = "Org source editor"
+        textView.accessibilityHint = "Edit the org-formatted text for this note. Use the keyboard toolbar to insert common org syntax."
+        textView.accessibilityIdentifier = "note.sourceEditor"
         textView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         textView.typingAttributes = OrgSyntaxHighlighter.typingAttributes
         textView.attributedText = OrgSyntaxHighlighter.highlight(text)
@@ -170,8 +174,12 @@ struct OrgSourceEditor: UIViewRepresentable {
 // MARK: - Highlighter
 
 enum OrgSyntaxHighlighter {
-    static let baseFont = UIFont.monospacedSystemFont(ofSize: 16, weight: .regular)
-    private static let boldFont = UIFont.monospacedSystemFont(ofSize: 16, weight: .bold)
+    static var baseFont: UIFont {
+        UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
+    }
+    private static var boldFont: UIFont {
+        UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .bold)
+    }
 
     static let typingAttributes: [NSAttributedString.Key: Any] = [
         .font: baseFont, .foregroundColor: UIColor.label,
