@@ -33,8 +33,8 @@ struct OnboardingView: View {
                     .tracking(1.8)
                     .foregroundStyle(.white.opacity(0.75))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 28)
-                    .padding(.top, 8)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 14)
 
                 TabView(selection: $page) {
                     welcomePage.tag(0)
@@ -122,7 +122,7 @@ struct OnboardingView: View {
 
     private func onboardingPage(symbol: String, title: String, description: String, card: AnyView) -> some View {
         VStack(alignment: .leading, spacing: 22) {
-            Color.clear.frame(height: 18)
+            Spacer()
             Image(systemName: symbol)
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(Color(red: 0.18, green: 0.45, blue: 0.76))
@@ -151,7 +151,7 @@ struct OnboardingView: View {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .stroke(.white.opacity(0.18), lineWidth: 1)
                 }
-            Spacer(minLength: 18)
+            Spacer()
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 8)

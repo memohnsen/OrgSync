@@ -72,7 +72,7 @@ struct FolderView: View {
         }
         .navigationTitle(title)
         .accessibilityIdentifier(isRoot ? "notes.screen" : "folder.screen")
-        .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Search notes")
         .refreshableIfRoot(isRoot: isRoot, sync: sync, reminders: reminders, repo: repo)
         .toolbar {
