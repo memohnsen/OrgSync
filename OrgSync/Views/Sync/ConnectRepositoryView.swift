@@ -124,7 +124,18 @@ struct ConnectRepositoryView: View {
             .accessibilityIdentifier("settings.validateRepository")
             .accessibilityHint("Checks the repository URL and Personal Access Token before connecting.")
 
-            if let validated {
+        } header: {
+            Text("GitHub")
+        } footer: {
+            if settings.repoURL.isEmpty || settings.token.isEmpty {
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
+            } else {
+                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
+            }
+        }
+
+        if let validated {
+            Section("Repository") {
                 LabeledContent("Repository", value: validated.fullName)
                 if let description = validated.description, !description.isEmpty {
                     LabeledContent("About", value: description)
@@ -150,14 +161,6 @@ struct ConnectRepositoryView: View {
                 .disabled(isWorking || selectedBranch.isEmpty)
                 .accessibilityIdentifier("settings.confirmConnectRepository")
                 .accessibilityHint("Downloads the selected branch to this device and enables sync.")
-            }
-        } header: {
-            Text("GitHub")
-        } footer: {
-            if settings.repoURL.isEmpty || settings.token.isEmpty {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain. Enter a repository URL and token to validate it.")
-            } else {
-                Text("Paste a fine-grained Personal Access Token with read/write access to the repository. It is stored securely in the Keychain.")
             }
         }
 
