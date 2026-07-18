@@ -100,24 +100,15 @@ struct OrgSourceEditor: UIViewRepresentable {
             guard !removedMatchingInsertion else { return }
             let textBeforeCommand = textView.text ?? ""
 
-            switch command {
-            case .headline: insertAtLineStart("* ")
-            case .todo: insertAtLineStart("* TODO ")
-            case .checkbox: insertAtLineStart("- [ ] ")
-            case .timestamp: insertTimestamp()
-            case .scheduled: insertSnippet("SCHEDULED: \(todayStamp())", caretOffsetFromEnd: 0)
-            case .deadline: insertSnippet("DEADLINE: \(todayStamp())", caretOffsetFromEnd: 0)
-            case .priority: insertSnippet("[#A] ", caretOffsetFromEnd: 0)
-            case .tag: insertSnippet(":tag:", caretOffsetFromEnd: 1)
-            case .bold: wrapSelection("*", "*")
-            case .italic: wrapSelection("/", "/")
-            case .underline: wrapSelection("_", "_")
-            case .strike: wrapSelection("+", "+")
-            case .code: wrapSelection("~", "~")
-            case .link: insertSnippet("[[][]]", caretOffsetFromEnd: 4)
-            case .comment: insertAtLineStart("# ")
-            case .sourceBlock: insertSnippet("#+begin_src\n\n#+end_src", caretOffsetFromEnd: 10)
-            }
+            let insertion = OrgEditorTextInsertion.applying(
+                command,
+                to: textBeforeCommand,
+                selection: textView.selectedRange,
+                timestamp: todayStamp()
+            )
+            textView.text = insertion.text
+            textView.selectedRange = insertion.selection
+            commit(textView)
 
             if !hadSelection {
                 recordPendingInsertion(of: command, from: textBeforeCommand, in: textView)
@@ -160,47 +151,6 @@ struct OrgSourceEditor: UIViewRepresentable {
 
         private func todayStamp() -> String {
             OrgTimestamp(date: Date(), isActive: true, includeTime: false).serialize()
-        }
-
-        private func insertTimestamp() {
-            insertSnippet(todayStamp(), caretOffsetFromEnd: 0)
-        }
-
-        // MARK: Insertion helpers
-
-        private func insertSnippet(_ snippet: String, caretOffsetFromEnd: Int) {
-            guard let textView else { return }
-            let range = textView.selectedRange
-            replace(range, with: snippet, in: textView)
-            let caret = range.location + (snippet as NSString).length - caretOffsetFromEnd
-            setCaret(to: caret, in: textView)
-            commit(textView)
-        }
-
-        private func wrapSelection(_ open: String, _ close: String) {
-            guard let textView else { return }
-            let range = textView.selectedRange
-            let ns = textView.text as NSString
-            let selected = ns.substring(with: range)
-            let replacement = open + selected + close
-            replace(range, with: replacement, in: textView)
-            if range.length == 0 {
-                setCaret(to: range.location + (open as NSString).length, in: textView)
-            } else {
-                let end = range.location + (replacement as NSString).length
-                setCaret(to: end, in: textView)
-            }
-            commit(textView)
-        }
-
-        private func insertAtLineStart(_ prefix: String) {
-            guard let textView else { return }
-            let ns = textView.text as NSString
-            let caret = textView.selectedRange.location
-            let lineStart = ns.lineRange(for: NSRange(location: caret, length: 0)).location
-            replace(NSRange(location: lineStart, length: 0), with: prefix, in: textView)
-            setCaret(to: caret + (prefix as NSString).length, in: textView)
-            commit(textView)
         }
 
         private func replace(_ range: NSRange, with string: String, in textView: UITextView) {
