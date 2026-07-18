@@ -16,6 +16,7 @@ struct RootView: View {
     @State private var favorites = FavoritesStore()
     @State private var settings: SettingsStore
     @State private var sync: SyncEngine
+    @State private var reminders: RemindersSyncEngine
     @State private var selectedTab = "notes"
 
     @Environment(\.scenePhase) private var scenePhase
@@ -26,6 +27,7 @@ struct RootView: View {
         _repo = State(initialValue: repo)
         _settings = State(initialValue: settings)
         _sync = State(initialValue: SyncEngine(repo: repo, settings: settings))
+        _reminders = State(initialValue: RemindersSyncEngine(settings: settings))
     }
 
     var body: some View {
@@ -44,6 +46,7 @@ struct RootView: View {
         .environment(favorites)
         .environment(settings)
         .environment(sync)
+        .environment(reminders)
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhase(newPhase)
         }
@@ -60,7 +63,7 @@ struct RootView: View {
         switch phase {
         case .active:
             if settings.pullOnOpen {
-                Task { await sync.pullNow(); repo.refresh() }
+                Task { await sync.pullNow(); await reminders.sync(repo: repo); repo.refresh() }
             }
         case .background:
             if settings.pushOnClose {

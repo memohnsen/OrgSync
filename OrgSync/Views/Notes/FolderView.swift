@@ -21,6 +21,7 @@ struct FolderView: View {
     @Environment(RepoStore.self) private var repo
     @Environment(FavoritesStore.self) private var favorites
     @Environment(SyncEngine.self) private var sync: SyncEngine?
+    @Environment(RemindersSyncEngine.self) private var reminders: RemindersSyncEngine?
 
     @State private var searchText = ""
     @State private var syncErrorShown = false
@@ -70,7 +71,7 @@ struct FolderView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
         .searchable(text: $searchText, prompt: "Search notes")
-        .refreshableIfRoot(isRoot: isRoot, sync: sync)
+        .refreshableIfRoot(isRoot: isRoot, sync: sync, reminders: reminders, repo: repo)
         .toolbar {
             if isRoot, let sync, sync.isConnected {
                 ToolbarItem(placement: .topBarLeading) {
@@ -129,19 +130,19 @@ struct FolderView: View {
     private func syncMenu(_ sync: SyncEngine) -> some View {
         Menu {
             Button {
-                Task { await sync.syncNow(); repo.refresh() }
+                Task { await sync.syncNow(); await reminders?.sync(repo: repo); repo.refresh() }
             } label: {
                 Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
             }
             .disabled(sync.phase.isBusy)
             Button {
-                Task { await sync.pullNow(); repo.refresh() }
+                Task { await sync.pullNow(); await reminders?.sync(repo: repo); repo.refresh() }
             } label: {
                 Label("Pull", systemImage: "arrow.down.circle")
             }
             .disabled(sync.phase.isBusy)
             Button {
-                Task { await sync.pushNow(); repo.refresh() }
+                Task { await sync.pushNow(); await reminders?.sync(repo: repo); repo.refresh() }
             } label: {
                 Label("Commit & Push", systemImage: "arrow.up.circle")
             }
@@ -265,9 +266,9 @@ private extension View {
     /// Adds pull-to-refresh that runs a full sync, but only at the repo root and
     /// only when a repository is connected.
     @ViewBuilder
-    func refreshableIfRoot(isRoot: Bool, sync: SyncEngine?) -> some View {
+    func refreshableIfRoot(isRoot: Bool, sync: SyncEngine?, reminders: RemindersSyncEngine?, repo: RepoStore) -> some View {
         if isRoot, let sync, sync.isConnected {
-            self.refreshable { await sync.syncNow() }
+            self.refreshable { await sync.syncNow(); await reminders?.sync(repo: repo) }
         } else {
             self
         }

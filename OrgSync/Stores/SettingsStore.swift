@@ -24,6 +24,7 @@ final class SettingsStore {
         static let pullOnOpen = "settings.sync.pullOnOpen"
         static let pushOnClose = "settings.sync.pushOnClose"
         static let remindersSync = "settings.reminders.sync"
+        static let remindersListID = "settings.reminders.listID"
     }
 
     private let defaults: UserDefaults
@@ -66,6 +67,10 @@ final class SettingsStore {
         didSet { defaults.set(remindersSync, forKey: Key.remindersSync) }
     }
 
+    var remindersListID: String {
+        didSet { defaults.set(remindersListID, forKey: Key.remindersListID) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         repoURL = defaults.string(forKey: Key.repoURL) ?? ""
@@ -74,6 +79,7 @@ final class SettingsStore {
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
         pushOnClose = defaults.bool(forKey: Key.pushOnClose)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
+        remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }

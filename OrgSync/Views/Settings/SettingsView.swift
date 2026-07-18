@@ -9,10 +9,13 @@
 //
 
 import SwiftUI
+import EventKit
 
 struct SettingsView: View {
+    @Environment(RepoStore.self) private var repo
     @Environment(SettingsStore.self) private var settings
     @Environment(SyncEngine.self) private var sync
+    @Environment(RemindersSyncEngine.self) private var reminders
 
     var body: some View {
         @Bindable var settings = settings
@@ -54,11 +57,22 @@ struct SettingsView: View {
 
                 Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
-                        .disabled(true)
+                        .disabled(reminders.access != .granted)
+                    if reminders.access == .granted {
+                        Picker("Reminders List", selection: $settings.remindersListID) {
+                            Text("OrgSync (managed)").tag("")
+                            ForEach(reminders.lists, id: \.calendarIdentifier) { list in
+                                Text(list.title).tag(list.calendarIdentifier)
+                            }
+                        }
+                        Button("Sync Reminders Now") { Task { await reminders.sync(repo: repo) } }
+                    } else {
+                        Button("Allow Reminders Access") { Task { await reminders.requestAccess() } }
+                    }
                 } header: {
                     Text("Reminders")
                 } footer: {
-                    Text("Two-way Reminders sync is coming in a later update.")
+                    Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
                 }
             }
             .navigationTitle("Settings")
