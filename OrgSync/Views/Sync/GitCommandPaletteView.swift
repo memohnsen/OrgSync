@@ -52,7 +52,7 @@ struct GitCommandPaletteView: View {
                         Button {
                             Task { await sync.pullNow(); repo.refresh() }
                         } label: {
-                            commandLabel("Pull", systemImage: "arrow.down.circle", enabled: canPull)
+                            commandLabel("Pull", systemImage: "arrow.down.circle", enabled: canPull, isLoading: isRunning("Pulling…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canPull)
@@ -61,7 +61,7 @@ struct GitCommandPaletteView: View {
                         Button {
                             Task { await sync.stageAllNow() }
                         } label: {
-                            commandLabel("Stage All Changes", systemImage: "tray.and.arrow.down", enabled: canStage)
+                            commandLabel("Stage All Changes", systemImage: "tray.and.arrow.down", enabled: canStage, isLoading: isRunning("Staging…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canStage)
@@ -70,7 +70,7 @@ struct GitCommandPaletteView: View {
                         Button(role: .destructive) {
                             showDiscardChangesPrompt = true
                         } label: {
-                            commandLabel("Discard Local Changes", systemImage: "arrow.uturn.backward", enabled: canDiscardChanges)
+                            commandLabel("Discard Local Changes", systemImage: "arrow.uturn.backward", enabled: canDiscardChanges, isLoading: isRunning("Discarding changes…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canDiscardChanges)
@@ -80,7 +80,7 @@ struct GitCommandPaletteView: View {
                             commitMessage = OrgSyncCommitMessage.automatic()
                             showCommitPrompt = true
                         } label: {
-                            commandLabel("Commit Staged Changes", systemImage: "checkmark.seal", enabled: canCommit)
+                            commandLabel("Commit Staged Changes", systemImage: "checkmark.seal", enabled: canCommit, isLoading: isRunning("Committing…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canCommit)
@@ -89,7 +89,7 @@ struct GitCommandPaletteView: View {
                         Button {
                             Task { await sync.pushPendingNow(); await reminders.sync(repo: repo); repo.refresh() }
                         } label: {
-                            commandLabel("Push", systemImage: "arrow.up.circle", enabled: canPush)
+                            commandLabel("Push", systemImage: "arrow.up.circle", enabled: canPush, isLoading: isRunning("Pushing…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canPush)
@@ -98,7 +98,7 @@ struct GitCommandPaletteView: View {
                         Button(role: .destructive) {
                             showDiscardPrompt = true
                         } label: {
-                            commandLabel("Discard Pending Commit", systemImage: "xmark.seal", enabled: canDiscard)
+                            commandLabel("Discard Pending Commit", systemImage: "xmark.seal", enabled: canDiscard, isLoading: isRunning("Discarding…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canDiscard)
@@ -107,7 +107,7 @@ struct GitCommandPaletteView: View {
                         Button {
                             Task { await sync.syncNow(); await reminders.sync(repo: repo); repo.refresh() }
                         } label: {
-                            commandLabel("Sync", systemImage: "arrow.triangle.2.circlepath", enabled: canSync)
+                            commandLabel("Sync", systemImage: "arrow.triangle.2.circlepath", enabled: canSync, isLoading: isRunning("Syncing…"))
                         }
                         .buttonStyle(.plain)
                         .disabled(!canSync)
@@ -128,11 +128,6 @@ struct GitCommandPaletteView: View {
                         }
                     }
 
-                    if case let .syncing(message) = sync.phase {
-                        Section {
-                            HStack { ProgressView(); Text(message) }
-                        }
-                    }
                     if let error = sync.lastError {
                         Section("Git Error") {
                             Text(error).foregroundStyle(.red)
@@ -202,13 +197,38 @@ struct GitCommandPaletteView: View {
     private var canDiscard: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
     private var canSync: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
 
-    private func commandLabel(_ title: String, systemImage: String, enabled: Bool) -> some View {
+    private func isRunning(_ message: String) -> Bool {
+        if case let .syncing(currentMessage) = sync.phase {
+            return currentMessage == message
+        }
+        return false
+    }
+
+    private func commandLabel(_ title: String, systemImage: String, enabled: Bool, isLoading: Bool = false) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .foregroundStyle(enabled ? Color.accentColor : Color.secondary)
-                .frame(width: 24)
-            Text(title)
-                .foregroundStyle(enabled ? Color.primary : Color.secondary)
+            Group {
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.regular)
+                        .tint(.accentColor)
+                } else {
+                    Image(systemName: systemImage)
+                        .foregroundStyle(enabled ? Color.accentColor : Color.secondary)
+                }
+            }
+            .frame(width: 24)
+            Text(isLoading ? loadingTitle(for: title) : title)
+                .foregroundStyle(isLoading || enabled ? Color.primary : Color.secondary)
+        }
+    }
+
+    private func loadingTitle(for title: String) -> String {
+        switch title {
+        case "Stage All Changes": "Staging…"
+        case "Commit Staged Changes": "Committing…"
+        case "Discard Local Changes": "Discarding changes…"
+        case "Discard Pending Commit": "Discarding…"
+        default: "\(title)ing…"
         }
     }
 }
