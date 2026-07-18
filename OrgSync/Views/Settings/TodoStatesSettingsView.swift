@@ -6,10 +6,12 @@
 import SwiftUI
 
 struct TodoStatesSettingsView: View {
+    @Environment(SettingsStore.self) private var settings
     @Binding var preference: String
     @State private var statuses: [OrgTodoStatus]
     @State private var newStatus = ""
     @State private var newStatusIsDone = false
+    @State private var newStatusColor = OrgTodoStatusPalette.customColors[0].hex
     @State private var validationMessage: String?
 
     init(preference: Binding<String>) {
@@ -19,9 +21,9 @@ struct TodoStatesSettingsView: View {
 
     var body: some View {
         List {
-            statusSection(title: "Active States", isDone: false,
-                          footer: "Active states appear in Agenda and cycle toward completion.")
-            statusSection(title: "Completed States", isDone: true,
+            statusSection(title: "Active Statuses", isDone: false,
+                          footer: "TODO, PROGRESS, and WAITING are active by default. Active statuses appear in Agenda and cycle toward completion.")
+            statusSection(title: "Completed Statuses", isDone: true,
                           footer: "Only DONE strikes through a note title.")
 
             Section {
@@ -29,23 +31,32 @@ struct TodoStatesSettingsView: View {
                     .textInputAutocapitalization(.characters)
                     .autocorrectionDisabled()
                     .accessibilityIdentifier("todoStates.newName")
-                Picker("State type", selection: $newStatusIsDone) {
+                Picker("Status type", selection: $newStatusIsDone) {
                     Text("Active").tag(false)
                     Text("Completed").tag(true)
                 }
-                Button("Add State", action: addStatus)
+                Picker("Color", selection: $newStatusColor) {
+                    ForEach(OrgTodoStatusPalette.customColors) { color in
+                        HStack {
+                            Circle().fill(color.swiftUIColor).frame(width: 12, height: 12)
+                            Text(color.name)
+                        }
+                        .tag(color.hex)
+                    }
+                }
+                Button("Add Status", action: addStatus)
                     .disabled(OrgTodoStatusConfiguration.normalizedName(newStatus) == nil)
                     .accessibilityIdentifier("todoStates.add")
                 if let validationMessage {
                     Text(validationMessage).foregroundStyle(.red)
                 }
             } header: {
-                Text("Add a State")
+                Text("Add a Status")
             } footer: {
-                Text("Use one word, or separate words with _ or -. Swipe a state to delete it. At least one active and completed state is always kept.")
+                Text("Choose a color for each custom status. Use one word, or separate words with _ or -. Swipe a status to delete it. At least one active and completed status is always kept.")
             }
         }
-        .navigationTitle("TODO States")
+        .navigationTitle("TODO Statuses")
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("todoStates.screen")
     }
@@ -57,7 +68,7 @@ struct TodoStatesSettingsView: View {
             ForEach(group) { status in
                 HStack(spacing: 10) {
                     Circle()
-                        .fill(Color.todoStatus(status.name, configuration: configuration))
+                        .fill(Color.todoStatus(status.name, configuration: configuration, overrides: settings.todoStatusColors))
                         .frame(width: 10, height: 10)
                     Text(status.name)
                     Spacer()
@@ -94,6 +105,7 @@ struct TodoStatesSettingsView: View {
         }
         statuses = updated
         preference = OrgTodoStatusConfiguration.preference(from: updated)
+        settings.todoStatusColors[updated.last!.name] = newStatusColor
         newStatus = ""
         validationMessage = nil
     }
@@ -106,6 +118,13 @@ struct TodoStatesSettingsView: View {
         }
         statuses = updated
         preference = OrgTodoStatusConfiguration.preference(from: updated)
+        settings.todoStatusColors.removeValue(forKey: status.name)
         validationMessage = nil
+    }
+}
+
+private extension OrgTodoStatusPalette.CustomColor {
+    var swiftUIColor: Color {
+        Color.todoStatus("CUSTOM", configuration: .default, overrides: ["CUSTOM": hex])
     }
 }

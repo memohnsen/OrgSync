@@ -28,6 +28,7 @@ final class SettingsStore {
         static let agendaDays = "settings.agenda.days"
         static let appearance = "settings.appearance"
         static let todoKeywords = "settings.todo.keywords"
+        static let todoStatusColors = "settings.todo.statusColors"
     }
 
     private let defaults: UserDefaults
@@ -76,6 +77,9 @@ final class SettingsStore {
     var agendaDays: Int { didSet { defaults.set(agendaDays, forKey: Key.agendaDays) } }
     var appearance: String { didSet { defaults.set(appearance, forKey: Key.appearance) } }
     var todoKeywords: String { didSet { defaults.set(todoKeywords, forKey: Key.todoKeywords) } }
+    var todoStatusColors: [String: String] {
+        didSet { defaults.set(todoStatusColors, forKey: Key.todoStatusColors) }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -89,6 +93,7 @@ final class SettingsStore {
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"
         todoKeywords = defaults.string(forKey: Key.todoKeywords) ?? OrgTodoConfig.defaultPreference
+        todoStatusColors = defaults.dictionary(forKey: Key.todoStatusColors) as? [String: String] ?? [:]
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }

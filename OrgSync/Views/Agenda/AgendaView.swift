@@ -262,9 +262,10 @@ struct AgendaView: View {
 
     private func statusColor(for item: OrgTodoItem) -> Color {
         guard let file = repo.item(forRelativePath: item.outline.filePath) else {
-            return .todoStatus(item.keyword, configuration: .default)
+            return .todoStatus(item.keyword, configuration: .default, overrides: settings.todoStatusColors)
         }
-        return .todoStatus(item.keyword, configuration: repo.document(of: file).todoConfig)
+        return .todoStatus(item.keyword, configuration: repo.document(of: file).todoConfig,
+                           overrides: settings.todoStatusColors)
     }
 
     private func accessibilityLabel(for item: OrgTodoItem) -> String {

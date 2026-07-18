@@ -147,5 +147,6 @@ import Testing
         #expect(restored.pullOnOpen)
         #expect(restored.pushOnClose)
         #expect(restored.todoKeywords == OrgTodoConfig.defaultPreference)
+        #expect(restored.todoStatusColors.isEmpty)
     }
 }

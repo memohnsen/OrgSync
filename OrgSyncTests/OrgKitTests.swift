@@ -198,6 +198,8 @@ import Foundation
         let customKeywords = ["NEXT", "BLOCKED", "REVIEW", "LATER", "MAYBE", "HOLD", "SOMEDAY", "PAUSED", "DELEGATED", "CANCELLED"]
         #expect(customKeywords.map { OrgTodoStatusPalette.hex(for: $0, configuration: custom) }
             == Array(OrgTodoStatusPalette.customHex.prefix(customKeywords.count)))
+        #expect(OrgTodoStatusPalette.hex(for: "BLOCKED", configuration: custom,
+                                         overrides: ["BLOCKED": "E54666"]) == "E54666")
     }
 
     @Test func onlyDoneStatusStrikesThroughTitles() {

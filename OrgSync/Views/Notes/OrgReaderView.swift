@@ -24,6 +24,7 @@ struct OrgReaderActions {
 // MARK: - Document
 
 struct OrgReaderView: View {
+    @Environment(SettingsStore.self) private var settings
     let document: OrgDocument
     @Binding var collapsed: Set<[Int]>
     let actions: OrgReaderActions
@@ -43,6 +44,7 @@ struct OrgReaderView: View {
                 ForEach(Array(document.headlines.enumerated()), id: \.offset) { index, headline in
                     OrgHeadlineView(headline: headline, path: [index],
                                     config: document.todoConfig,
+                                    statusColors: settings.todoStatusColors,
                                     collapsed: $collapsed, actions: actions)
                 }
             }
@@ -58,6 +60,7 @@ struct OrgHeadlineView: View {
     let headline: OrgHeadline
     let path: [Int]
     let config: OrgTodoConfig
+    let statusColors: [String: String]
     @Binding var collapsed: Set<[Int]>
     let actions: OrgReaderActions
 
@@ -83,7 +86,8 @@ struct OrgHeadlineView: View {
                 }
                 ForEach(Array(headline.children.enumerated()), id: \.offset) { index, child in
                     OrgHeadlineView(headline: child, path: path + [index],
-                                    config: config, collapsed: $collapsed, actions: actions)
+                                    config: config, statusColors: statusColors,
+                                    collapsed: $collapsed, actions: actions)
                 }
             }
         }
@@ -233,7 +237,7 @@ struct OrgHeadlineView: View {
     }
 
     private func todoColor(_ keyword: String) -> Color {
-        .todoStatus(keyword, configuration: config)
+        .todoStatus(keyword, configuration: config, overrides: statusColors)
     }
 
     private func priorityColor(_ priority: Character) -> Color {

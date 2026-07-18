@@ -6,8 +6,9 @@
 import SwiftUI
 
 extension Color {
-    static func todoStatus(_ keyword: String, configuration: OrgTodoConfig) -> Color {
-        let hex = OrgTodoStatusPalette.hex(for: keyword, configuration: configuration)
+    static func todoStatus(_ keyword: String, configuration: OrgTodoConfig,
+                           overrides: [String: String] = [:]) -> Color {
+        let hex = OrgTodoStatusPalette.hex(for: keyword, configuration: configuration, overrides: overrides)
         let value = UInt64(hex, radix: 16) ?? 0
         return Color(
             red: Double((value >> 16) & 0xFF) / 255,

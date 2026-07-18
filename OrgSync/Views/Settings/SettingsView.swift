@@ -28,10 +28,10 @@ struct SettingsView: View {
                     NavigationLink {
                         TodoStatesSettingsView(preference: $settings.todoKeywords)
                     } label: {
-                        LabeledContent("TODO States", value: "\(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).count)")
+                        LabeledContent("TODO Statuses", value: "\(OrgTodoStatusConfiguration.statuses(from: settings.todoKeywords).count)")
                     }
                     .accessibilityIdentifier("settings.todoStates")
-                    .accessibilityHint("Add or delete active and completed TODO states.")
+                    .accessibilityHint("Add or delete active and completed TODO statuses.")
                     Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
                         .accessibilityIdentifier("settings.agendaDays")
                         .accessibilityHint("Sets how many days appear in the Upcoming agenda.")
