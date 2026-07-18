@@ -188,8 +188,13 @@ struct GitCommandPaletteView: View {
     private var canSync: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
 
     private func commandLabel(_ title: String, systemImage: String, enabled: Bool) -> some View {
-        Label(title, systemImage: systemImage)
-            .foregroundStyle(enabled ? Color.primary : Color.secondary)
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .foregroundStyle(enabled ? Color.accentColor : Color.secondary)
+                .frame(width: 24)
+            Text(title)
+                .foregroundStyle(enabled ? Color.primary : Color.secondary)
+        }
     }
 }
 
