@@ -19,6 +19,12 @@ import Observation
 @MainActor
 @Observable
 final class SyncEngine {
+    struct ConflictCopy: Identifiable, Hashable {
+        var sidecarURL: URL
+        var originalURL: URL
+        var id: URL { sidecarURL }
+        var fileName: String { originalURL.lastPathComponent }
+    }
     enum Phase: Equatable {
         case idle
         case syncing(String)
@@ -145,6 +151,32 @@ final class SyncEngine {
         state = nil
         status = SyncStatus()
         phase = .idle
+    }
+
+    /// Conflict sidecars are created by pull when both local and remote edits
+    /// overlap. They must be explicitly resolved before a push is allowed.
+    func conflictCopies() -> [ConflictCopy] {
+        enumerateWorkingFiles().values.compactMap { sidecar in
+            let ext = sidecar.pathExtension
+            let stem = sidecar.deletingPathExtension().lastPathComponent
+            guard let range = stem.range(of: " (conflict ", options: .backwards) else { return nil }
+            let originalStem = String(stem[..<range.lowerBound])
+            let originalName = ext.isEmpty ? originalStem : originalStem + "." + ext
+            return ConflictCopy(sidecarURL: sidecar,
+                                originalURL: sidecar.deletingLastPathComponent().appendingPathComponent(originalName))
+        }.sorted { $0.fileName.localizedCaseInsensitiveCompare($1.fileName) == .orderedAscending }
+    }
+
+    func resolveConflictKeepingLocal(_ conflict: ConflictCopy) {
+        try? fileManager.removeItem(at: conflict.sidecarURL)
+        repo.refresh()
+    }
+
+    func resolveConflictUsingRemote(_ conflict: ConflictCopy) {
+        guard fileManager.fileExists(atPath: conflict.sidecarURL.path) else { return }
+        try? fileManager.removeItem(at: conflict.originalURL)
+        try? fileManager.moveItem(at: conflict.sidecarURL, to: conflict.originalURL)
+        repo.refresh()
     }
 
     // MARK: - Status

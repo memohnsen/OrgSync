@@ -86,7 +86,8 @@ extension OrgDocument {
                     title: headline.title,
                     tags: headline.tags,
                     scheduled: headline.planning.scheduled,
-                    deadline: headline.planning.deadline))
+                    deadline: headline.planning.deadline,
+                    persistentID: headline.persistentID))
             }
             for child in headline.children { visit(child, path: here) }
         }

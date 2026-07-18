@@ -51,8 +51,18 @@ final class RemindersSyncEngine {
         do {
             let list = try orgSyncList()
             var mappings = loadMappings()
+            ensurePersistentIDs(repo: repo)
             let inboundItems = allTodoItems(repo: repo)
-            let byKey = Dictionary(uniqueKeysWithValues: inboundItems.map { (key($0.outline), $0) })
+            var byKey = Dictionary(uniqueKeysWithValues: inboundItems.map { (key($0), $0) })
+            // Migrate title-path keys written by older releases.
+            for item in inboundItems where item.persistentID != nil {
+                let stable = key(item)
+                let legacy = legacyKey(item.outline)
+                if mappings[stable] == nil, let reminder = mappings.removeValue(forKey: legacy) {
+                    mappings[stable] = reminder
+                }
+                byKey[legacy] = item
+            }
 
             // Reminders -> Org comes first. Otherwise outbound writes would
             // overwrite a completion or due-date edit before we could observe it.
@@ -62,7 +72,9 @@ final class RemindersSyncEngine {
                 guard let mapKey = mappings.first(where: { $0.value == reminderID })?.key,
                       let item = byKey[mapKey] else {
                     if !reminder.isCompleted, let outline = createInboxTodo(from: reminder, repo: repo) {
-                        mappings[key(outline)] = reminderID
+                        if let item = allTodoItems(repo: repo).first(where: { $0.outline == outline }) {
+                            mappings[key(item)] = reminderID
+                        }
                     }
                     continue
                 }
@@ -84,8 +96,8 @@ final class RemindersSyncEngine {
             // Re-read the notes after inbound mutations, then mirror their
             // current state out to Reminders.
             let items = allTodoItems(repo: repo)
-            for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item.outline)] != nil {
-                let mapKey = key(item.outline)
+            for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item)] != nil {
+                let mapKey = key(item)
                 let reminder = mappings[mapKey].flatMap { store.calendarItem(withIdentifier: $0) as? EKReminder }
                     ?? EKReminder(eventStore: store)
                 reminder.calendar = list
@@ -133,6 +145,17 @@ final class RemindersSyncEngine {
         }.flatMap { repo.document(of: $0).todoItems(filePath: $0.relativePath) }
     }
 
+    private func ensurePersistentIDs(repo: RepoStore) {
+        guard let e = FileManager.default.enumerator(at: repo.repoURL, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return }
+        for case let url as URL in e where url.pathExtension.lowercased() == "org" {
+            let root = repo.repoURL.path + "/"
+            let path = url.path.hasPrefix(root) ? String(url.path.dropFirst(root.count)) : url.lastPathComponent
+            guard let file = repo.item(forRelativePath: path) else { continue }
+            var document = repo.document(of: file)
+            if document.ensurePersistentIDsForTodoHeadlines() { _ = repo.write(document.serialize(), to: file) }
+        }
+    }
+
     private func mutate(_ item: OrgTodoItem, repo: RepoStore, _ transform: (inout OrgHeadline, OrgDocument) -> Void) {
         guard let file = repo.item(forRelativePath: item.outline.filePath) else { return }
         var document = repo.document(of: file); let original = document
@@ -156,7 +179,11 @@ final class RemindersSyncEngine {
         return repo.document(of: file).todoItems(filePath: file.relativePath)
             .last(where: { $0.title == title })?.outline
     }
-    private func key(_ outline: OrgOutline) -> String { outline.filePath + "|" + outline.headingPath.joined(separator: "\u{1F}") + "|" + String(outline.index) }
+    private func key(_ item: OrgTodoItem) -> String {
+        if let id = item.persistentID { return "id|" + id }
+        return legacyKey(item.outline)
+    }
+    private func legacyKey(_ outline: OrgOutline) -> String { outline.filePath + "|" + outline.headingPath.joined(separator: "\u{1F}") + "|" + String(outline.index) }
     private func loadMappings() -> [String: String] { defaults.dictionary(forKey: mappingKey) as? [String: String] ?? [:] }
     private func saveMappings(_ value: [String: String]) { defaults.set(value, forKey: mappingKey) }
     private func noteMetadata(_ outline: OrgOutline) -> String { "OrgSync\nfile: \(outline.filePath)\nheading: \(outline.headingPath.joined(separator: " / "))" }

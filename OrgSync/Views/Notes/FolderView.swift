@@ -162,6 +162,13 @@ struct FolderView: View {
             }
             .disabled(sync.phase.isBusy)
             Divider()
+            if !sync.conflictCopies().isEmpty {
+                NavigationLink {
+                    ConflictResolutionView()
+                } label: {
+                    Label("Resolve Conflicts", systemImage: "exclamationmark.triangle")
+                }
+            }
             NavigationLink {
                 CommitLogView()
             } label: {

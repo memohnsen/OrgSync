@@ -11,6 +11,28 @@
 import Foundation
 
 extension OrgDocument {
+    /// Assigns a standard org `:ID:` property to every TODO headline that
+    /// lacks one. Returns whether serialization is required.
+    @discardableResult
+    public mutating func ensurePersistentIDsForTodoHeadlines() -> Bool {
+        var changed = false
+        func visit(_ headlines: inout [OrgHeadline], config: OrgTodoConfig) {
+            for index in headlines.indices {
+                if let keyword = headlines[index].todoKeyword, config.isKeyword(keyword),
+                   headlines[index].persistentID == nil {
+                    var drawer = headlines[index].propertyDrawer ?? OrgPropertyDrawer(properties: [])
+                    drawer.properties.append(OrgProperty(key: "ID", value: UUID().uuidString.uppercased()))
+                    drawer.beginRaw = nil; drawer.endRaw = nil
+                    headlines[index].propertyDrawer = drawer
+                    headlines[index].raw = nil
+                    changed = true
+                }
+                visit(&headlines[index].children, config: config)
+            }
+        }
+        visit(&headlines, config: todoConfig)
+        return changed
+    }
     /// Apply `transform` to the headline addressed by `path`.
     public mutating func mutateHeadline(at path: [Int], _ transform: (inout OrgHeadline) -> Void) {
         OrgDocument.mutate(&headlines, path: path, transform)

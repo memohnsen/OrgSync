@@ -568,6 +568,22 @@ import Foundation
         #expect(doc.headlines[1].priority == "A")
     }
 
+    @Test func todoOutlineCountsNonTodoDuplicateHeadings() {
+        let doc = OrgParser.parse("* Task\n* TODO Task\n")
+        let items = doc.todoItems(filePath: "x.org")
+        #expect(items.count == 1)
+        #expect(items[0].outline.index == 1)
+    }
+
+    @Test func ensuresPersistentIDsForTodoHeadlines() {
+        var doc = OrgParser.parse("* TODO Durable task\n")
+        let firstChange = doc.ensurePersistentIDsForTodoHeadlines()
+        #expect(firstChange)
+        #expect(doc.headlines[0].persistentID != nil)
+        let secondChange = doc.ensurePersistentIDsForTodoHeadlines()
+        #expect(!secondChange)
+    }
+
     @Test func collectsAllTimestamps() {
         let text = """
         * TODO Task

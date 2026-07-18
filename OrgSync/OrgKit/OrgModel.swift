@@ -211,6 +211,12 @@ public struct OrgHeadline: Sendable, Hashable, Identifiable {
 
     public var titleInlines: [OrgInline] { OrgInlineParser.parse(title) }
 
+    /// A persistent org-mode `:ID:` property, when present. Unlike a title
+    /// path, this survives a heading rename or a move within its file.
+    public var persistentID: String? {
+        propertyDrawer?.properties.first { $0.key.uppercased() == "ID" }?.value
+    }
+
     public static func == (lhs: OrgHeadline, rhs: OrgHeadline) -> Bool {
         lhs.level == rhs.level && lhs.todoKeyword == rhs.todoKeyword
             && lhs.priority == rhs.priority && lhs.title == rhs.title
@@ -279,13 +285,16 @@ public struct OrgTodoItem: Sendable, Hashable, Identifiable {
     public var tags: [String]
     public var scheduled: OrgTimestamp?
     public var deadline: OrgTimestamp?
+    public var persistentID: String?
 
     public var id: OrgOutline { outline }
 
     public init(outline: OrgOutline, keyword: String, isDone: Bool, priority: Character?,
-                title: String, tags: [String], scheduled: OrgTimestamp?, deadline: OrgTimestamp?) {
+                title: String, tags: [String], scheduled: OrgTimestamp?, deadline: OrgTimestamp?,
+                persistentID: String? = nil) {
         self.outline = outline; self.keyword = keyword; self.isDone = isDone
         self.priority = priority; self.title = title; self.tags = tags
         self.scheduled = scheduled; self.deadline = deadline
+        self.persistentID = persistentID
     }
 }
