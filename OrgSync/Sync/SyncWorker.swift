@@ -147,6 +147,49 @@ actor SyncWorker {
         return Result(state: state, status: localChanges(against: state))
     }
 
+    /// Restores the working copy to the last synced GitHub baseline. Unlike
+    /// discarding a pending commit, this removes unsaved local file changes.
+    func discardLocalChanges(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
+        guard initialState.pendingCommit == nil else {
+            throw GitHubError.server(status: 409, message: "Push or discard the pending commit before discarding local changes")
+        }
+        let changes = localChanges(against: initialState)
+        for path in changes.modified + changes.deleted {
+            guard let sha = initialState.files[path] else { continue }
+            try writeWorkingFile(path: path, data: await client.getBlobData(sha: sha))
+        }
+        for path in changes.added {
+            try? fileManager.removeItem(at: repoURL.appendingPathComponent(path))
+        }
+        var state = initialState
+        state.stagedPaths.removeAll { changes.changedPaths.contains($0) }
+        persist(state)
+        return Result(state: state, status: localChanges(against: state))
+    }
+
+    func localDiffs(state: SyncRepoState, client: GitHubClient) async throws -> [GitFileDiff] {
+        let changes = localChanges(against: state)
+        let working = enumerateWorkingFiles()
+        func text(_ data: Data) -> String { String(decoding: data, as: UTF8.self) }
+
+        var result: [GitFileDiff] = []
+        for path in changes.modified {
+            guard let sha = state.files[path], let url = working[path], let data = try? Data(contentsOf: url) else { continue }
+            result.append(GitFileDiff(path: path, kind: .modified,
+                                      original: text(try await client.getBlobData(sha: sha)), current: text(data)))
+        }
+        for path in changes.added {
+            guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
+            result.append(GitFileDiff(path: path, kind: .added, original: nil, current: text(data)))
+        }
+        for path in changes.deleted {
+            guard let sha = state.files[path] else { continue }
+            result.append(GitFileDiff(path: path, kind: .deleted,
+                                      original: text(try await client.getBlobData(sha: sha)), current: nil))
+        }
+        return result
+    }
+
     func pull(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         guard initialState.pendingCommit == nil else {
             throw GitHubError.server(status: 409, message: "Push the pending commit before pulling remote changes")

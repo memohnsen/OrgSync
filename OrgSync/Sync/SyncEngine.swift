@@ -86,6 +86,19 @@ final class SyncEngine {
         }
     }
 
+    func discardLocalChangesNow() async {
+        await run("Discarding changes…") {
+            guard let state = self.state else { throw GitHubError.notConfigured }
+            self.apply(try await self.worker.discardLocalChanges(state: state, client: try self.makeClient(for: state)))
+            self.repo.refresh()
+        }
+    }
+
+    func localDiffs() async throws -> [GitFileDiff] {
+        guard let state else { throw GitHubError.notConfigured }
+        return try await worker.localDiffs(state: state, client: try makeClient(for: state))
+    }
+
     private func run(_ label: String, _ operation: @escaping () async throws -> Void) async {
         phase = .syncing(label)
         do {

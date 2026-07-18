@@ -123,6 +123,36 @@ private func makeWorkingCopy() throws -> URL {
     }
 }
 
+@Suite struct SyncWorkerLocalChangesTests {
+    @Test func diffsAndDiscardsLocalChangesAgainstTheSyncedBaseline() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: [
+            "modified.org": Data("before\n".utf8),
+            "deleted.org": Data("keep me\n".utf8),
+        ])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        var result = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+
+        try Data("after\n".utf8).write(to: root.appendingPathComponent("modified.org"))
+        try Data("new\n".utf8).write(to: root.appendingPathComponent("added.org"))
+        try FileManager.default.removeItem(at: root.appendingPathComponent("deleted.org"))
+
+        let diffs = try await worker.localDiffs(state: result.state, client: client)
+        #expect(diffs.map(\.path) == ["modified.org", "added.org", "deleted.org"])
+        #expect(diffs.first(where: { $0.path == "modified.org" })?.original == "before\n")
+        #expect(diffs.first(where: { $0.path == "modified.org" })?.current == "after\n")
+
+        result = try await worker.discardLocalChanges(state: result.state, client: client)
+        #expect(!result.status.hasLocalChanges)
+        #expect(try String(contentsOf: root.appendingPathComponent("modified.org")) == "before\n")
+        #expect(try String(contentsOf: root.appendingPathComponent("deleted.org")) == "keep me\n")
+        #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("added.org").path))
+    }
+}
+
 @Suite struct SyncWorkerPushBaselineTests {
     @Test func editsAndCreationsDuringPushSurviveTheNextPull() async throws {
         let remote = FakeGitHubRepo()

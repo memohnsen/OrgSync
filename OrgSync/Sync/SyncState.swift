@@ -95,6 +95,17 @@ nonisolated struct SyncStatus: Equatable, Sendable {
     var changedPaths: [String] { (modified + added + deleted).sorted() }
 }
 
+/// A local working-copy file compared with its last successfully synced blob.
+nonisolated struct GitFileDiff: Identifiable, Equatable, Sendable {
+    enum Kind: String, Sendable { case modified, added, deleted }
+
+    var path: String
+    var kind: Kind
+    var original: String?
+    var current: String?
+    var id: String { path }
+}
+
 /// A commit as shown in the log view.
 struct CommitSummary: Identifiable, Equatable {
     let sha: String

@@ -16,6 +16,8 @@ struct GitCommandPaletteView: View {
     @State private var commitMessage = ""
     @State private var showCommitPrompt = false
     @State private var showDiscardPrompt = false
+    @State private var showDiscardChangesPrompt = false
+    @State private var showChanges = false
 
     var body: some View {
         NavigationStack {
@@ -35,6 +37,13 @@ struct GitCommandPaletteView: View {
                     }
 
                     Section("Commands") {
+                        Button { showChanges = true } label: {
+                            commandLabel("View Changes", systemImage: "doc.text.magnifyingglass", enabled: canViewChanges)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!canViewChanges)
+                        .accessibilityHint("Shows local additions, edits, and deletions compared with the last synced version.")
+
                         Button {
                             Task { await sync.pullNow(); repo.refresh() }
                         } label: {
@@ -52,6 +61,15 @@ struct GitCommandPaletteView: View {
                         .buttonStyle(.plain)
                         .disabled(!canStage)
                         .accessibilityHint("Selects every current local change for the next commit.")
+
+                        Button(role: .destructive) {
+                            showDiscardChangesPrompt = true
+                        } label: {
+                            commandLabel("Discard Local Changes", systemImage: "arrow.uturn.backward", enabled: canDiscardChanges)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!canDiscardChanges)
+                        .accessibilityHint("Restores the working copy to the last synced version. This cannot be undone.")
 
                         Button {
                             commitMessage = OrgSyncCommitMessage.automatic()
@@ -147,12 +165,23 @@ struct GitCommandPaletteView: View {
             } message: {
                 Text("The unpublished commit is abandoned. Your file changes stay in the working copy as local changes, so you can pull and commit again.")
             }
+            .confirmationDialog("Discard Local Changes?", isPresented: $showDiscardChangesPrompt, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) {
+                    Task { await sync.discardLocalChangesNow(); repo.refresh() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This restores modified and deleted files from the last synced commit and removes newly added files. This cannot be undone.")
+            }
+            .sheet(isPresented: $showChanges) { GitChangesView() }
         }
         .accessibilityIdentifier("git.commandPalette")
     }
 
     private var canPull: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
+    private var canViewChanges: Bool { !sync.phase.isBusy && sync.status.hasLocalChanges }
     private var canStage: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.status.hasLocalChanges }
+    private var canDiscardChanges: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.status.hasLocalChanges }
     private var canCommit: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.stagedChangeCount > 0 }
     private var canPush: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
     private var canDiscard: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
