@@ -50,6 +50,10 @@ struct OnboardingView: View {
             }
         }
         .interactiveDismissDisabled()
+        // .contain keeps this a container: identifying the root ZStack without
+        // it merges every child into one element, hiding the buttons from
+        // assistive tech and UI tests alike.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("onboarding.screen")
     }
 
