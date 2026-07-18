@@ -149,4 +149,14 @@ import Testing
         #expect(restored.todoKeywords == OrgTodoConfig.defaultPreference)
         #expect(restored.todoStatusColors.isEmpty)
     }
+
+    @Test func repairsLegacyDefaultWithProgressAndWaitingMarkedComplete() {
+        let suiteName = "OrgSyncTests.Settings.Legacy.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("TODO | PROGRESS WAITING DONE", forKey: "settings.todo.keywords")
+
+        let settings = SettingsStore(defaults: defaults)
+        #expect(settings.todoKeywords == OrgTodoConfig.defaultPreference)
+    }
 }
