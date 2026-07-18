@@ -37,7 +37,7 @@ the mapping (and remove the reminder) instead of re-creating the todo in inbox.o
 (Both paths live inside the EventKit-coupled engine, so they are covered by the
 existing pure-rule tests plus build verification rather than new unit tests.)
 
-## Step 7 — [ ] UX: confirm before destructive delete
+## Step 7 — [x] UX: confirm before destructive delete
 FolderView swipe-delete: confirmation dialog before deleting folders and non-empty
 notes (permanent, unpushed edits unrecoverable).
 

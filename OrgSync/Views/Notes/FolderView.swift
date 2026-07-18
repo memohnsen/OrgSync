@@ -37,6 +37,9 @@ struct FolderView: View {
     @State private var renameTarget: FileItem?
     @State private var renameText = ""
 
+    // Delete confirmation
+    @State private var deleteTarget: FileItem?
+
     var body: some View {
         List {
             if searchText.isEmpty {
@@ -154,6 +157,21 @@ struct FolderView: View {
             Button("Cancel", role: .cancel) { renameTarget = nil }
             Button("Rename") { commitRename() }
         }
+        .confirmationDialog(
+            deleteTarget.map { "Delete “\($0.displayName)”?" } ?? "Delete?",
+            isPresented: deleteIsPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let item = deleteTarget { performDelete(item) }
+                deleteTarget = nil
+            }
+            Button("Cancel", role: .cancel) { deleteTarget = nil }
+        } message: {
+            Text(deleteTarget?.isDirectory == true
+                 ? "The folder and every note inside it are deleted permanently. Unpushed changes cannot be recovered."
+                 : "The note is deleted permanently. Unpushed changes cannot be recovered.")
+        }
         .sheet(isPresented: $showGitCommands) {
             GitCommandPaletteView()
         }
@@ -260,10 +278,30 @@ struct FolderView: View {
 
     // MARK: - Mutations
 
+    /// Deleting is permanent (no trash, and unpushed edits are unrecoverable),
+    /// so folders and notes with content require confirmation. Only an empty
+    /// note deletes immediately.
     private func delete(_ item: FileItem) {
+        let isEmptyNote = !item.isDirectory
+            && repo.text(of: item).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if isEmptyNote {
+            performDelete(item)
+        } else {
+            deleteTarget = item
+        }
+    }
+
+    private func performDelete(_ item: FileItem) {
         if repo.delete(item) {
             favorites.remove(pathOrPrefix: item.relativePath)
         }
+    }
+
+    private var deleteIsPresented: Binding<Bool> {
+        Binding(
+            get: { deleteTarget != nil },
+            set: { if !$0 { deleteTarget = nil } }
+        )
     }
 
     private var renameIsPresented: Binding<Bool> {
