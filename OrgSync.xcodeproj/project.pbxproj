@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
+		99A000000000000000000012 /* PBXContainerItemProxy */ = { isa = PBXContainerItemProxy; containerPortal = 714B5423300BB52500C2F7A9 /* Project object */; proxyType = 1; remoteGlobalIDString = 99A000000000000000000003; remoteInfo = OrgSyncWidgets; };
 		714B5439300BB52600C2F7A9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 714B5423300BB52500C2F7A9 /* Project object */;
@@ -24,12 +25,22 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		99A000000000000000000001 /* OrgSyncWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OrgSyncWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		714B542B300BB52500C2F7A9 /* OrgSync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OrgSync.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		714B5438300BB52600C2F7A9 /* OrgSyncTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrgSyncTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		714B5442300BB52600C2F7A9 /* OrgSyncUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrgSyncUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXBuildFile section */
+		99A000000000000000000013 /* OrgSyncWidgets.appex in Embed Foundation Extensions */ = { isa = PBXBuildFile; fileRef = 99A000000000000000000001 /* OrgSyncWidgets.appex */; settings = { ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		99A000000000000000000014 /* Embed Foundation Extensions */ = { isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (99A000000000000000000013 /* OrgSyncWidgets.appex in Embed Foundation Extensions */,); name = "Embed Foundation Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		99A000000000000000000002 /* OrgSyncWidgets */ = { isa = PBXFileSystemSynchronizedRootGroup; path = OrgSyncWidgets; sourceTree = "<group>"; };
 		714B542D300BB52500C2F7A9 /* OrgSync */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = OrgSync;
@@ -78,6 +89,7 @@
 				714B542D300BB52500C2F7A9 /* OrgSync */,
 				714B543B300BB52600C2F7A9 /* OrgSyncTests */,
 				714B5445300BB52600C2F7A9 /* OrgSyncUITests */,
+				99A000000000000000000002 /* OrgSyncWidgets */,
 				714B542C300BB52500C2F7A9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +100,7 @@
 				714B542B300BB52500C2F7A9 /* OrgSync.app */,
 				714B5438300BB52600C2F7A9 /* OrgSyncTests.xctest */,
 				714B5442300BB52600C2F7A9 /* OrgSyncUITests.xctest */,
+				99A000000000000000000001 /* OrgSyncWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,11 +115,11 @@
 				714B5427300BB52500C2F7A9 /* Sources */,
 				714B5428300BB52500C2F7A9 /* Frameworks */,
 				714B5429300BB52500C2F7A9 /* Resources */,
+				99A000000000000000000014 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
+			dependencies = (99A000000000000000000015 /* PBXTargetDependency */,);
 			fileSystemSynchronizedGroups = (
 				714B542D300BB52500C2F7A9 /* OrgSync */,
 			);
@@ -163,6 +176,19 @@
 			productReference = 714B5442300BB52600C2F7A9 /* OrgSyncUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		99A000000000000000000003 /* OrgSyncWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99A000000000000000000004 /* Build configuration list for PBXNativeTarget "OrgSyncWidgets" */;
+			buildPhases = (99A000000000000000000005 /* Sources */, 99A000000000000000000006 /* Frameworks */, 99A000000000000000000007 /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (99A000000000000000000002 /* OrgSyncWidgets */,);
+			name = OrgSyncWidgets;
+			packageProductDependencies = ();
+			productName = OrgSyncWidgets;
+			productReference = 99A000000000000000000001 /* OrgSyncWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +210,7 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 714B542A300BB52500C2F7A9;
 					};
+					99A000000000000000000003 = { CreatedOnToolsVersion = 26.6; };
 				};
 			};
 			buildConfigurationList = 714B5426300BB52500C2F7A9 /* Build configuration list for PBXProject "OrgSync" */;
@@ -203,11 +230,13 @@
 				714B542A300BB52500C2F7A9 /* OrgSync */,
 				714B5437300BB52600C2F7A9 /* OrgSyncTests */,
 				714B5441300BB52600C2F7A9 /* OrgSyncUITests */,
+				99A000000000000000000003 /* OrgSyncWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		99A000000000000000000007 /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		714B5429300BB52500C2F7A9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +261,8 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		99A000000000000000000005 /* Sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		99A000000000000000000006 /* Frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		714B5427300BB52500C2F7A9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +287,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		99A000000000000000000015 /* PBXTargetDependency */ = { isa = PBXTargetDependency; target = 99A000000000000000000003 /* OrgSyncWidgets */; targetProxy = 99A000000000000000000012 /* PBXContainerItemProxy */; };
 		714B543A300BB52600C2F7A9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 714B542A300BB52500C2F7A9 /* OrgSync */;
@@ -393,14 +425,17 @@
 		714B544D300BB52600C2F7A9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSync/OrgSync.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrgSync-Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "({ CFBundleURLSchemes = (orgsync); })";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -425,14 +460,17 @@
 		714B544E300BB52600C2F7A9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSync/OrgSync.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrgSync-Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "({ CFBundleURLSchemes = (orgsync); })";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -449,6 +487,56 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		99A000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSync/OrgSync.entitlements;
+			};
+			name = Debug;
+		};
+		99A000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSync/OrgSync.entitlements;
+			};
+			name = Release;
+		};
+		99A000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSyncWidgets/OrgSyncWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HCK9FFW6UX;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrgSyncWidgets-Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.OrgSync.OrgSyncWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		99A000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OrgSyncWidgets/OrgSyncWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HCK9FFW6UX;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrgSyncWidgets-Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.OrgSync.OrgSyncWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -556,6 +644,12 @@
 				714B544D300BB52600C2F7A9 /* Debug */,
 				714B544E300BB52600C2F7A9 /* Release */,
 			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		99A000000000000000000004 /* Build configuration list for PBXNativeTarget "OrgSyncWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (99A000000000000000000010 /* Debug */, 99A000000000000000000011 /* Release */,);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};

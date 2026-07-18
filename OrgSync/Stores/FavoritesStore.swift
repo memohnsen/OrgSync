@@ -21,10 +21,14 @@ final class FavoritesStore {
 
     private(set) var favorites: Set<String>
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        let stored = defaults.stringArray(forKey: Self.storageKey) ?? []
+    init(defaults: UserDefaults? = nil) {
+        let shared = UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)
+        self.defaults = defaults ?? shared ?? .standard
+        // Keep favorites created before the App Group entitlement was added.
+        let stored = self.defaults.stringArray(forKey: Self.storageKey)
+            ?? UserDefaults.standard.stringArray(forKey: Self.storageKey) ?? []
         self.favorites = Set(stored)
+        if shared != nil { self.defaults.set(Array(favorites), forKey: Self.storageKey) }
     }
 
     func isFavorite(_ item: FileItem) -> Bool {

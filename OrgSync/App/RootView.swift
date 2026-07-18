@@ -16,6 +16,7 @@ struct RootView: View {
     @State private var favorites = FavoritesStore()
     @State private var settings: SettingsStore
     @State private var sync: SyncEngine
+    @State private var selectedTab = "notes"
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -28,14 +29,14 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView {
-            Tab("Notes", systemImage: "note.text") {
+        TabView(selection: $selectedTab) {
+            Tab("Notes", systemImage: "note.text", value: "notes") {
                 NotesView()
             }
-            Tab("Agenda", systemImage: "calendar") {
+            Tab("Agenda", systemImage: "calendar", value: "agenda") {
                 AgendaView()
             }
-            Tab("Settings", systemImage: "gearshape") {
+            Tab("Settings", systemImage: "gearshape", value: "settings") {
                 SettingsView()
             }
         }
@@ -45,6 +46,12 @@ struct RootView: View {
         .environment(sync)
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhase(newPhase)
+        }
+        .onOpenURL { url in
+            // Widgets use orgsync://agenda and orgsync://note/<repo path>.
+            // Note links land in the Notes tab; the user can then open the
+            // named file in the existing native browser.
+            selectedTab = url.host == "agenda" ? "agenda" : "notes"
         }
     }
 
