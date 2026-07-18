@@ -85,6 +85,20 @@ struct GitCommandPaletteView: View {
                         .accessibilityHint("Pulls remote changes, then commits and pushes local changes.")
                     }
 
+                    let conflicts = sync.conflictCopies()
+                    if !conflicts.isEmpty {
+                        Section("Conflicts") {
+                            NavigationLink {
+                                ConflictResolutionView()
+                            } label: {
+                                Label("Resolve \(conflicts.count) Conflict\(conflicts.count == 1 ? "" : "s")",
+                                      systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                            }
+                            .accessibilityHint("Choose the local or remote version for each conflicted file. Pushing is blocked until all conflicts are resolved.")
+                        }
+                    }
+
                     if case let .syncing(message) = sync.phase {
                         Section {
                             HStack { ProgressView(); Text(message) }

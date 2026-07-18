@@ -20,7 +20,7 @@ Add a "discard pending commit" path in `SyncWorker`/`SyncEngine` and surface it 
 the Git command palette so a non-fast-forward pending commit is recoverable without
 disconnecting. Add test.
 
-## Step 4 — [ ] Wire up ConflictResolutionView
+## Step 4 — [x] Wire up ConflictResolutionView
 It exists but is unreachable. Link it from the Git command palette and show a
 "Resolve Conflicts" affordance in the Notes browser when `sync.conflictCopies()`
 is non-empty.

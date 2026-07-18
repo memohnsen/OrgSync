@@ -40,6 +40,22 @@ struct FolderView: View {
     var body: some View {
         List {
             if searchText.isEmpty {
+                if isRoot, let sync {
+                    let conflicts = sync.conflictCopies()
+                    if !conflicts.isEmpty {
+                        Section {
+                            NavigationLink {
+                                ConflictResolutionView()
+                            } label: {
+                                Label("Resolve \(conflicts.count) Sync Conflict\(conflicts.count == 1 ? "" : "s")",
+                                      systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                            }
+                            .accessibilityIdentifier("notes.resolveConflicts")
+                            .accessibilityHint("Choose the local or remote version for each conflicted file.")
+                        }
+                    }
+                }
                 if isRoot {
                     let favItems = favoriteItems()
                     if !favItems.isEmpty {
