@@ -1,0 +1,87 @@
+# OrgSync
+
+OrgSync is a native, local-first iOS app for writing and organizing `.org`
+files. It includes an org-mode reader and editor, Agenda views, widgets,
+two-way Reminders integration, and optional GitHub synchronization.
+
+## Privacy first
+
+OrgSync does not collect, track, analyze, or sell any data. There is no
+analytics SDK, telemetry, account system, advertising, or OrgSync-operated
+server.
+
+All app data lives on your device:
+
+- Notes are stored in the app's local Documents directory.
+- Preferences and widget snapshots are stored locally in the app's App Group
+  container.
+- Your GitHub Personal Access Token is stored in the device Keychain.
+- The app does not send data anywhere unless you explicitly enable an optional
+  integration.
+
+Optional integrations follow your choices:
+
+- Connecting a GitHub repository sends and receives note content directly with
+  GitHub for that repository.
+- Enabling Reminders sync reads and writes the Reminders list you choose through
+  Apple's EventKit APIs.
+
+## Features
+
+- Local `.org` file browser with folders, search, favorites, and recent notes.
+- Rendered org documents and a syntax-aware plain-text editor.
+- Headlines, TODO states, priorities, tags, timestamps, checkboxes, tables,
+  links, source blocks, drawers, inline formatting, and more.
+- Agenda views for today, upcoming tasks, and all open TODOs.
+- Home Screen widgets for favorites and upcoming TODOs.
+- Optional GitHub clone, pull, three-way merge, commit, push, conflict copies,
+  sync status, and commit history.
+- Optional two-way sync with a dedicated Apple Reminders list.
+- Configurable TODO keywords, agenda range, appearance, and automatic sync.
+
+## Requirements
+
+- macOS with Xcode and an iOS 26 SDK.
+- iOS 26.0 or later for the app, widgets, and tests.
+- [just](https://just.systems/) is optional but recommended for the development
+  commands below.
+
+## Getting started
+
+1. Open `OrgSync.xcodeproj` in Xcode.
+2. Choose the `OrgSync` scheme and an iOS 26 simulator or device.
+3. Build and run the app.
+4. To sync an existing org repository, open **Settings**, enter its GitHub URL,
+   provide a fine-grained Personal Access Token with repository access, and
+   choose a branch.
+
+The app creates a few sample notes on first launch. They remain local unless
+you choose to connect and sync a repository.
+
+## Development
+
+```sh
+just build
+just run
+just test
+```
+
+`just run` uses the configured simulator ID. Override it when needed:
+
+```sh
+IOS_SIMULATOR_ID="YOUR-SIMULATOR-UUID" just run
+```
+
+The full test suite can also be run from Xcode.
+
+## Archives and build numbers
+
+The shared `OrgSync` scheme runs
+[`Scripts/increment_build_number.sh`](Scripts/increment_build_number.sh) as an
+Archive pre-action. Every archive increments all
+`CURRENT_PROJECT_VERSION` values in the Xcode project together. Builds, runs,
+and tests do not change the build number.
+
+## License
+
+OrgSync is released under the [MIT License](LICENSE).
