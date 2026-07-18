@@ -16,7 +16,6 @@ struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(SyncEngine.self) private var sync
     @Environment(RemindersSyncEngine.self) private var reminders
-    @Environment(OnboardingState.self) private var onboarding
 
     var body: some View {
         @Bindable var settings = settings
@@ -127,7 +126,9 @@ struct SettingsView: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 14) {
                         Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with Reminders." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
-                        Text("OrgSync • Version 1.0 • Local-first notes. Your data stays on this device unless you connect your own GitHub repository or Reminders list.")
+                        Text("OrgSync • Version 1.0")
+                            .frame(maxWidth: .infinity)
+                            .multilineTextAlignment(.center)
                     }
                 }
                 if let error = reminders.lastError {
@@ -137,15 +138,6 @@ struct SettingsView: View {
                     }
                 }
 
-                #if DEBUG
-                Section("Developer") {
-                    Button("Restart Onboarding") {
-                        onboarding.restart()
-                    }
-                    .accessibilityIdentifier("settings.restartOnboarding")
-                    .accessibilityHint("Shows the first-run onboarding flow again.")
-                }
-                #endif
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
