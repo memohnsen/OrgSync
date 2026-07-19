@@ -23,6 +23,7 @@ final class SettingsStore {
         static let pullOnOpen = "settings.sync.pullOnOpen"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
+        static let archiveCompletedInboxTasks = "settings.inbox.archiveCompletedTasks"
         static let agendaDays = "settings.agenda.days"
         static let appearance = "settings.appearance"
         static let todoKeywords = "settings.todo.keywords"
@@ -65,6 +66,11 @@ final class SettingsStore {
     var remindersListID: String {
         didSet { defaults.set(remindersListID, forKey: Key.remindersListID) }
     }
+    /// When enabled, completed one-off tasks in `inbox.org` are moved to
+    /// `done.org`. Repeating tasks always stay in place so they can recur.
+    var archiveCompletedInboxTasks: Bool {
+        didSet { defaults.set(archiveCompletedInboxTasks, forKey: Key.archiveCompletedInboxTasks) }
+    }
     var agendaDays: Int { didSet { defaults.set(agendaDays, forKey: Key.agendaDays) } }
     var appearance: String { didSet { defaults.set(appearance, forKey: Key.appearance) } }
     var todoKeywords: String { didSet { defaults.set(todoKeywords, forKey: Key.todoKeywords) } }
@@ -79,6 +85,7 @@ final class SettingsStore {
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
+        archiveCompletedInboxTasks = defaults.bool(forKey: Key.archiveCompletedInboxTasks)
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"
         let storedKeywords = defaults.string(forKey: Key.todoKeywords)

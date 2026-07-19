@@ -234,7 +234,9 @@ private final class OrgEditorAccessoryView: UIToolbar {
                 self?.commandAction(command)
             })
             button.accessibilityLabel = command.title
-            button.accessibilityHint = "Inserts \(command.title.lowercased()) org syntax."
+            button.accessibilityHint = command == .recurrence
+                ? "Inserts a weekly Org repeater. Edit 1w to change the interval."
+                : "Inserts \(command.title.lowercased()) org syntax."
             button.accessibilityIdentifier = "editor.command.\(command.rawValue)"
             scrollView.addSubview(button)
             controls.append(button)

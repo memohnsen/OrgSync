@@ -30,6 +30,8 @@ struct OrgEditorTextInsertion: Equatable {
             insert("SCHEDULED: \(timestamp)", into: text, selection: selection, separatesFromLineContent: true)
         case .deadline:
             insert("DEADLINE: \(timestamp)", into: text, selection: selection, separatesFromLineContent: true)
+        case .recurrence:
+            insert("+1w", into: text, selection: selection, separatesFromLineContent: true)
         case .priority:
             insertPriority(into: text, selection: selection, todoKeywords: todoKeywords)
         case .tag:

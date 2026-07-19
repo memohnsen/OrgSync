@@ -155,10 +155,10 @@ struct NoteDetailView: View {
     private var readerActions: OrgReaderActions {
         OrgReaderActions(
             cycleTodo: { path in
-                mutateHeadline(at: path) { $0.cycleTodo(config: document.todoConfig) }
+                cycleTodo(at: path)
             },
             setTodo: { path, keyword in
-                mutateHeadline(at: path) { $0.setTodoKeyword(keyword, config: document.todoConfig) }
+                setTodo(at: path, keyword: keyword)
             },
             setPriority: { path, priority in
                 mutateHeadline(at: path) { $0.setPriority(priority) }
@@ -180,6 +180,38 @@ struct NoteDetailView: View {
         var updated = document
         updated.mutateHeadline(at: path, transform)
         commit(updated)
+    }
+
+    private func cycleTodo(at path: [Int]) {
+        guard let todo = todoItem(at: path) else { return }
+        let sequence = document.todoConfig.sequence(for: todo.keyword) ?? document.todoConfig.sequences.first
+        guard let sequence, let current = sequence.all.firstIndex(of: todo.keyword) else { return }
+        let next = sequence.all[(current + 1) % sequence.all.count]
+        setTodo(at: path, keyword: next)
+    }
+
+    private func setTodo(at path: [Int], keyword: String?) {
+        guard let todo = todoItem(at: path) else { return }
+        if OrgTodoStatusPalette.isCompleted(keyword), !todo.isDone {
+            guard TaskCompletionService.complete(todo, repo: repo, settings: settings) else { return }
+            let current = repo.text(of: item)
+            diskText = current
+            document = repo.document(of: item)
+            return
+        }
+        mutateHeadline(at: path) { $0.setTodoKeyword(keyword, config: document.todoConfig) }
+    }
+
+    private func todoItem(at path: [Int]) -> OrgTodoItem? {
+        func headline(_ headlines: [OrgHeadline], path: ArraySlice<Int>) -> OrgHeadline? {
+            guard let index = path.first, headlines.indices.contains(index) else { return nil }
+            let current = headlines[index]
+            return path.count == 1 ? current : headline(current.children, path: path.dropFirst())
+        }
+        guard let target = headline(document.headlines, path: ArraySlice(path)) else { return nil }
+        return document.todoItems(filePath: item.relativePath).first {
+            document.headline(at: $0.outline)?.id == target.id
+        }
     }
 
     /// Adopt a mutated document and persist it.

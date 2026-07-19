@@ -3,6 +3,7 @@
 //  OrgSyncTests
 //
 
+import EventKit
 import Foundation
 import Testing
 @testable import OrgSync
@@ -124,6 +125,14 @@ import Testing
         #expect(timestamp.isActive)
         #expect(!timestamp.hasTime)
         #expect(timestamp.serialize() == "<2026-07-30 Thu>")
+    }
+
+    @Test func orgRepeaterMapsToRemindersRecurrence() {
+        let item = OrgParser.parse("* TODO Weekly\nSCHEDULED: <2026-07-30 Thu +2w>\n")
+            .todoItems(filePath: "repeat.org")[0]
+        let rule = ReminderSyncRules.recurrenceRules(for: item)?.first
+        #expect(rule?.frequency == .weekly)
+        #expect(rule?.interval == 2)
     }
 
     private func date(year: Int, month: Int, day: Int, hour: Int = 12) -> Date {

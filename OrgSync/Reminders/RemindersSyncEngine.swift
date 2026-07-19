@@ -84,7 +84,7 @@ final class RemindersSyncEngine {
                     }
                     continue
                 }
-                guard let item = byKey[mapKey] else {
+                guard var item = byKey[mapKey] else {
                     // The mapped org TODO no longer exists (deleted note or
                     // subtree). Prune the pair instead of treating the reminder
                     // as new, which would resurrect the deleted TODO every sync.
@@ -92,10 +92,17 @@ final class RemindersSyncEngine {
                     try? store.remove(reminder, commit: false)
                     continue
                 }
-                if reminder.isCompleted && !item.isDone {
-                    mutate(item, repo: repo) { headline, document in
-                        ReminderSyncRules.complete(&headline, item: item, document: document)
+                if let repeater = ReminderSyncRules.repeater(from: reminder),
+                   ReminderSyncRules.shouldApplyIncomingRepeater(repeater, to: item) {
+                    mutate(item, repo: repo) { headline, _ in
+                        ReminderSyncRules.applyIncomingRepeater(repeater, to: &headline)
                     }
+                    if let refreshed = repo.allTodoItems().first(where: { key($0) == mapKey }) {
+                        item = refreshed
+                    }
+                }
+                if reminder.isCompleted && !item.isDone {
+                    _ = TaskCompletionService.complete(item, repo: repo, settings: settings)
                 }
                 if let due = reminder.dueDateComponents, let date = Calendar.current.date(from: due),
                    ReminderSyncRules.shouldApplyIncomingDueDate(date, to: item) {
@@ -117,6 +124,7 @@ final class RemindersSyncEngine {
                 reminder.notes = noteMetadata(item.outline)
                 reminder.priority = ReminderSyncRules.priority(for: item.priority)
                 reminder.dueDateComponents = ReminderSyncRules.dueDateComponents(for: item)
+                reminder.recurrenceRules = ReminderSyncRules.recurrenceRules(for: item)
                 reminder.isCompleted = item.isDone
                 try store.save(reminder, commit: false)
                 mappings[mapKey] = reminder.calendarItemIdentifier
@@ -178,6 +186,9 @@ final class RemindersSyncEngine {
         text += "\n* TODO \(title)\n"
         if let components = reminder.dueDateComponents, let date = Calendar.current.date(from: components) {
             text += "SCHEDULED: \(ReminderSyncRules.inboxScheduledTimestamp(for: date).serialize())\n"
+        }
+        if let repeater = ReminderSyncRules.repeater(from: reminder) {
+            text = ReminderSyncRules.appending(repeater: repeater, toLastScheduledTimestampIn: text)
         }
         guard repo.write(text, to: file) else { return nil }
         return repo.document(of: file).todoItems(filePath: file.relativePath)

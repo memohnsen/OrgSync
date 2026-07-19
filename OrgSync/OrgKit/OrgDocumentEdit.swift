@@ -49,6 +49,13 @@ extension OrgDocument {
                                   match: &match, transform)
     }
 
+    /// Remove and return the headline identified by an outline, including its
+    /// entire subtree. This is used when archiving an inbox task to done.org.
+    public mutating func removeHeadline(at outline: OrgOutline) -> OrgHeadline? {
+        var match = 0
+        return OrgDocument.remove(&headlines, titles: [], outline: outline, match: &match)
+    }
+
     private static func mutate(_ nodes: inout [OrgHeadline], path: [Int],
                                _ transform: (inout OrgHeadline) -> Void) {
         guard let first = path.first, nodes.indices.contains(first) else { return }
@@ -77,6 +84,22 @@ extension OrgDocument {
             }
         }
         return false
+    }
+
+    private static func remove(_ nodes: inout [OrgHeadline], titles: [String],
+                               outline: OrgOutline, match: inout Int) -> OrgHeadline? {
+        for index in nodes.indices {
+            let here = titles + [nodes[index].title]
+            if here == outline.headingPath {
+                if match == outline.index { return nodes.remove(at: index) }
+                match += 1
+            }
+            if let removed = remove(&nodes[index].children, titles: here,
+                                    outline: outline, match: &match) {
+                return removed
+            }
+        }
+        return nil
     }
 
     /// Toggle a checkbox inside the `contentIndex`-th body element (a list) of
