@@ -29,8 +29,15 @@ final class RepoStore {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-repo") {
             try? fileManager.removeItem(at: repoURL)
         }
-        bootstrap()
+        bootstrap(seedsSampleContent: true)
         AgendaSnapshotWriter.write(repo: self)
+    }
+
+    /// Test seam: points the store at an explicit directory and optionally skips
+    /// the first-launch sample seeding so tests control the contents.
+    init(repoURL: URL, seedsSampleContent: Bool) {
+        self.repoURL = repoURL
+        bootstrap(seedsSampleContent: seedsSampleContent)
     }
 
     // MARK: - Listing
@@ -287,14 +294,14 @@ final class RepoStore {
 
     // MARK: - Bootstrap / seed
 
-    private func bootstrap() {
+    private func bootstrap(seedsSampleContent: Bool) {
         var isDirectory: ObjCBool = false
         let exists = fileManager.fileExists(atPath: repoURL.path, isDirectory: &isDirectory)
         if exists && isDirectory.boolValue {
             return
         }
         try? fileManager.createDirectory(at: repoURL, withIntermediateDirectories: true)
-        seedSampleFiles()
+        if seedsSampleContent { seedSampleFiles() }
     }
 
     private func seedSampleFiles() {

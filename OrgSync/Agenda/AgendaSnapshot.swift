@@ -11,6 +11,9 @@ import WidgetKit
 struct AgendaSnapshot: Codable {
     static let appGroupIdentifier = "group.com.memohnsen.OrgSync"
     static let fileName = "agenda-snapshot.json"
+    /// App-group key holding snapshot ids the widget asked to complete but that
+    /// the app hasn't yet written into the notes. Must match the widget target.
+    static let pendingCompletionsKey = "widget.pendingCompletions"
 
     var generatedAt: Date
     var items: [AgendaSnapshotItem]
@@ -35,10 +38,16 @@ enum AgendaSnapshotWriter {
         write(repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) })
     }
 
+    /// Stable id for a TODO, shared by the snapshot payload and the widget
+    /// completion queue so the app can map a widget request back to a headline.
+    static func snapshotID(for item: OrgTodoItem) -> String {
+        item.outline.filePath + "|" + item.outline.headingPath.joined(separator: "/") + "|" + String(item.outline.index)
+    }
+
     static func write(_ items: [OrgTodoItem]) {
         let snapshot = AgendaSnapshot(generatedAt: .now, items: items.map { item in
             AgendaSnapshotItem(
-                id: item.outline.filePath + "|" + item.outline.headingPath.joined(separator: "/") + "|" + String(item.outline.index),
+                id: snapshotID(for: item),
                 title: item.title,
                 filePath: item.outline.filePath,
                 scheduled: item.scheduled?.date(),

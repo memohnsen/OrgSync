@@ -91,6 +91,9 @@ struct RootView: View {
             }
         }
         .task {
+            // Initial launch doesn't always fire the scenePhase change, so drain
+            // the widget completion queue here too. Idempotent.
+            WidgetCompletionReconciler.reconcile(repo: repo)
             guard !holdsSplashForUITesting else { return }
             try? await Task.sleep(for: .milliseconds(850))
             guard !Task.isCancelled else { return }
@@ -108,6 +111,9 @@ struct RootView: View {
         case .background: return
         default: event = .inactive
         }
+        // Apply any TODO completions tapped in the widget before syncing, so the
+        // marked-done note is included in the outgoing push.
+        if phase == .active { WidgetCompletionReconciler.reconcile(repo: repo) }
         for action in AutoSyncPolicy.actions(
             for: event,
             isConnected: sync.isConnected,
