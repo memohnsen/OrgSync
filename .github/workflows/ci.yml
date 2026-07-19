@@ -27,12 +27,31 @@ jobs:
       - name: Resolve dependencies
         run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -resolvePackageDependencies
 
+      # The newest Xcode on the runner image can ship without a pre-installed
+      # iOS simulator runtime (or any pre-created devices), in which case a
+      # name-based destination like "iPhone 17" matches nothing. Install the
+      # runtime only if missing, then create a device the runtime itself
+      # declares support for, and test against its UDID.
+      - name: Prepare iOS simulator
+        id: simulator
+        run: |
+          set -euo pipefail
+          if [ "$(xcrun simctl list runtimes ios --json | jq '[.runtimes[] | select(.isAvailable)] | length')" -eq 0 ]; then
+            sudo xcodebuild -downloadPlatform iOS
+          fi
+          RUNTIMES=$(xcrun simctl list runtimes ios --json)
+          RUNTIME=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.identifier')
+          DEVICE_TYPE=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.supportedDeviceTypes | map(select(.productFamily=="iPhone")) | first.identifier')
+          UDID=$(xcrun simctl create "CI iPhone" "$DEVICE_TYPE" "$RUNTIME")
+          echo "Created $DEVICE_TYPE on $RUNTIME: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
       - name: Run tests
         run: |
           xcodebuild \
             -project OrgSync.xcodeproj \
             -scheme OrgSync \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}' \
             -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
             -resultBundlePath TestResults \
             test
