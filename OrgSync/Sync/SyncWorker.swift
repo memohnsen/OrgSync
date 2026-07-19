@@ -17,10 +17,12 @@ actor SyncWorker {
     private let repoURL: URL
     private let maxBlobDownloadBytes: Int
     private let fileManager = FileManager.default
+    private let stateStore: SyncStateStore
 
     init(repoURL: URL, maxBlobDownloadBytes: Int = 5 * 1024 * 1024) {
         self.repoURL = repoURL
         self.maxBlobDownloadBytes = maxBlobDownloadBytes
+        self.stateStore = SyncStateStore(repoRoot: repoURL)
     }
 
     func connect(branch: String, owner: String, repo: String, client: GitHubClient) async throws -> Result {
@@ -51,7 +53,7 @@ actor SyncWorker {
         var state = SyncRepoState(owner: owner, repo: repo, branch: branch,
                                   baseCommitSHA: head, files: files, skippedPaths: skipped)
         state.lastSyncDate = Date()
-        persist(state)
+        try persist(state)
         return Result(state: state, status: try await computeStatus(using: client, state: state))
     }
 
@@ -71,7 +73,7 @@ actor SyncWorker {
         var state = initialState
         let status = localChanges(against: state)
         state.stagedPaths = status.changedPaths
-        persist(state)
+        try? persist(state)
         return Result(state: state, status: status)
     }
 
@@ -114,7 +116,7 @@ actor SyncWorker {
         var state = initialState
         state.stagedPaths = []
         state.pendingCommit = PendingGitCommit(sha: commitSHA, changes: pendingChanges)
-        persist(state)
+        try persist(state)
         return Result(state: state, status: localChanges(against: state))
     }
 
@@ -132,7 +134,7 @@ actor SyncWorker {
         state.baseCommitSHA = pending.sha
         state.pendingCommit = nil
         state.lastSyncDate = Date()
-        persist(state)
+        try persist(state)
         return Result(state: state, status: localChanges(against: state))
     }
 
@@ -143,7 +145,7 @@ actor SyncWorker {
     func discardPendingCommit(state initialState: SyncRepoState) -> Result {
         var state = initialState
         state.pendingCommit = nil
-        persist(state)
+        try? persist(state)
         return Result(state: state, status: localChanges(against: state))
     }
 
@@ -163,7 +165,7 @@ actor SyncWorker {
         }
         var state = initialState
         state.stagedPaths.removeAll { changes.changedPaths.contains($0) }
-        persist(state)
+        try persist(state)
         return Result(state: state, status: localChanges(against: state))
     }
 
@@ -198,7 +200,7 @@ actor SyncWorker {
         let remoteHead = try await client.getRef(branch: state.branch).object.sha
         if remoteHead == state.baseCommitSHA {
             state.lastSyncDate = Date()
-            persist(state)
+            try persist(state)
             return Result(state: state, status: localChanges(against: state))
         }
 
@@ -255,7 +257,7 @@ actor SyncWorker {
         state.skippedPaths = Array(skipped).filter { newFiles[$0] != nil }
         state.baseCommitSHA = remoteHead
         state.lastSyncDate = Date()
-        persist(state)
+        try persist(state)
         return Result(state: state, status: localChanges(against: state))
     }
 
@@ -311,14 +313,14 @@ actor SyncWorker {
         rebased.baseCommitSHA = commit
         rebased.lastSyncDate = Date()
         rebased.stagedPaths = []
-        persist(rebased)
+        try persist(rebased)
         return Result(state: rebased, status: localChanges(against: rebased))
     }
 
     func removeWorkingCopy() { clearWorkingCopy() }
 
     func removePersistedState() {
-        try? fileManager.removeItem(at: repoURL.appendingPathComponent(".orgsync/state.json"))
+        stateStore.delete()
     }
 
     private func computeStatus(using client: GitHubClient, state: SyncRepoState) async throws -> SyncStatus {
@@ -417,10 +419,7 @@ actor SyncWorker {
         try? fileManager.copyItem(at: repoURL, to: backup)
     }
 
-    private func persist(_ state: SyncRepoState) {
-        let url = repoURL.appendingPathComponent(".orgsync/state.json")
-        try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]; encoder.dateEncodingStrategy = .iso8601
-        if let data = try? encoder.encode(state) { try? data.write(to: url, options: .atomic) }
+    private func persist(_ state: SyncRepoState) throws {
+        try stateStore.save(state)
     }
 }

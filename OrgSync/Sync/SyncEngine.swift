@@ -59,7 +59,7 @@ final class SyncEngine {
         self.settings = settings
         self.session = session
         self.worker = SyncWorker(repoURL: repo.repoURL)
-        self.state = Self.loadState(from: Self.stateURL(repoRoot: repo.repoURL))
+        self.state = SyncStateStore(repoRoot: repo.repoURL).load()
         self.lastSyncDate = state?.lastSyncDate
     }
 
@@ -274,16 +274,5 @@ final class SyncEngine {
 
     private func currentToken() -> String {
         KeychainHelper.get(account: SettingsStore.tokenAccount) ?? settings.token
-    }
-
-    private static func stateURL(repoRoot: URL) -> URL {
-        repoRoot.appendingPathComponent(".orgsync/state.json")
-    }
-
-    private static func loadState(from url: URL) -> SyncRepoState? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try? decoder.decode(SyncRepoState.self, from: data)
     }
 }
