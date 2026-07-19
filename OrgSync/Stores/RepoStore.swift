@@ -23,6 +23,21 @@ final class RepoStore {
     private var mutationBatchDepth = 0
     private var mutationPending = false
 
+    /// Parsed-document cache keyed by repo-relative path. Avoids re-parsing every
+    /// file on each `allTodoItems()` / snapshot write. Entries are invalidated on
+    /// local writes and validated against file modification date + the global
+    /// TODO-config signature so external (synced) changes are picked up too.
+    @ObservationIgnored private var documentCache: [String: CachedDocument] = [:]
+
+    /// Count of real parses performed (cache misses). Exposed for tests.
+    @ObservationIgnored private(set) var parseCount = 0
+
+    private struct CachedDocument {
+        let modificationDate: Date
+        let configSignature: String
+        let document: OrgDocument
+    }
+
     init() {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         repoURL = documents.appendingPathComponent("repo", isDirectory: true)
@@ -156,17 +171,35 @@ final class RepoStore {
         (try? String(contentsOf: item.url, encoding: .utf8)) ?? ""
     }
 
-    /// Parse a file into an `OrgDocument`.
+    /// Parse a file into an `OrgDocument`. Cached by path; the cache is reused
+    /// only when the file's modification date and the global TODO-config
+    /// signature both match the parsed entry.
     func document(of item: FileItem) -> OrgDocument {
+        let signature = Self.configSignature()
+        if let cached = documentCache[item.relativePath],
+           cached.modificationDate == item.modifiedDate,
+           cached.configSignature == signature {
+            return cached.document
+        }
+
+        parseCount += 1
         var document = OrgParser.parse(text(of: item))
         // A document-local #+TODO remains authoritative; otherwise apply the
         // user's global preference as the default TODO vocabulary.
         let hasLocalConfig = document.keywords.contains { OrgTodoConfig.keywordNames.contains($0.key.uppercased()) }
-        if !hasLocalConfig,
-           let value = UserDefaults.standard.string(forKey: "settings.todo.keywords"), !value.isEmpty {
-            document.todoConfig = OrgTodoConfig(sequences: [OrgTodoConfig.parseSequence(value)])
+        if !hasLocalConfig, !signature.isEmpty {
+            document.todoConfig = OrgTodoConfig(sequences: [OrgTodoConfig.parseSequence(signature)])
         }
+        documentCache[item.relativePath] = CachedDocument(
+            modificationDate: item.modifiedDate, configSignature: signature, document: document
+        )
         return document
+    }
+
+    /// Signature that distinguishes cached parses across global TODO-config
+    /// changes (the only parse input outside the file itself).
+    private static func configSignature() -> String {
+        UserDefaults.standard.string(forKey: "settings.todo.keywords") ?? ""
     }
 
     /// Overwrite a file's contents with `text`. Used by the note editor and by
@@ -176,6 +209,9 @@ final class RepoStore {
         guard (try? text.write(to: item.url, atomically: true, encoding: .utf8)) != nil else {
             return false
         }
+        // Same-second writes can share a modification date, so invalidate
+        // explicitly rather than relying on the date check alone.
+        documentCache[item.relativePath] = nil
         didMutateRepo()
         return true
     }
@@ -233,6 +269,9 @@ final class RepoStore {
         guard (try? fileManager.moveItem(at: item.url, to: destination)) != nil else {
             return nil
         }
+        // A folder rename changes every descendant's path, so clear everything;
+        // a file rename only frees its own entry.
+        if item.isDirectory { documentCache.removeAll() } else { documentCache[item.relativePath] = nil }
         didMutateRepo()
         return relativePath(for: destination)
     }
@@ -241,13 +280,16 @@ final class RepoStore {
     @discardableResult
     func delete(_ item: FileItem) -> Bool {
         guard (try? fileManager.removeItem(at: item.url)) != nil else { return false }
+        if item.isDirectory { documentCache.removeAll() } else { documentCache[item.relativePath] = nil }
         didMutateRepo()
         return true
     }
 
     /// Forces observing views to re-list the directory. Called after a sync
-    /// writes files directly to disk (bypassing the mutation helpers above).
+    /// writes files directly to disk (bypassing the mutation helpers above), so
+    /// the entire parse cache is discarded — any file may have changed.
     func refresh() {
+        documentCache.removeAll()
         didMutateRepo()
     }
 
