@@ -97,12 +97,17 @@ enum AgendaTimeRange: String, AppEnum {
 
 /// Configuration intent backing the Upcoming widget's Edit Widget options.
 struct UpcomingConfigIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Upcoming TODOs"
-    static var description = IntentDescription("Choose which scheduled tasks to show.")
+    static var title: LocalizedStringResource = "Scheduled TODOs"
+    static var description = IntentDescription("Choose the scheduled-date range to show.")
 
-    @Parameter(title: "Show", default: .upcoming) var range: AgendaTimeRange
+    @Parameter(title: "Date Range", default: .upcoming) var range: AgendaTimeRange
 
-    init() {}
+    static var parameterSummary: some ParameterSummary {
+        Summary { \.$range }
+    }
+
+    init() { range = .upcoming }
+    init(range: AgendaTimeRange) { self.range = range }
 }
 
 struct UpcomingEntry: TimelineEntry {
