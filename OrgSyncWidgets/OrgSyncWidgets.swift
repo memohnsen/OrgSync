@@ -290,10 +290,36 @@ struct AgendaListView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Complete \(item.title)")
-            Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
-                Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            if let marks = Self.priorityMarks(item.priority) {
+                Text(marks)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel("Priority \(item.priority ?? "")")
             }
+            Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
+                HStack(spacing: 6) {
+                    Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
+                        .layoutPriority(1)
+                    Spacer(minLength: 0)
+                    if !item.tags.isEmpty {
+                        Text(item.tags.map { "#\($0)" }.joined(separator: " "))
+                            .lineLimit(1)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    /// Org priority rendered as exclamation marks: A = !!!, B = !!, C = !.
+    static func priorityMarks(_ priority: String?) -> String? {
+        switch priority {
+        case "A": "!!!"
+        case "B": "!!"
+        case "C": "!"
+        default: nil
         }
     }
 
