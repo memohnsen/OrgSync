@@ -86,7 +86,11 @@ enum OrgEditorToolbarPreferences {
     static func load(defaults: UserDefaults = .standard) -> [OrgEditorCommand] {
         let stored = defaults.stringArray(forKey: commandsKey) ?? []
         let commands = uniqueCommands(from: stored.compactMap(OrgEditorCommand.init(rawValue:)))
-        return commands.isEmpty ? defaultCommands : commands
+        guard !commands.isEmpty else { return defaultCommands }
+        // Toolbar layouts are persisted, so existing users would otherwise
+        // never see commands introduced in a later release. Add recurrence
+        // once; it can still be removed from the customization screen.
+        return commands.contains(.recurrence) ? commands : commands + [.recurrence]
     }
 
     static func save(_ commands: [OrgEditorCommand], defaults: UserDefaults = .standard) {

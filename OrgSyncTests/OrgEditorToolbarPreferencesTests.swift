@@ -22,7 +22,7 @@ import Testing
 
         OrgEditorToolbarPreferences.save([.deadline, .bold, .deadline], defaults: defaults)
 
-        #expect(OrgEditorToolbarPreferences.load(defaults: defaults) == [.deadline, .bold])
+        #expect(OrgEditorToolbarPreferences.load(defaults: defaults) == [.deadline, .bold, .recurrence])
     }
 
     @Test func invalidOrEmptyPersistedCommandsRestoreTheUsefulDefaultSet() {
