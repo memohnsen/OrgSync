@@ -153,6 +153,21 @@ final class RepoStore {
         allOrgFiles().flatMap { document(of: $0).todoItems(filePath: $0.relativePath) }
     }
 
+    /// Notes that reference `item` through an org `[[wiki-link]]`, name-sorted.
+    func backlinks(to item: FileItem) -> [FileItem] {
+        _ = revision
+        let displayName = item.displayName
+        let relativePath = item.relativePath
+        return allOrgFiles()
+            .filter { $0.relativePath != relativePath }
+            .filter { file in
+                WikiLink.targets(in: text(of: file)).contains {
+                    WikiLink.resolves($0, toNoteNamed: displayName, relativePath: relativePath)
+                }
+            }
+            .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+    }
+
     /// Resolves a repo-relative path to a `FileItem`, if the entry still exists.
     func item(forRelativePath path: String) -> FileItem? {
         let url = repoURL.appendingPathComponent(path)

@@ -24,10 +24,18 @@ struct OrgReaderActions {
 // MARK: - Document
 
 struct OrgReaderView: View {
+    struct BacklinkRef: Identifiable, Hashable {
+        let relativePath: String
+        let title: String
+        var id: String { relativePath }
+    }
+
     @Environment(SettingsStore.self) private var settings
     let document: OrgDocument
     @Binding var collapsed: Set<[Int]>
     let actions: OrgReaderActions
+    var backlinks: [BacklinkRef] = []
+    var onOpenBacklink: (BacklinkRef) -> Void = { _ in }
 
     var body: some View {
         ScrollView {
@@ -47,10 +55,36 @@ struct OrgReaderView: View {
                                     statusColors: settings.todoStatusColors,
                                     collapsed: $collapsed, actions: actions)
                 }
+                if !backlinks.isEmpty {
+                    backlinksSection
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
+    }
+
+    private var backlinksSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider().padding(.top, 8)
+            Label("Linked References", systemImage: "link")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            ForEach(backlinks) { ref in
+                Button { onOpenBacklink(ref) } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.text").foregroundStyle(.secondary)
+                        Text(ref.title)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("note.backlink.\(ref.relativePath)")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -30,6 +30,7 @@ struct NoteDetailView: View {
     /// external change so the stale in-memory document isn't written back
     /// over it by the next reader mutation.
     @State private var diskText = ""
+    @State private var backlinks: [OrgReaderView.BacklinkRef] = []
     @State private var toolbarCommands = OrgEditorToolbarPreferences.load()
     @State private var isCustomizingToolbar = false
 
@@ -45,7 +46,9 @@ struct NoteDetailView: View {
                     .ignoresSafeArea(.container, edges: .bottom)
                     .onChange(of: editText) { _, _ in scheduleAutosave() }
             } else {
-                OrgReaderView(document: document, collapsed: $collapsed, actions: readerActions)
+                OrgReaderView(document: document, collapsed: $collapsed, actions: readerActions,
+                              backlinks: backlinks,
+                              onOpenBacklink: { AppServices.requestOpen(tab: "notes", note: $0.relativePath) })
             }
         }
         .navigationTitle(item.displayName)
@@ -90,7 +93,14 @@ struct NoteDetailView: View {
         guard !loaded else { return }
         diskText = repo.text(of: item)
         document = repo.document(of: item)
+        refreshBacklinks()
         loaded = true
+    }
+
+    private func refreshBacklinks() {
+        backlinks = repo.backlinks(to: item).map {
+            OrgReaderView.BacklinkRef(relativePath: $0.relativePath, title: $0.displayName)
+        }
     }
 
     /// Adopts changes another writer (pull, Reminders sync) made to this file
@@ -108,6 +118,7 @@ struct NoteDetailView: View {
         }
         diskText = current
         document = repo.document(of: item)
+        refreshBacklinks()
     }
 
     private func enterEditMode() {
