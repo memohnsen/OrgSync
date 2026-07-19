@@ -125,18 +125,16 @@ struct AgendaView: View {
                                 DatePicker("Deadline Date", selection: $deadlineDate, displayedComponents: .date)
                                     .accessibilityIdentifier("agenda.quickAddDeadlineDate")
                             }
-                            Section("Recurrence") {
-                                Toggle("Repeat task", isOn: $repeats)
-                                    .disabled(!includesScheduledDate && !includesDeadlineDate)
-                                    .accessibilityIdentifier("agenda.quickAddRepeats")
-                                if repeats {
-                                    Stepper("Repeat every \(repeatInterval)", value: $repeatInterval, in: 1...99)
-                                    Picker("Unit", selection: $repeatUnit) {
-                                        Text("Day").tag(OrgInterval.day)
-                                        Text("Week").tag(OrgInterval.week)
-                                        Text("Month").tag(OrgInterval.month)
-                                        Text("Year").tag(OrgInterval.year)
-                                    }
+                            Toggle("Repeat task", isOn: $repeats)
+                                .disabled(!includesScheduledDate && !includesDeadlineDate)
+                                .accessibilityIdentifier("agenda.quickAddRepeats")
+                            if repeats {
+                                Stepper("Repeat every \(repeatInterval)", value: $repeatInterval, in: 1...99)
+                                Picker("Unit", selection: $repeatUnit) {
+                                    Text("Day").tag(OrgInterval.day)
+                                    Text("Week").tag(OrgInterval.week)
+                                    Text("Month").tag(OrgInterval.month)
+                                    Text("Year").tag(OrgInterval.year)
                                 }
                             }
                         }

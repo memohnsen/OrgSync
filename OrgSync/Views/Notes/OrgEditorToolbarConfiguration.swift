@@ -88,9 +88,13 @@ enum OrgEditorToolbarPreferences {
         let commands = uniqueCommands(from: stored.compactMap(OrgEditorCommand.init(rawValue:)))
         guard !commands.isEmpty else { return defaultCommands }
         // Toolbar layouts are persisted, so existing users would otherwise
-        // never see commands introduced in a later release. Add recurrence
-        // once; it can still be removed from the customization screen.
-        return commands.contains(.recurrence) ? commands : commands + [.recurrence]
+        // never see commands introduced in a later release. Place recurrence
+        // beside Deadline, matching the default toolbar order.
+        guard !commands.contains(.recurrence) else { return commands }
+        var migrated = commands
+        let position = migrated.firstIndex(of: .deadline).map { $0 + 1 } ?? migrated.endIndex
+        migrated.insert(.recurrence, at: position)
+        return migrated
     }
 
     static func save(_ commands: [OrgEditorCommand], defaults: UserDefaults = .standard) {

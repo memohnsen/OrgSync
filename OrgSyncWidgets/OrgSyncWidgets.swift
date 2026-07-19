@@ -69,7 +69,7 @@ enum AgendaTimeRange: String, AppEnum {
     /// items are always included (they still need attention today).
     func filter(_ items: [WidgetAgendaItem]) -> [WidgetAgendaItem] {
         let calendar = Calendar.current
-        let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now)) ?? .now
+        let startOfToday = calendar.startOfDay(for: .now)
         let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
         let dated = items.compactMap { item -> (item: WidgetAgendaItem, date: Date)? in
             guard let date = item.deadline ?? item.scheduled else { return nil }
@@ -77,7 +77,11 @@ enum AgendaTimeRange: String, AppEnum {
         }
         let windowed = dated.filter { entry in
             switch self {
-            case .today: entry.date < startOfTomorrow
+            case .today:
+                // Use a calendar-day comparison rather than a timestamp
+                // cutoff so a configured Today widget can never show tomorrow
+                // because of timezone or midnight conversion differences.
+                entry.date < startOfToday || calendar.isDate(entry.date, inSameDayAs: .now)
             case .week: entry.date < endOfWeek
             case .upcoming: true
             }
@@ -219,14 +223,16 @@ struct AgendaListView: View {
     var accent: Color
     var empty: String
 
-    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 18
-    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 20
+    // These are fitting estimates only; they do not change the row fonts or
+    // spacing. The previous estimates left enough unused space for one task.
+    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 21
+    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 21
 
     var body: some View {
         GeometryReader { proxy in
             let rows = fitted(in: proxy.size.height)
             ZStack(alignment: .bottomTrailing) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     if rows.isEmpty {
                         Text(empty).font(.caption).foregroundStyle(.secondary)
                     } else {
