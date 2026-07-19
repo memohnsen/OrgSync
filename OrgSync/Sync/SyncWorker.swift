@@ -80,7 +80,7 @@ actor SyncWorker {
     /// Creates a Git commit object without moving the remote branch ref.
     func commitStaged(state initialState: SyncRepoState, client: GitHubClient, message: String?) async throws -> Result {
         guard initialState.pendingCommit == nil else {
-            throw GitHubError.server(status: 409, message: "Push the pending commit before creating another commit")
+            throw SyncError.pendingCommitBlocksCommit
         }
         let current = localChanges(against: initialState)
         let staged = Set(initialState.stagedPaths)
@@ -88,7 +88,7 @@ actor SyncWorker {
         let added = current.added.filter { staged.contains($0) }
         let deleted = current.deleted.filter { staged.contains($0) }
         guard !modified.isEmpty || !added.isEmpty || !deleted.isEmpty else {
-            throw GitHubError.server(status: 422, message: "Stage one or more changes before committing")
+            throw SyncError.nothingStaged
         }
 
         let working = enumerateWorkingFiles()
@@ -123,7 +123,7 @@ actor SyncWorker {
     /// Publishes a previously created commit by advancing the branch ref.
     func pushPending(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         guard let pending = initialState.pendingCommit else {
-            throw GitHubError.server(status: 422, message: "Create a commit before pushing")
+            throw SyncError.noPendingCommit
         }
         try await client.updateRef(branch: initialState.branch, sha: pending.sha, force: false)
         var state = initialState
@@ -153,7 +153,7 @@ actor SyncWorker {
     /// discarding a pending commit, this removes unsaved local file changes.
     func discardLocalChanges(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         guard initialState.pendingCommit == nil else {
-            throw GitHubError.server(status: 409, message: "Push or discard the pending commit before discarding local changes")
+            throw SyncError.pendingCommitBlocksDiscard
         }
         let changes = localChanges(against: initialState)
         for path in changes.modified + changes.deleted {
@@ -194,7 +194,7 @@ actor SyncWorker {
 
     func pull(state initialState: SyncRepoState, client: GitHubClient) async throws -> Result {
         guard initialState.pendingCommit == nil else {
-            throw GitHubError.server(status: 409, message: "Push the pending commit before pulling remote changes")
+            throw SyncError.pendingCommitBlocksPull
         }
         var state = initialState
         let remoteHead = try await client.getRef(branch: state.branch).object.sha
@@ -271,7 +271,7 @@ actor SyncWorker {
     func commitAndPush(state: SyncRepoState, client: GitHubClient, message: String?, allowRetry: Bool = true) async throws -> Result {
         if state.pendingCommit != nil { return try await pushPending(state: state, client: client) }
         if enumerateWorkingFiles().keys.contains(where: { $0.contains(" (conflict ") }) {
-            throw GitHubError.server(status: 409, message: "Resolve conflict copies before committing and pushing")
+            throw SyncError.unresolvedConflicts
         }
         let changes = localChanges(against: state)
         guard changes.hasLocalChanges else { return Result(state: state, status: changes) }

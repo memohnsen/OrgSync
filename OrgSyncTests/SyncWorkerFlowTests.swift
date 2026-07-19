@@ -107,7 +107,7 @@ private func makeWorkingCopy() throws -> URL {
         await #expect(throws: GitHubError.nonFastForward) {
             _ = try await worker.pushPending(state: result.state, client: client)
         }
-        await #expect(throws: GitHubError.self) {
+        await #expect(throws: SyncError.pendingCommitBlocksPull) {
             _ = try await worker.pull(state: result.state, client: client)
         }
 
