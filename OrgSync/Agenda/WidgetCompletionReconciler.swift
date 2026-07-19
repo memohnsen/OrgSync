@@ -26,6 +26,9 @@ enum WidgetCompletionReconciler {
         let matches = repo.allTodoItems().filter {
             wanted.contains(AgendaSnapshotWriter.snapshotID(for: $0))
                 && !OrgTodoStatusPalette.isCompleted($0.keyword)
+                // Calendar-mirror entries are read-only events; a DONE written
+                // there would just be regenerated away on the next sync.
+                && $0.outline.filePath != CalendarSyncRules.fileName
         }
         guard !matches.isEmpty else { return }
 

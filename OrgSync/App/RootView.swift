@@ -16,6 +16,7 @@ struct RootView: View {
     @State private var settings: SettingsStore
     @State private var sync: SyncEngine
     @State private var reminders: RemindersSyncEngine
+    @State private var calendar: CalendarSyncEngine
     @State private var onboarding: OnboardingState
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
@@ -33,6 +34,7 @@ struct RootView: View {
         _settings = State(initialValue: settings)
         _sync = State(initialValue: SyncEngine(repo: repo, settings: settings))
         _reminders = State(initialValue: RemindersSyncEngine(settings: settings))
+        _calendar = State(initialValue: CalendarSyncEngine(settings: settings))
         _onboarding = State(initialValue: OnboardingState())
     }
 
@@ -63,6 +65,7 @@ struct RootView: View {
         .environment(settings)
         .environment(sync)
         .environment(reminders)
+        .environment(calendar)
         .environment(onboarding)
         .fullScreenCover(isPresented: $onboarding.isPresented) {
             OnboardingView(
@@ -129,8 +132,14 @@ struct RootView: View {
         default: event = .inactive
         }
         // Apply any TODO completions tapped in the widget before syncing, so the
-        // marked-done note is included in the outgoing push.
-        if phase == .active { WidgetCompletionReconciler.reconcile(repo: repo) }
+        // marked-done note is included in the outgoing push. Refresh the
+        // read-only calendar mirror on every open as well.
+        if phase == .active {
+            WidgetCompletionReconciler.reconcile(repo: repo)
+            if settings.calendarSync {
+                Task { await calendar.sync(repo: repo) }
+            }
+        }
         for action in AutoSyncPolicy.actions(
             for: event,
             isConnected: sync.isConnected,

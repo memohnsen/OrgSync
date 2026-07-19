@@ -54,7 +54,9 @@ final class RemindersSyncEngine {
             let list = try orgSyncList()
             var mappings = loadMappings()
             ensurePersistentIDs(repo: repo)
-            let inboundItems = repo.allTodoItems()
+            // The read-only calendar mirror never syncs with Reminders: its
+            // entries are events, and the file is regenerated wholesale.
+            let inboundItems = repo.allTodoItems().filter { $0.outline.filePath != CalendarSyncRules.fileName }
             // Duplicate keys are possible (a duplicated file or copy-pasted
             // subtree carries its :ID: along) — keep the first occurrence
             // rather than trapping.
@@ -114,7 +116,7 @@ final class RemindersSyncEngine {
 
             // Re-read the notes after inbound mutations, then mirror their
             // current state out to Reminders.
-            let items = repo.allTodoItems()
+            let items = repo.allTodoItems().filter { $0.outline.filePath != CalendarSyncRules.fileName }
             for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item)] != nil {
                 let mapKey = key(item)
                 let reminder = mappings[mapKey].flatMap { store.calendarItem(withIdentifier: $0) as? EKReminder }
@@ -159,7 +161,8 @@ final class RemindersSyncEngine {
 
     private func ensurePersistentIDs(repo: RepoStore) {
         repo.performMutationBatch {
-            for file in repo.allOrgFiles() {
+            // Never write :ID: drawers into the regenerated calendar mirror.
+            for file in repo.allOrgFiles() where file.relativePath != CalendarSyncRules.fileName {
                 var document = repo.document(of: file)
                 if document.ensurePersistentIDsForTodoHeadlines() {
                     _ = repo.write(document.serialize(), to: file)

@@ -35,7 +35,19 @@ enum AgendaSnapshotWriter {
     /// merge, Agenda action, or Reminders reconciliation—not only after the
     /// Agenda screen happens to be opened.
     static func write(repo: RepoStore) {
-        write(repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) })
+        write(agendaItems(repo: repo))
+    }
+
+    /// Open TODOs visible on agenda surfaces (the Agenda tab and widgets):
+    /// completed items are dropped, and mirrored calendar events are dropped
+    /// when the user has hidden them in Settings.
+    static func agendaItems(repo: RepoStore) -> [OrgTodoItem] {
+        var items = repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) }
+        let showsCalendar = UserDefaults.standard.object(forKey: SettingsStore.calendarShowInAgendaKey) as? Bool ?? true
+        if !showsCalendar {
+            items.removeAll { $0.outline.filePath == CalendarSyncRules.fileName }
+        }
+        return items
     }
 
     /// Stable id for a TODO, shared by the snapshot payload and the widget

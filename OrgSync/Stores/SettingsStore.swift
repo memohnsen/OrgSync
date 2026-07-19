@@ -23,6 +23,8 @@ final class SettingsStore {
         static let pullOnOpen = "settings.sync.pullOnOpen"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
+        static let calendarSync = "settings.calendar.sync"
+        static let calendarShowInAgenda = "settings.calendar.showInAgenda"
         static let archiveCompletedInboxTasks = "settings.inbox.archiveCompletedTasks"
         static let agendaDays = "settings.agenda.days"
         static let appearance = "settings.appearance"
@@ -66,6 +68,23 @@ final class SettingsStore {
     var remindersListID: String {
         didSet { defaults.set(remindersListID, forKey: Key.remindersListID) }
     }
+
+    // MARK: - Calendar
+
+    /// Mirrors upcoming calendar events into the read-only calendar.org file.
+    var calendarSync: Bool {
+        didSet { defaults.set(calendarSync, forKey: Key.calendarSync) }
+    }
+
+    /// Whether mirrored calendar events appear in the Agenda tab and widgets.
+    var calendarShowInAgenda: Bool {
+        didSet { defaults.set(calendarShowInAgenda, forKey: Key.calendarShowInAgenda) }
+    }
+
+    /// UserDefaults key for `calendarShowInAgenda`, read directly by
+    /// AgendaSnapshotWriter (widget payload generation happens outside the
+    /// store graph, mirroring how RepoStore reads the TODO keywords).
+    static var calendarShowInAgendaKey: String { Key.calendarShowInAgenda }
     /// When enabled, completed one-off tasks in `inbox.org` are moved to
     /// `done.org`. Repeating tasks always stay in place so they can recur.
     var archiveCompletedInboxTasks: Bool {
@@ -85,6 +104,8 @@ final class SettingsStore {
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
+        calendarSync = defaults.bool(forKey: Key.calendarSync)
+        calendarShowInAgenda = defaults.object(forKey: Key.calendarShowInAgenda) as? Bool ?? true
         archiveCompletedInboxTasks = defaults.bool(forKey: Key.archiveCompletedInboxTasks)
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"
