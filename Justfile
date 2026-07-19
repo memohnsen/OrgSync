@@ -1,5 +1,6 @@
 project := "OrgSync.xcodeproj"
 scheme := "OrgSync"
+app_id := "6792388512"
 simulator := env_var_or_default("IOS_SIMULATOR_ID", "E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5")
 destination := "platform=iOS Simulator,id=" + simulator
 
@@ -15,10 +16,24 @@ run: build
     xcrun simctl launch {{simulator}} com.memohnsen.OrgSync
 
 # Execute the complete unit and UI test suite.
-test:
-    xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' test
-
 # Exercise GitHub authentication, clone, and pull against the ignored local
 # reviewer repository credentials. This never writes to the remote branch.
-test-live-git:
+test:
+    xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' test
     @touch .orgsync-live-git-enabled; xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' -only-testing:OrgSyncTests/LiveGitHubIntegrationTests test; status=$?; rm -f .orgsync-live-git-enabled; exit $status
+
+# Archive the app and upload the build to App Store Connect.
+publish:
+    asc xcode archive \
+        --project {{project}} \
+        --scheme {{scheme}} \
+        --archive-path .asc/artifacts/OrgSync.xcarchive \
+        --clean --overwrite
+    asc xcode export \
+        --archive-path .asc/artifacts/OrgSync.xcarchive \
+        --ipa-path .asc/artifacts/OrgSync.ipa \
+        --overwrite
+    asc publish appstore \
+        --app {{app_id}} \
+        --ipa .asc/artifacts/OrgSync.ipa \
+        --wait
