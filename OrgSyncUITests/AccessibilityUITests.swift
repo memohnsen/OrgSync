@@ -84,14 +84,11 @@ final class AccessibilityUITests: XCTestCase {
         app.textFields["agenda.quickAddTitle"].typeText("Quick add regression")
         app.buttons["agenda.quickAddConfirm"].tap()
         app.segmentedControls["agenda.scope"].buttons["All"].tap()
-        // Agenda rows combine their children into one accessibility element
-        // whose label is "<status>, <title>, …, in <file>", so match the row by
-        // a label that contains the new task's title rather than an exact
-        // static text.
-        let newRow = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Quick add regression"))
-            .firstMatch
-        XCTAssertTrue(newRow.waitForExistence(timeout: 2))
+        // Agenda rows carry a stable "agenda.row.<title>" identifier; query it
+        // directly rather than scanning every descendant for a label substring
+        // (which is slow enough to flake under a short timeout on CI).
+        let newRow = app.descendants(matching: .any)["agenda.row.Quick add regression"]
+        XCTAssertTrue(newRow.waitForExistence(timeout: 5))
     }
 
     @MainActor

@@ -218,6 +218,7 @@ struct AgendaView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel(for: item))
+        .accessibilityIdentifier("agenda.row.\(item.title)")
         .accessibilityHint("Swipe right to complete or left to reschedule. Double tap to open note.")
     }
 
