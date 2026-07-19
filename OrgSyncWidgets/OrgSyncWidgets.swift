@@ -13,6 +13,11 @@ struct WidgetAgendaItem: Codable, Identifiable {
 struct WidgetAgendaSnapshot: Codable { var generatedAt: Date; var items: [WidgetAgendaItem] }
 extension WidgetAgendaSnapshot: TimelineEntry { var date: Date { generatedAt } }
 
+private extension WidgetAgendaItem {
+    /// Match the app Agenda: when both dates exist, use the earlier one.
+    var relevantDate: Date? { [scheduled, deadline].compactMap { $0 }.min() }
+}
+
 struct AgendaProvider: TimelineProvider {
     func placeholder(in context: Context) -> WidgetAgendaSnapshot { .init(generatedAt: .now, items: []) }
     func getSnapshot(in context: Context, completion: @escaping (WidgetAgendaSnapshot) -> Void) { completion(load()) }
@@ -72,7 +77,7 @@ enum AgendaTimeRange: String, AppEnum {
         let startOfToday = calendar.startOfDay(for: .now)
         let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
         let dated = items.compactMap { item -> (item: WidgetAgendaItem, date: Date)? in
-            guard let date = item.deadline ?? item.scheduled else { return nil }
+            guard let date = item.relevantDate else { return nil }
             return (item, date)
         }
         let windowed = dated.filter { entry in
@@ -194,14 +199,14 @@ enum AgendaRow {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
         let grouped = Dictionary(grouping: items) { item -> Date in
-            let date = item.deadline ?? item.scheduled ?? today
+            let date = item.relevantDate ?? today
             return max(calendar.startOfDay(for: date), today)
         }
         var rows: [AgendaRow] = []
         for day in grouped.keys.sorted() {
             rows.append(.day(label(for: day, today: today, calendar: calendar)))
             let dayItems = (grouped[day] ?? []).sorted {
-                ($0.deadline ?? $0.scheduled ?? .distantFuture) < ($1.deadline ?? $1.scheduled ?? .distantFuture)
+                ($0.relevantDate ?? .distantFuture) < ($1.relevantDate ?? .distantFuture)
             }
             rows.append(contentsOf: dayItems.map(AgendaRow.task))
         }
@@ -303,8 +308,7 @@ struct WidgetNoteList: View {
         GeometryReader { proxy in
             let capacity = max(1, Int((proxy.size.height - headerHeight) / rowHeight))
             let visible = Array(items.prefix(capacity))
-            ZStack(alignment: .bottomTrailing) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 6) {
                     Label(title, systemImage: symbol)
                         .font(.headline)
                         .foregroundStyle(accent)
@@ -319,8 +323,6 @@ struct WidgetNoteList: View {
                         }
                     }
                     Spacer(minLength: 0)
-                }
-                WidgetAddTaskButton()
             }
             // WidgetKit centers a view that does not claim the available space in
             // medium and large families. Fill that space and pin content to the

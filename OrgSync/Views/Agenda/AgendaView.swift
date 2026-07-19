@@ -129,13 +129,16 @@ struct AgendaView: View {
                                 .disabled(!includesScheduledDate && !includesDeadlineDate)
                                 .accessibilityIdentifier("agenda.quickAddRepeats")
                             if repeats {
-                                Stepper("Repeat every \(repeatInterval)", value: $repeatInterval, in: 1...99)
-                                Picker("Unit", selection: $repeatUnit) {
-                                    Text("Day").tag(OrgInterval.day)
-                                    Text("Week").tag(OrgInterval.week)
-                                    Text("Month").tag(OrgInterval.month)
-                                    Text("Year").tag(OrgInterval.year)
+                                Picker("Repeats", selection: $repeatUnit) {
+                                    Text("Every day").tag(OrgInterval.day)
+                                    Text("Every week").tag(OrgInterval.week)
+                                    Text("Every month on this date").tag(OrgInterval.month)
+                                    Text("Every year on this date").tag(OrgInterval.year)
                                 }
+                                Stepper(repeatIntervalLabel, value: $repeatInterval, in: 1...99)
+                                Text(repeatDetail)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -336,6 +339,31 @@ struct AgendaView: View {
             .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: ":")) }
             .filter { !$0.isEmpty }))
             .sorted()
+    }
+
+    private var repeatIntervalLabel: String {
+        return "Repeat every \(repeatInterval) \(repeatUnitLabel)"
+    }
+
+    private var repeatUnitLabel: String {
+        switch repeatUnit {
+        case .day: "days"
+        case .week: "weeks"
+        case .month: "months"
+        case .year: "years"
+        case .hour: "hours"
+        }
+    }
+
+    private var repeatDetail: String {
+        let date = includesScheduledDate ? scheduledDate : deadlineDate
+        return switch repeatUnit {
+        case .day: "Repeats daily from \(date.formatted(date: .abbreviated, time: .omitted))."
+        case .week: "Repeats on \(date.formatted(.dateTime.weekday(.wide)))."
+        case .month: "Repeats on day \(Calendar.current.component(.day, from: date)) of each month."
+        case .year: "Repeats every year on \(date.formatted(.dateTime.month(.wide).day()))."
+        case .hour: "Repeats hourly."
+        }
     }
 
     private func complete(_ item: OrgTodoItem) {
