@@ -20,17 +20,100 @@ struct AgendaProvider: TimelineProvider {
         let snapshot = load()
         completion(Timeline(entries: [snapshot], policy: .after(.now.addingTimeInterval(15 * 60))))
     }
-    private func load() -> WidgetAgendaSnapshot {
-        guard let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup),
-              let data = try? Data(contentsOf: root.appendingPathComponent(snapshotName)),
-              let value = try? JSONDecoder.orgSync.decode(WidgetAgendaSnapshot.self, from: data) else {
-            return .init(generatedAt: .now, items: [])
-        }
-        return value
-    }
+    private func load() -> WidgetAgendaSnapshot { loadAgendaSnapshot() }
 }
 private extension JSONDecoder { static let orgSync: JSONDecoder = { let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601; return d }() }
 private extension JSONEncoder { static let orgSync: JSONEncoder = { let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601; return e }() }
+
+/// Reads the shared agenda snapshot from the app group; empty when absent.
+func loadAgendaSnapshot() -> WidgetAgendaSnapshot {
+    guard let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup),
+          let data = try? Data(contentsOf: root.appendingPathComponent(snapshotName)),
+          let value = try? JSONDecoder.orgSync.decode(WidgetAgendaSnapshot.self, from: data) else {
+        return .init(generatedAt: .now, items: [])
+    }
+    return value
+}
+
+// MARK: - Configurable time range
+
+/// User-selectable window for the Upcoming widget, chosen from the Home Screen
+/// "Edit Widget" panel.
+enum AgendaTimeRange: String, AppEnum {
+    case today
+    case week
+    case upcoming
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation { "Time Range" }
+    static var caseDisplayRepresentations: [AgendaTimeRange: DisplayRepresentation] {
+        [.today: "Today", .week: "This Week", .upcoming: "All Upcoming"]
+    }
+
+    var title: String {
+        switch self {
+        case .today: "Today"
+        case .week: "This Week"
+        case .upcoming: "Upcoming"
+        }
+    }
+
+    var emptyText: String {
+        switch self {
+        case .today: "Nothing scheduled for today."
+        case .week: "Nothing scheduled this week."
+        case .upcoming: "Scheduled TODOs appear here."
+        }
+    }
+
+    /// Keeps only dated items falling inside this window, earliest first. Overdue
+    /// items are always included (they still need attention today).
+    func filter(_ items: [WidgetAgendaItem]) -> [WidgetAgendaItem] {
+        let calendar = Calendar.current
+        let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now)) ?? .now
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
+        let dated = items.compactMap { item -> (item: WidgetAgendaItem, date: Date)? in
+            guard let date = item.deadline ?? item.scheduled else { return nil }
+            return (item, date)
+        }
+        let windowed = dated.filter { entry in
+            switch self {
+            case .today: entry.date < startOfTomorrow
+            case .week: entry.date < endOfWeek
+            case .upcoming: true
+            }
+        }
+        return windowed.sorted { $0.date < $1.date }.map(\.item)
+    }
+}
+
+/// Configuration intent backing the Upcoming widget's Edit Widget options.
+struct UpcomingConfigIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Upcoming TODOs"
+    static var description = IntentDescription("Choose which scheduled tasks to show.")
+
+    @Parameter(title: "Show", default: .upcoming) var range: AgendaTimeRange
+
+    init() {}
+}
+
+struct UpcomingEntry: TimelineEntry {
+    let date: Date
+    let items: [WidgetAgendaItem]
+    let range: AgendaTimeRange
+}
+
+struct UpcomingProvider: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> UpcomingEntry {
+        UpcomingEntry(date: .now, items: [], range: .upcoming)
+    }
+    func snapshot(for configuration: UpcomingConfigIntent, in context: Context) async -> UpcomingEntry {
+        UpcomingEntry(date: .now, items: loadAgendaSnapshot().items, range: configuration.range)
+    }
+    func timeline(for configuration: UpcomingConfigIntent, in context: Context) async -> Timeline<UpcomingEntry> {
+        let entry = UpcomingEntry(date: .now, items: loadAgendaSnapshot().items, range: configuration.range)
+        return Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
+    }
+}
 
 /// Marks an agenda TODO complete straight from the widget. The extension can't
 /// reach the notes in the app's Documents sandbox, so it (1) queues the item id
@@ -85,25 +168,127 @@ struct FavoritesWidget: Widget {
 struct UpcomingWidget: Widget {
     let kind = "OrgSyncUpcoming"
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: AgendaProvider()) { entry in
-            let upcoming = entry.items.filter { ($0.deadline ?? $0.scheduled) != nil }.sorted { ($0.deadline ?? $0.scheduled ?? .distantFuture) < ($1.deadline ?? $1.scheduled ?? .distantFuture) }
-            WidgetNoteList(title: "Upcoming", symbol: "calendar", accent: .cyan, items: upcoming, empty: "Scheduled TODOs appear here.", showsCompletion: true)
+        AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
+            AgendaListView(items: entry.range.filter(entry.items), accent: .cyan, empty: entry.range.emptyText)
         }
-        .configurationDisplayName("Upcoming TODOs").description("Your next scheduled and deadline tasks.")
+        .configurationDisplayName("Upcoming TODOs")
+        .description("Scheduled and deadline tasks grouped by day. Long-press to show Today, This Week, or All Upcoming.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
+/// One rendered line in the agenda widget: a day divider or a task under it.
+enum AgendaRow {
+    case day(String)
+    case task(WidgetAgendaItem)
+
+    var isDay: Bool { if case .day = self { return true } else { return false } }
+
+    /// Groups items by day (overdue folds into Today) with a divider before each
+    /// day's tasks, days ascending and tasks within a day earliest first.
+    static func build(from items: [WidgetAgendaItem]) -> [AgendaRow] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let grouped = Dictionary(grouping: items) { item -> Date in
+            let date = item.deadline ?? item.scheduled ?? today
+            return max(calendar.startOfDay(for: date), today)
+        }
+        var rows: [AgendaRow] = []
+        for day in grouped.keys.sorted() {
+            rows.append(.day(label(for: day, today: today, calendar: calendar)))
+            let dayItems = (grouped[day] ?? []).sorted {
+                ($0.deadline ?? $0.scheduled ?? .distantFuture) < ($1.deadline ?? $1.scheduled ?? .distantFuture)
+            }
+            rows.append(contentsOf: dayItems.map(AgendaRow.task))
+        }
+        return rows
+    }
+
+    private static func label(for day: Date, today: Date, calendar: Calendar) -> String {
+        if calendar.isDate(day, inSameDayAs: today) { return "Today" }
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
+           calendar.isDate(day, inSameDayAs: tomorrow) { return "Tomorrow" }
+        return day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+    }
+}
+
+/// Fantastical-style agenda: tasks grouped under day dividers, each task a
+/// completion circle plus its title (no file path, no per-row date).
+struct AgendaListView: View {
+    var items: [WidgetAgendaItem]
+    var accent: Color
+    var empty: String
+
+    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 24
+    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 24
+
+    var body: some View {
+        GeometryReader { proxy in
+            let rows = fitted(in: proxy.size.height)
+            VStack(alignment: .leading, spacing: 4) {
+                if rows.isEmpty {
+                    Text(empty).font(.caption).foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                        switch row {
+                        case .day(let label):
+                            Text(label.uppercased())
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(accent)
+                                .padding(.top, 1)
+                        case .task(let item):
+                            taskRow(item)
+                        }
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .containerBackground(for: .widget) { Color.clear }
+    }
+
+    private func taskRow(_ item: WidgetAgendaItem) -> some View {
+        HStack(spacing: 8) {
+            Button(intent: CompleteTodoIntent(itemID: item.id)) {
+                Image(systemName: "circle").font(.footnote).foregroundStyle(accent)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Complete \(item.title)")
+            Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
+                Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    /// Keeps as many rows as fit the available height, never leaving a trailing
+    /// day divider with no tasks under it.
+    private func fitted(in height: CGFloat) -> [AgendaRow] {
+        var used: CGFloat = 0
+        var result: [AgendaRow] = []
+        for row in AgendaRow.build(from: items) {
+            let rowHeight = row.isDay ? dayHeight : taskHeight
+            if used + rowHeight > height { break }
+            used += rowHeight
+            result.append(row)
+        }
+        if let last = result.last, last.isDay { result.removeLast() }
+        return result
+    }
+}
+
+/// Favorites list: a titled header over note rows (name + path). The agenda
+/// widget uses AgendaListView instead.
 struct WidgetNoteList: View {
     var title: String; var symbol: String; var accent: Color; var items: [WidgetAgendaItem]; var empty: String
-    var showsCompletion = false
 
     // Estimated heights, scaled with Dynamic Type so the row count stays right
     // at larger text sizes. The header row plus each two-line note row are
     // divided into the real available height to decide how many rows fit —
     // this is what keeps rows from spilling off the top and bottom.
     @ScaledMetric(relativeTo: .headline) private var headerHeight: CGFloat = 30
-    @ScaledMetric(relativeTo: .subheadline) private var rowHeight: CGFloat = 42
+    @ScaledMetric(relativeTo: .footnote) private var rowHeight: CGFloat = 38
 
     var body: some View {
         GeometryReader { proxy in
@@ -115,23 +300,12 @@ struct WidgetNoteList: View {
                     .foregroundStyle(accent)
                 if visible.isEmpty { Text(empty).font(.caption).foregroundStyle(.secondary) }
                 ForEach(visible) { item in
-                    HStack(spacing: 8) {
-                        if showsCompletion {
-                            Button(intent: CompleteTodoIntent(itemID: item.id)) {
-                                Image(systemName: "circle")
-                                    .font(.subheadline)
-                                    .foregroundStyle(accent)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Complete \(item.title)")
+                    Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
+                            Text(item.filePath).lineLimit(1).font(.caption2).foregroundStyle(.secondary)
                         }
-                        Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(item.title).lineLimit(1).font(.subheadline)
-                                Text(item.filePath).lineLimit(1).font(.caption2).foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 Spacer(minLength: 0)

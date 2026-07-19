@@ -79,6 +79,11 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhase(newPhase)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .orgSyncOpenRequest)) { _ in
+            let target = AppServices.consumePendingOpen()
+            if let tab = target.tab { selectedTab = tab }
+            if let note = target.note { openedNotePath = note }
+        }
         .onOpenURL { url in
             // Widgets use orgsync://agenda and orgsync://note/<repo path>.
             // Note links land in the Notes tab; the user can then open the
@@ -91,6 +96,9 @@ struct RootView: View {
             }
         }
         .task {
+            // Share the live stores with App Intents so Siri/Shortcuts mutations
+            // flow straight into the running UI.
+            AppServices.register(repo: repo, settings: settings, sync: sync)
             // Initial launch doesn't always fire the scenePhase change, so drain
             // the widget completion queue here too. Idempotent.
             WidgetCompletionReconciler.reconcile(repo: repo)
