@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct AgendaView: View {
+    @Binding var showQuickAdd: Bool
     private enum Scope: String, CaseIterable, Identifiable {
         case today = "Today"
         case upcoming = "Upcoming"
@@ -24,7 +25,6 @@ struct AgendaView: View {
     @State private var items: [OrgTodoItem] = []
     @State private var rescheduling: OrgTodoItem?
     @State private var rescheduleDate = Date()
-    @State private var showQuickAdd = false
     @State private var quickAddTitle = ""
     @State private var quickAddStatus = "TODO"
     @State private var quickAddTags = ""
@@ -417,7 +417,7 @@ struct AgendaView: View {
 }
 
 #Preview {
-    AgendaView()
+    AgendaView(showQuickAdd: .constant(false))
         .environment(RepoStore())
         .environment(FavoritesStore())
 }

@@ -19,6 +19,7 @@ struct RootView: View {
     @State private var onboarding: OnboardingState
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
+    @State private var isShowingAgendaQuickAdd = false
     @State private var isShowingSplash = true
 
     private let holdsSplashForUITesting = ProcessInfo.processInfo.arguments.contains("-ui-testing-hold-splash")
@@ -44,7 +45,7 @@ struct RootView: View {
                     NotesView(openNotePath: $openedNotePath)
                 }
                 Tab("Agenda", systemImage: "calendar", value: "agenda") {
-                    AgendaView()
+                    AgendaView(showQuickAdd: $isShowingAgendaQuickAdd)
                 }
                 Tab("Settings", systemImage: "gearshape", value: "settings") {
                     SettingsView()
@@ -85,11 +86,14 @@ struct RootView: View {
             if let note = target.note { openedNotePath = note }
         }
         .onOpenURL { url in
-            // Widgets use orgsync://agenda and orgsync://note/<repo path>.
+            // Widgets use orgsync://agenda (optionally with ?newTask=1) and
+            // orgsync://note/<repo path>.
             // Note links land in the Notes tab; the user can then open the
             // named file in the existing native browser.
             if url.host == "agenda" {
                 selectedTab = "agenda"
+                isShowingAgendaQuickAdd = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                    .queryItems?.contains(where: { $0.name == "newTask" && $0.value == "1" }) == true
             } else {
                 selectedTab = "notes"
                 openedNotePath = url.path.removingPercentEncoding?.trimmingCharacters(in: CharacterSet(charactersIn: "/"))

@@ -107,10 +107,10 @@ struct UpcomingProvider: AppIntentTimelineProvider {
         UpcomingEntry(date: .now, items: [], range: .upcoming)
     }
     func snapshot(for configuration: UpcomingConfigIntent, in context: Context) async -> UpcomingEntry {
-        UpcomingEntry(date: .now, items: loadAgendaSnapshot().items, range: configuration.range)
+        UpcomingEntry(date: .now, items: configuration.range.filter(loadAgendaSnapshot().items), range: configuration.range)
     }
     func timeline(for configuration: UpcomingConfigIntent, in context: Context) async -> Timeline<UpcomingEntry> {
-        let entry = UpcomingEntry(date: .now, items: loadAgendaSnapshot().items, range: configuration.range)
+        let entry = UpcomingEntry(date: .now, items: configuration.range.filter(loadAgendaSnapshot().items), range: configuration.range)
         return Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
     }
 }
@@ -169,10 +169,10 @@ struct UpcomingWidget: Widget {
     let kind = "OrgSyncUpcoming"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
-            AgendaListView(items: entry.range.filter(entry.items), accent: .cyan, empty: entry.range.emptyText)
+            AgendaListView(items: entry.items, accent: .cyan, empty: entry.range.emptyText)
         }
         .configurationDisplayName("Upcoming TODOs")
-        .description("Scheduled and deadline tasks grouped by day. Long-press to show Today, This Week, or All Upcoming.")
+        .description("Scheduled and deadline tasks grouped by day.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -219,29 +219,32 @@ struct AgendaListView: View {
     var accent: Color
     var empty: String
 
-    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 24
-    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 24
+    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 18
+    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 20
 
     var body: some View {
         GeometryReader { proxy in
             let rows = fitted(in: proxy.size.height)
-            VStack(alignment: .leading, spacing: 4) {
-                if rows.isEmpty {
-                    Text(empty).font(.caption).foregroundStyle(.secondary)
-                } else {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                        switch row {
-                        case .day(let label):
-                            Text(label.uppercased())
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(accent)
-                                .padding(.top, 1)
-                        case .task(let item):
-                            taskRow(item)
+            ZStack(alignment: .bottomTrailing) {
+                VStack(alignment: .leading, spacing: 2) {
+                    if rows.isEmpty {
+                        Text(empty).font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                            switch row {
+                            case .day(let label):
+                                Text(label.uppercased())
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(accent)
+                                    .padding(.top, 1)
+                            case .task(let item):
+                                taskRow(item)
+                            }
                         }
                     }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                WidgetAddTaskButton()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
@@ -294,21 +297,24 @@ struct WidgetNoteList: View {
         GeometryReader { proxy in
             let capacity = max(1, Int((proxy.size.height - headerHeight) / rowHeight))
             let visible = Array(items.prefix(capacity))
-            VStack(alignment: .leading, spacing: 6) {
-                Label(title, systemImage: symbol)
-                    .font(.headline)
-                    .foregroundStyle(accent)
-                if visible.isEmpty { Text(empty).font(.caption).foregroundStyle(.secondary) }
-                ForEach(visible) { item in
-                    Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
-                            Text(item.filePath).lineLimit(1).font(.caption2).foregroundStyle(.secondary)
+            ZStack(alignment: .bottomTrailing) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(title, systemImage: symbol)
+                        .font(.headline)
+                        .foregroundStyle(accent)
+                    if visible.isEmpty { Text(empty).font(.caption).foregroundStyle(.secondary) }
+                    ForEach(visible) { item in
+                        Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
+                                Text(item.filePath).lineLimit(1).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                WidgetAddTaskButton()
             }
             // WidgetKit centers a view that does not claim the available space in
             // medium and large families. Fill that space and pin content to the
@@ -316,6 +322,19 @@ struct WidgetNoteList: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .containerBackground(for: .widget) { Color.clear }
+    }
+}
+
+/// Opens Agenda directly to its New Task popup from either widget family.
+private struct WidgetAddTaskButton: View {
+    var body: some View {
+        Link(destination: URL(string: "orgsync://agenda?newTask=1")!) {
+            Image(systemName: "plus.circle.fill")
+                .font(.title3)
+                .foregroundStyle(.tint)
+                .padding(2)
+        }
+        .accessibilityLabel("Add task")
     }
 }
 
