@@ -60,38 +60,5 @@ extension OrgTaskQuery: EntityStringQuery {
     }
 }
 
-// MARK: - Note
-
-struct OrgNoteEntity: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Note"
-    static var defaultQuery = OrgNoteQuery()
-
-    var id: String
-    var name: String
-
-    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
-}
-
-struct OrgNoteQuery: EntityQuery {
-    @MainActor
-    func entities(for identifiers: [String]) async throws -> [OrgNoteEntity] {
-        identifiers.compactMap { path in
-            AppServices.repo.item(forRelativePath: path)
-                .map { OrgNoteEntity(id: $0.relativePath, name: $0.displayName) }
-        }
-    }
-
-    @MainActor
-    func suggestedEntities() async throws -> [OrgNoteEntity] {
-        AppServices.repo.allOrgFiles().prefix(40).map { OrgNoteEntity(id: $0.relativePath, name: $0.displayName) }
-    }
-}
-
-extension OrgNoteQuery: EntityStringQuery {
-    @MainActor
-    func entities(matching string: String) async throws -> [OrgNoteEntity] {
-        AppServices.repo.allOrgFiles()
-            .filter { $0.displayName.localizedCaseInsensitiveContains(string) }
-            .map { OrgNoteEntity(id: $0.relativePath, name: $0.displayName) }
-    }
-}
+// Notes are represented by the assistant-schema NoteDocumentEntity in
+// OrgAssistantSchemas.swift (the WordProcessor document domain).

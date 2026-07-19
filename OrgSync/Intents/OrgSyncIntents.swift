@@ -45,25 +45,8 @@ struct AddTaskIntent: AppIntent {
     }
 }
 
-struct CreateNoteIntent: AppIntent {
-    static var title: LocalizedStringResource = "Create Note"
-    static var description = IntentDescription("Create a new note in OrgSync.")
-
-    @Parameter(title: "Name") var name: String
-
-    static var parameterSummary: some ParameterSummary {
-        Summary("Create note \(\.$name) in OrgSync")
-    }
-
-    @MainActor
-    func perform() async throws -> some IntentResult & ReturnsValue<OrgNoteEntity> & ProvidesDialog {
-        guard let file = AppServices.repo.createNote(named: name, in: AppServices.repo.repoURL) else {
-            throw OrgIntentError.noteCreateFailed
-        }
-        let entity = OrgNoteEntity(id: file.relativePath, name: file.displayName)
-        return .result(value: entity, dialog: "Created “\(file.displayName)”.")
-    }
-}
+// Note creation and opening are handled by the assistant-schema intents in
+// OrgAssistantSchemas.swift (CreateNoteDocumentIntent / OpenNoteDocumentIntent).
 
 // MARK: - Complete
 
@@ -134,24 +117,6 @@ struct SyncNowIntent: AppIntent {
 }
 
 // MARK: - Open
-
-struct OpenNoteIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Note"
-    static var description = IntentDescription("Open a note in OrgSync.")
-    static var openAppWhenRun = true
-
-    @Parameter(title: "Note") var note: OrgNoteEntity
-
-    static var parameterSummary: some ParameterSummary {
-        Summary("Open \(\.$note)")
-    }
-
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        AppServices.requestOpen(tab: "notes", note: note.id)
-        return .result()
-    }
-}
 
 struct OpenAgendaIntent: AppIntent {
     static var title: LocalizedStringResource = "Open Agenda"

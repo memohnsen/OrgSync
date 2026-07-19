@@ -39,7 +39,7 @@ struct OrgSyncShortcuts: AppShortcutsProvider {
             systemImageName: "calendar.badge.clock"
         )
         AppShortcut(
-            intent: CreateNoteIntent(),
+            intent: CreateNoteDocumentIntent(),
             phrases: [
                 "Create a note in \(.applicationName)",
                 "New \(.applicationName) note"
@@ -66,7 +66,7 @@ struct OrgSyncShortcuts: AppShortcutsProvider {
             systemImageName: "arrow.triangle.2.circlepath"
         )
         AppShortcut(
-            intent: OpenNoteIntent(),
+            intent: OpenNoteDocumentIntent(),
             phrases: [
                 "Open a note in \(.applicationName)"
             ],
