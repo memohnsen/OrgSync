@@ -22,7 +22,6 @@ final class CalendarSyncEngine {
     private(set) var access: Access = .unknown
     private(set) var lastError: String?
     private(set) var isSyncing = false
-    private(set) var lastSyncDate: Date?
 
     init(settings: SettingsStore) {
         self.settings = settings
@@ -68,6 +67,5 @@ final class CalendarSyncEngine {
                 return
             }
         }
-        lastSyncDate = .now
     }
 }

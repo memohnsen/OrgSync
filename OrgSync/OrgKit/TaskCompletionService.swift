@@ -16,21 +16,23 @@ enum TaskCompletionService {
         var source = repo.document(of: sourceFile)
         let original = source
 
-        // A repeating task must remain in its source document. Completion
-        // advances its timestamp and returns it to the first active state.
-        if item.scheduled?.repeater != nil || item.deadline?.repeater != nil {
+        // Marks the task DONE where it lives (advancing a repeater's timestamp
+        // back to its first active state when present).
+        func completeInPlace() -> Bool {
             guard source.mutateHeadline(at: item.outline, {
                 ReminderSyncRules.complete(&$0, item: item, document: original)
             }) else { return false }
             return repo.write(source.serialize(), to: sourceFile)
         }
 
+        // A repeating task must remain in its source document.
+        if item.scheduled?.repeater != nil || item.deadline?.repeater != nil {
+            return completeInPlace()
+        }
+
         guard settings.archiveCompletedInboxTasks,
               item.outline.filePath.caseInsensitiveCompare("inbox.org") == .orderedSame else {
-            guard source.mutateHeadline(at: item.outline, {
-                ReminderSyncRules.complete(&$0, item: item, document: original)
-            }) else { return false }
-            return repo.write(source.serialize(), to: sourceFile)
+            return completeInPlace()
         }
 
         guard var completed = source.removeHeadline(at: item.outline) else { return false }
