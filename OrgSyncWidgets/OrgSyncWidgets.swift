@@ -44,14 +44,17 @@ func loadAgendaSnapshot() -> WidgetAgendaSnapshot {
 
 /// User-selectable window for the scheduled-TODO widget, chosen from the Home
 /// Screen "Edit Widget" panel.
-enum AgendaTimeRange: String, AppEnum {
+enum AgendaTimeRange: String {
     case today
     case week
     case upcoming
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation { "Time Range" }
-    static var caseDisplayRepresentations: [AgendaTimeRange: DisplayRepresentation] {
-        [.today: "Today", .week: "This Week", .upcoming: "All Upcoming"]
+    init(configValue: String) {
+        switch configValue.lowercased() {
+        case "today": self = .today
+        case "week", "this week": self = .week
+        default: self = .upcoming
+        }
     }
 
     var title: String {
@@ -95,19 +98,29 @@ enum AgendaTimeRange: String, AppEnum {
     }
 }
 
+/// Strings are used for the widget configuration because WidgetKit does not
+/// reliably deserialize this extension's AppEnum value on-device. A dynamic
+/// options provider still presents this as a fixed Edit Widget picker.
+struct ScheduledRangeOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        ["Today", "This Week", "All Upcoming"]
+    }
+
+    func defaultResult() async -> String? { "upcoming" }
+}
+
 /// Configuration intent backing the Upcoming widget's Edit Widget options.
 struct UpcomingConfigIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Scheduled TODOs"
     static var description = IntentDescription("Choose the scheduled-date range to show.")
 
-    @Parameter(title: "Date Range", default: .upcoming) var range: AgendaTimeRange
+    @Parameter(title: "Date Range", default: "upcoming", optionsProvider: ScheduledRangeOptionsProvider())
+    var range: String
 
     static var parameterSummary: some ParameterSummary {
         Summary { \.$range }
     }
 
-    init() { range = .upcoming }
-    init(range: AgendaTimeRange) { self.range = range }
 }
 
 struct UpcomingEntry: TimelineEntry {
@@ -121,10 +134,12 @@ struct UpcomingProvider: AppIntentTimelineProvider {
         UpcomingEntry(date: .now, items: [], range: .upcoming)
     }
     func snapshot(for configuration: UpcomingConfigIntent, in context: Context) async -> UpcomingEntry {
-        UpcomingEntry(date: .now, items: configuration.range.filter(loadAgendaSnapshot().items), range: configuration.range)
+        let range = AgendaTimeRange(configValue: configuration.range)
+        return UpcomingEntry(date: .now, items: range.filter(loadAgendaSnapshot().items), range: range)
     }
     func timeline(for configuration: UpcomingConfigIntent, in context: Context) async -> Timeline<UpcomingEntry> {
-        let entry = UpcomingEntry(date: .now, items: configuration.range.filter(loadAgendaSnapshot().items), range: configuration.range)
+        let range = AgendaTimeRange(configValue: configuration.range)
+        let entry = UpcomingEntry(date: .now, items: range.filter(loadAgendaSnapshot().items), range: range)
         return Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
     }
 }
@@ -183,7 +198,7 @@ struct UpcomingWidget: Widget {
     let kind = "OrgSyncUpcoming"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
-            AgendaListView(items: entry.items, accent: .cyan, empty: entry.range.emptyText)
+            AgendaListView(items: entry.items, range: entry.range, accent: .cyan, empty: entry.range.emptyText)
         }
         .configurationDisplayName("Upcoming TODOs")
         .description("Scheduled and deadline tasks grouped by day.")
@@ -230,6 +245,7 @@ enum AgendaRow {
 /// completion circle plus its title (no file path, no per-row date).
 struct AgendaListView: View {
     var items: [WidgetAgendaItem]
+    var range: AgendaTimeRange
     var accent: Color
     var empty: String
 
@@ -240,7 +256,7 @@ struct AgendaListView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let rows = fitted(in: proxy.size.height)
+            let rows = fitted(from: range.filter(items), in: proxy.size.height)
             ZStack(alignment: .bottomTrailing) {
                 VStack(alignment: .leading, spacing: 4) {
                     if rows.isEmpty {
@@ -283,7 +299,7 @@ struct AgendaListView: View {
 
     /// Keeps as many rows as fit the available height, never leaving a trailing
     /// day divider with no tasks under it.
-    private func fitted(in height: CGFloat) -> [AgendaRow] {
+    private func fitted(from items: [WidgetAgendaItem], in height: CGFloat) -> [AgendaRow] {
         var used: CGFloat = 0
         var result: [AgendaRow] = []
         for row in AgendaRow.build(from: items) {
