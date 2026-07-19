@@ -15,7 +15,8 @@ import Foundation
 enum WidgetCompletionReconciler {
     /// Drains the widget completion queue and marks the matching headlines DONE.
     /// Idempotent: safe to call on every foreground.
-    static func reconcile(repo: RepoStore, defaults: UserDefaults? = nil) {
+    static func reconcile(repo: RepoStore, settings providedSettings: SettingsStore? = nil, defaults: UserDefaults? = nil) {
+        let settings = providedSettings ?? SettingsStore()
         let defaults = defaults ?? UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier) ?? .standard
         let pending = defaults.stringArray(forKey: AgendaSnapshot.pendingCompletionsKey) ?? []
         guard !pending.isEmpty else { return }
@@ -30,13 +31,7 @@ enum WidgetCompletionReconciler {
 
         var didWrite = false
         for item in matches {
-            guard let file = repo.item(forRelativePath: item.outline.filePath) else { continue }
-            var document = repo.document(of: file)
-            let source = document
-            let changed = document.mutateHeadline(at: item.outline) { headline in
-                ReminderSyncRules.complete(&headline, item: item, document: source)
-            }
-            if changed, repo.write(document.serialize(), to: file) { didWrite = true }
+            if TaskCompletionService.complete(item, repo: repo, settings: settings) { didWrite = true }
         }
 
         if didWrite {

@@ -10,6 +10,7 @@ import Testing
         #expect(commands.contains(.timestamp))
         #expect(commands.contains(.scheduled))
         #expect(commands.contains(.deadline))
+        #expect(commands.contains(.recurrence))
         #expect(commands.contains(.bold))
         #expect(commands.contains(.link))
     }
@@ -61,6 +62,7 @@ import Testing
             (.timestamp, timestamp, 0),
             (.scheduled, "SCHEDULED: \(timestamp)", 0),
             (.deadline, "DEADLINE: \(timestamp)", 0),
+            (.recurrence, "+1w", 0),
             (.priority, "[#A] ", 0),
             (.tag, ":tag:", 1),
             (.link, "[[][]]", 4),

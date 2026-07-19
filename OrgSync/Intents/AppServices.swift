@@ -79,14 +79,8 @@ enum AppServices {
     /// snapshot, so all widgets update too.
     @discardableResult
     static func completeTask(id: String) -> Bool {
-        guard let item = task(id: id),
-              let file = repo.item(forRelativePath: item.outline.filePath) else { return false }
-        var document = repo.document(of: file)
-        let source = document
-        guard document.mutateHeadline(at: item.outline, { headline in
-            ReminderSyncRules.complete(&headline, item: item, document: source)
-        }) else { return false }
-        return repo.write(document.serialize(), to: file)
+        guard let item = task(id: id) else { return false }
+        return TaskCompletionService.complete(item, repo: repo, settings: settings)
     }
 
     /// Appends a new TODO to inbox.org, optionally scheduled for a day.

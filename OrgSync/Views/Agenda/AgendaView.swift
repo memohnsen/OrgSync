@@ -32,6 +32,9 @@ struct AgendaView: View {
     @State private var scheduledDate = Date()
     @State private var includesDeadlineDate = false
     @State private var deadlineDate = Date()
+    @State private var repeats = false
+    @State private var repeatInterval = 1
+    @State private var repeatUnit: OrgInterval = .week
 
     var body: some View {
         NavigationStack {
@@ -121,6 +124,18 @@ struct AgendaView: View {
                             if includesDeadlineDate {
                                 DatePicker("Deadline Date", selection: $deadlineDate, displayedComponents: .date)
                                     .accessibilityIdentifier("agenda.quickAddDeadlineDate")
+                            }
+                            Toggle("Repeats", isOn: $repeats)
+                                .disabled(!includesScheduledDate && !includesDeadlineDate)
+                                .accessibilityIdentifier("agenda.quickAddRepeats")
+                            if repeats {
+                                Stepper("Every \(repeatInterval)", value: $repeatInterval, in: 1...99)
+                                Picker("Repeat", selection: $repeatUnit) {
+                                    Text("Day").tag(OrgInterval.day)
+                                    Text("Week").tag(OrgInterval.week)
+                                    Text("Month").tag(OrgInterval.month)
+                                    Text("Year").tag(OrgInterval.year)
+                                }
                             }
                         }
                     }
@@ -277,6 +292,9 @@ struct AgendaView: View {
         scheduledDate = .now
         includesDeadlineDate = false
         deadlineDate = .now
+        repeats = false
+        repeatInterval = 1
+        repeatUnit = .week
         showQuickAdd = true
     }
 
@@ -286,6 +304,9 @@ struct AgendaView: View {
         let status = availableStatuses.contains(where: { $0.name == quickAddStatus }) ? quickAddStatus : "TODO"
         let tags = normalizedTags(quickAddTags)
         let tagSuffix = tags.isEmpty ? "" : " :" + tags.joined(separator: ":") + ":"
+        let repeater = repeats && (includesScheduledDate || includesDeadlineDate)
+            ? OrgRepeater(kind: .cumulate, value: repeatInterval, unit: repeatUnit)
+            : nil
 
         guard let inbox = repo.item(forRelativePath: "inbox.org") ?? repo.createNote(named: "inbox", in: repo.repoURL) else { return }
         var text = repo.text(of: inbox)
@@ -293,10 +314,14 @@ struct AgendaView: View {
         if !text.isEmpty { text += "\n" }
         text += "* \(status) \(title)\(tagSuffix)\n"
         if includesScheduledDate {
-            text += "SCHEDULED: \(OrgTimestamp(date: scheduledDate, isActive: true, includeTime: false).serialize())\n"
+            var timestamp = OrgTimestamp(date: scheduledDate, isActive: true, includeTime: false)
+            timestamp.repeater = repeater
+            text += "SCHEDULED: \(timestamp.serialize())\n"
         }
         if includesDeadlineDate {
-            text += "DEADLINE: \(OrgTimestamp(date: deadlineDate, isActive: true, includeTime: false).serialize())\n"
+            var timestamp = OrgTimestamp(date: deadlineDate, isActive: true, includeTime: false)
+            timestamp.repeater = repeater
+            text += "DEADLINE: \(timestamp.serialize())\n"
         }
         guard repo.write(text, to: inbox) else { return }
         showQuickAdd = false
@@ -314,9 +339,8 @@ struct AgendaView: View {
     }
 
     private func complete(_ item: OrgTodoItem) {
-        mutate(item) { headline, document in
-            ReminderSyncRules.complete(&headline, item: item, document: document)
-        }
+        _ = TaskCompletionService.complete(item, repo: repo, settings: settings)
+        reload()
     }
 
     private func beginReschedule(_ item: OrgTodoItem) {

@@ -45,6 +45,16 @@ struct SettingsView: View {
                 } header: { Text("Preferences") }
 
                 Section {
+                    Toggle("Archive completed tasks", isOn: $settings.archiveCompletedInboxTasks)
+                        .accessibilityIdentifier("settings.archiveCompletedInboxTasks")
+                        .accessibilityHint("Moves completed, non-recurring tasks from inbox.org to done.org.")
+                } header: {
+                    Text("Inbox")
+                } footer: {
+                    Text("Recurring tasks remain in inbox.org and advance to their next scheduled occurrence.")
+                }
+
+                Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                         .disabled(reminders.access != .granted)
                         .accessibilityIdentifier("settings.remindersSync")

@@ -16,6 +16,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
     case timestamp
     case scheduled
     case deadline
+    case recurrence
     case priority
     case tag
     case bold
@@ -37,6 +38,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
         case .timestamp: "Timestamp"
         case .scheduled: "Scheduled"
         case .deadline: "Deadline"
+        case .recurrence: "Repeat weekly"
         case .priority: "Priority"
         case .tag: "Tag"
         case .bold: "Bold"
@@ -58,6 +60,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
         case .timestamp: "calendar"
         case .scheduled: "calendar.badge.clock"
         case .deadline: "calendar.badge.exclamationmark"
+        case .recurrence: "arrow.trianglehead.2.clockwise"
         case .priority: "exclamationmark.circle"
         case .tag: "tag"
         case .bold: "bold"
@@ -76,7 +79,7 @@ enum OrgEditorToolbarPreferences {
     private static let commandsKey = "editorToolbar.commands"
 
     static let defaultCommands: [OrgEditorCommand] = [
-        .headline, .todo, .checkbox, .timestamp, .scheduled, .deadline,
+        .headline, .todo, .checkbox, .timestamp, .scheduled, .deadline, .recurrence,
         .priority, .tag, .bold, .italic, .underline, .strike, .code, .link,
     ]
 
