@@ -99,6 +99,11 @@ struct RootView: View {
             // Share the live stores with App Intents so Siri/Shortcuts mutations
             // flow straight into the running UI.
             AppServices.register(repo: repo, settings: settings, sync: sync)
+            // An open intent that launched the app may have posted its request
+            // before this view subscribed; apply any pending target now.
+            let target = AppServices.consumePendingOpen()
+            if let tab = target.tab { selectedTab = tab }
+            if let note = target.note { openedNotePath = note }
             // Initial launch doesn't always fire the scenePhase change, so drain
             // the widget completion queue here too. Idempotent.
             WidgetCompletionReconciler.reconcile(repo: repo)
