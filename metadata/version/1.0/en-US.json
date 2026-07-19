@@ -3,6 +3,5 @@
   "keywords": "org mode,notes,todo,agenda,reminders,github,git,plain text,privacy,productivity",
   "marketingUrl": "https://github.com/memohnsen/OrgSync",
   "promotionalText": "Your .org files, always local, always yours.",
-  "supportUrl": "https://github.com/memohnsen/OrgSync/issues",
-  "whatsNew": "Welcome to OrgSync. Capture notes, manage .org tasks, work from Agenda, and optionally sync with GitHub or Reminders."
+  "supportUrl": "https://github.com/memohnsen/OrgSync/issues"
 }

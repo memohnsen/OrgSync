@@ -1,12 +1,12 @@
 {
   "approved": [
-    "|ipad-13|01-notes",
-    "|ipad-13|02-agenda",
-    "|ipad-13|03-org-reader",
-    "|iphone-69|01-notes",
-    "|iphone-69|02-agenda",
-    "|iphone-69|03-org-reader",
-    "|iphone-69|04-org-editor",
-    "|iphone-69|05-settings"
+    "en-US|ipad-13|01-notes",
+    "en-US|ipad-13|02-agenda",
+    "en-US|ipad-13|03-org-reader",
+    "en-US|iphone-69|01-notes",
+    "en-US|iphone-69|02-agenda",
+    "en-US|iphone-69|03-org-reader",
+    "en-US|iphone-69|04-org-editor",
+    "en-US|iphone-69|05-settings"
   ]
 }
