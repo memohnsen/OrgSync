@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA0000000000000000000A01 /* AgendaSnapshotShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000F01 /* AgendaSnapshotShared.swift */; };
+		AA0000000000000000000D01 /* AgendaSnapshotShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000F01 /* AgendaSnapshotShared.swift */; };
 		99A000000000000000000013 /* OrgSyncWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 99A000000000000000000001 /* OrgSyncWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -49,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA0000000000000000000F01 /* AgendaSnapshotShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaSnapshotShared.swift; sourceTree = "<group>"; };
 		714B542B300BB52500C2F7A9 /* OrgSync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OrgSync.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		714B5438300BB52600C2F7A9 /* OrgSyncTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrgSyncTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		714B5442300BB52600C2F7A9 /* OrgSyncUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrgSyncUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,6 +113,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AA0000000000000000000601 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000F01 /* AgendaSnapshotShared.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		714B5422300BB52500C2F7A9 = {
 			isa = PBXGroup;
 			children = (
@@ -117,6 +128,7 @@
 				714B543B300BB52600C2F7A9 /* OrgSyncTests */,
 				714B5445300BB52600C2F7A9 /* OrgSyncUITests */,
 				99A000000000000000000002 /* OrgSyncWidgets */,
+				AA0000000000000000000601 /* Shared */,
 				714B542C300BB52500C2F7A9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -311,6 +323,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA0000000000000000000A01 /* AgendaSnapshotShared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,6 +345,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA0000000000000000000D01 /* AgendaSnapshotShared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

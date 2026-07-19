@@ -2,39 +2,32 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
-private let appGroup = "group.com.memohnsen.OrgSync"
-private let snapshotName = "agenda-snapshot.json"
-private let pendingCompletionsKey = "widget.pendingCompletions"
+// AgendaSnapshot / AgendaSnapshotItem and the app-group keys come from the
+// shared Shared/AgendaSnapshotShared.swift, compiled into this target too.
+extension AgendaSnapshot: @retroactive TimelineEntry { public var date: Date { generatedAt } }
 
-struct WidgetAgendaItem: Codable, Identifiable {
-    var id: String; var title: String; var filePath: String
-    var scheduled: Date?; var deadline: Date?; var priority: String?; var tags: [String]
-}
-struct WidgetAgendaSnapshot: Codable { var generatedAt: Date; var items: [WidgetAgendaItem] }
-extension WidgetAgendaSnapshot: TimelineEntry { var date: Date { generatedAt } }
-
-private extension WidgetAgendaItem {
+private extension AgendaSnapshotItem {
     /// Match the app Agenda: when both dates exist, use the earlier one.
     var relevantDate: Date? { [scheduled, deadline].compactMap { $0 }.min() }
 }
 
 struct AgendaProvider: TimelineProvider {
-    func placeholder(in context: Context) -> WidgetAgendaSnapshot { .init(generatedAt: .now, items: []) }
-    func getSnapshot(in context: Context, completion: @escaping (WidgetAgendaSnapshot) -> Void) { completion(load()) }
-    func getTimeline(in context: Context, completion: @escaping (Timeline<WidgetAgendaSnapshot>) -> Void) {
+    func placeholder(in context: Context) -> AgendaSnapshot { .init(generatedAt: .now, items: []) }
+    func getSnapshot(in context: Context, completion: @escaping (AgendaSnapshot) -> Void) { completion(load()) }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<AgendaSnapshot>) -> Void) {
         let snapshot = load()
         completion(Timeline(entries: [snapshot], policy: .after(.now.addingTimeInterval(15 * 60))))
     }
-    private func load() -> WidgetAgendaSnapshot { loadAgendaSnapshot() }
+    private func load() -> AgendaSnapshot { loadAgendaSnapshot() }
 }
 private extension JSONDecoder { static let orgSync: JSONDecoder = { let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601; return d }() }
 private extension JSONEncoder { static let orgSync: JSONEncoder = { let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601; return e }() }
 
 /// Reads the shared agenda snapshot from the app group; empty when absent.
-func loadAgendaSnapshot() -> WidgetAgendaSnapshot {
-    guard let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup),
-          let data = try? Data(contentsOf: root.appendingPathComponent(snapshotName)),
-          let value = try? JSONDecoder.orgSync.decode(WidgetAgendaSnapshot.self, from: data) else {
+func loadAgendaSnapshot() -> AgendaSnapshot {
+    guard let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AgendaSnapshot.appGroupIdentifier),
+          let data = try? Data(contentsOf: root.appendingPathComponent(AgendaSnapshot.fileName)),
+          let value = try? JSONDecoder.orgSync.decode(AgendaSnapshot.self, from: data) else {
         return .init(generatedAt: .now, items: [])
     }
     return value
@@ -75,11 +68,11 @@ enum AgendaTimeRange: String {
 
     /// Keeps only items with a SCHEDULED date inside this window, earliest
     /// first. Deadlines deliberately do not affect this widget's range.
-    func filter(_ items: [WidgetAgendaItem]) -> [WidgetAgendaItem] {
+    func filter(_ items: [AgendaSnapshotItem]) -> [AgendaSnapshotItem] {
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: .now)
         let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
-        let dated = items.compactMap { item -> (item: WidgetAgendaItem, date: Date)? in
+        let dated = items.compactMap { item -> (item: AgendaSnapshotItem, date: Date)? in
             guard let date = item.scheduled else { return nil }
             return (item, date)
         }
@@ -125,7 +118,7 @@ struct UpcomingConfigIntent: WidgetConfigurationIntent {
 
 struct UpcomingEntry: TimelineEntry {
     let date: Date
-    let items: [WidgetAgendaItem]
+    let items: [AgendaSnapshotItem]
     let range: AgendaTimeRange
 }
 
@@ -157,15 +150,15 @@ struct CompleteTodoIntent: AppIntent {
     init(itemID: String) { self.itemID = itemID }
 
     func perform() async throws -> some IntentResult {
-        let defaults = UserDefaults(suiteName: appGroup)
-        var pending = defaults?.stringArray(forKey: pendingCompletionsKey) ?? []
+        let defaults = UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)
+        var pending = defaults?.stringArray(forKey: AgendaSnapshot.pendingCompletionsKey) ?? []
         if !pending.contains(itemID) { pending.append(itemID) }
-        defaults?.set(pending, forKey: pendingCompletionsKey)
+        defaults?.set(pending, forKey: AgendaSnapshot.pendingCompletionsKey)
 
-        if let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
-            let url = root.appendingPathComponent(snapshotName)
+        if let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AgendaSnapshot.appGroupIdentifier) {
+            let url = root.appendingPathComponent(AgendaSnapshot.fileName)
             if let data = try? Data(contentsOf: url),
-               var snapshot = try? JSONDecoder.orgSync.decode(WidgetAgendaSnapshot.self, from: data) {
+               var snapshot = try? JSONDecoder.orgSync.decode(AgendaSnapshot.self, from: data) {
                 snapshot.items.removeAll { $0.id == itemID }
                 if let out = try? JSONEncoder.orgSync.encode(snapshot) {
                     try? out.write(to: url, options: .atomic)
@@ -182,10 +175,10 @@ struct FavoritesWidget: Widget {
     let kind = "OrgSyncFavorites"
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: AgendaProvider()) { entry in
-            let paths = Set(UserDefaults(suiteName: appGroup)?.stringArray(forKey: "favorites.relativePaths") ?? [])
+            let paths = Set(UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)?.stringArray(forKey: AgendaSnapshot.favoritesKey) ?? [])
             let favoriteItems = paths.sorted().map { path in
                 entry.items.first(where: { $0.filePath == path })
-                    ?? WidgetAgendaItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
+                    ?? AgendaSnapshotItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
             }
             WidgetNoteList(title: "Favorites", symbol: "star.fill", accent: .yellow, items: favoriteItems, empty: "Favorite notes appear here.")
         }
@@ -209,13 +202,13 @@ struct UpcomingWidget: Widget {
 /// One rendered line in the agenda widget: a day divider or a task under it.
 enum AgendaRow {
     case day(String)
-    case task(WidgetAgendaItem)
+    case task(AgendaSnapshotItem)
 
     var isDay: Bool { if case .day = self { return true } else { return false } }
 
     /// Groups items by day (overdue folds into Today) with a divider before each
     /// day's tasks, days ascending and tasks within a day earliest first.
-    static func build(from items: [WidgetAgendaItem]) -> [AgendaRow] {
+    static func build(from items: [AgendaSnapshotItem]) -> [AgendaRow] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
         let grouped = Dictionary(grouping: items) { item -> Date in
@@ -244,7 +237,7 @@ enum AgendaRow {
 /// Fantastical-style agenda: tasks grouped under day dividers, each task a
 /// completion circle plus its title (no file path, no per-row date).
 struct AgendaListView: View {
-    var items: [WidgetAgendaItem]
+    var items: [AgendaSnapshotItem]
     var range: AgendaTimeRange
     var accent: Color
     var empty: String
@@ -283,7 +276,7 @@ struct AgendaListView: View {
         .containerBackground(for: .widget) { Color.clear }
     }
 
-    private func taskRow(_ item: WidgetAgendaItem) -> some View {
+    private func taskRow(_ item: AgendaSnapshotItem) -> some View {
         HStack(spacing: 8) {
             Button(intent: CompleteTodoIntent(itemID: item.id)) {
                 Image(systemName: "circle").font(.footnote).foregroundStyle(accent)
@@ -325,7 +318,7 @@ struct AgendaListView: View {
 
     /// Keeps as many rows as fit the available height, never leaving a trailing
     /// day divider with no tasks under it.
-    private func fitted(from items: [WidgetAgendaItem], in height: CGFloat) -> [AgendaRow] {
+    private func fitted(from items: [AgendaSnapshotItem], in height: CGFloat) -> [AgendaRow] {
         var used: CGFloat = 0
         var result: [AgendaRow] = []
         for row in AgendaRow.build(from: items) {
@@ -342,7 +335,7 @@ struct AgendaListView: View {
 /// Favorites list: a titled header over note rows (name + path). The agenda
 /// widget uses AgendaListView instead.
 struct WidgetNoteList: View {
-    var title: String; var symbol: String; var accent: Color; var items: [WidgetAgendaItem]; var empty: String
+    var title: String; var symbol: String; var accent: Color; var items: [AgendaSnapshotItem]; var empty: String
 
     // Estimated heights, scaled with Dynamic Type so the row count stays right
     // at larger text sizes. The header row plus each two-line note row are

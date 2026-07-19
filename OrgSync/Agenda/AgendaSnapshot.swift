@@ -8,26 +8,8 @@
 import Foundation
 import WidgetKit
 
-struct AgendaSnapshot: Codable {
-    static let appGroupIdentifier = "group.com.memohnsen.OrgSync"
-    static let fileName = "agenda-snapshot.json"
-    /// App-group key holding snapshot ids the widget asked to complete but that
-    /// the app hasn't yet written into the notes. Must match the widget target.
-    static let pendingCompletionsKey = "widget.pendingCompletions"
-
-    var generatedAt: Date
-    var items: [AgendaSnapshotItem]
-}
-
-struct AgendaSnapshotItem: Codable, Identifiable {
-    var id: String
-    var title: String
-    var filePath: String
-    var scheduled: Date?
-    var deadline: Date?
-    var priority: String?
-    var tags: [String]
-}
+// AgendaSnapshot / AgendaSnapshotItem and the app-group keys live in
+// Shared/AgendaSnapshotShared.swift, compiled into both the app and the widget.
 
 enum AgendaSnapshotWriter {
     /// Regenerates the widget payload from the authoritative local mirror.

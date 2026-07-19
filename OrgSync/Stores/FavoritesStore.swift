@@ -13,7 +13,7 @@ import Observation
 
 @Observable
 final class FavoritesStore {
-    private static let storageKey = "favorites.relativePaths"
+    private static let storageKey = AgendaSnapshot.favoritesKey
 
     /// Injection point for the backing store. Swap for an App Group
     /// `UserDefaults(suiteName:)` in a later phase.
