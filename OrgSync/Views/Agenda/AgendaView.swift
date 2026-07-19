@@ -99,8 +99,12 @@ struct AgendaView: View {
             .fullScreenCover(isPresented: $showQuickAdd) {
                 NavigationStack {
                     Form {
-                        TextField("Title", text: $quickAddTitle)
-                            .accessibilityIdentifier("agenda.quickAddTitle")
+                        Section {
+                            TextField("Title", text: $quickAddTitle, prompt: Text("call Sam tomorrow 3pm #work !!"))
+                                .accessibilityIdentifier("agenda.quickAddTitle")
+                        } footer: {
+                            Text("Type naturally — dates, #tags, and ! priority are picked up automatically.")
+                        }
                         Picker("State", selection: $quickAddStatus) {
                             ForEach(availableStatuses, id: \.name) { status in
                                 Text(status.name).tag(status.name)
@@ -302,12 +306,27 @@ struct AgendaView: View {
     }
 
     private func addQuickItem() {
-        let title = quickAddTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Natural-language parse of the title extracts tags, a priority, and a
+        // scheduled date; the explicit fields below take precedence where set.
+        let parsed = QuickAddParser.parse(quickAddTitle)
+        let title = parsed.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
         let status = availableStatuses.contains(where: { $0.name == quickAddStatus }) ? quickAddStatus : "TODO"
-        let tags = normalizedTags(quickAddTags)
-        let tagSuffix = tags.isEmpty ? "" : " :" + tags.joined(separator: ":") + ":"
-        let repeater = repeats && (includesScheduledDate || includesDeadlineDate)
+
+        var tagNames = normalizedTags(quickAddTags)
+        for tag in normalizedTags(parsed.tags.joined(separator: ",")) where !tagNames.contains(tag) {
+            tagNames.append(tag)
+        }
+        tagNames.sort()
+        let tagSuffix = tagNames.isEmpty ? "" : " :" + tagNames.joined(separator: ":") + ":"
+        let priorityPrefix = parsed.priority.map { "[#\($0)] " } ?? ""
+
+        // Explicit scheduled toggle wins; otherwise use the parsed date.
+        let useScheduled = includesScheduledDate || parsed.scheduledDate != nil
+        let scheduledValue = includesScheduledDate ? scheduledDate : (parsed.scheduledDate ?? scheduledDate)
+        let scheduledIncludesTime = includesScheduledDate ? false : parsed.includesTime
+
+        let repeater = repeats && (useScheduled || includesDeadlineDate)
             ? OrgRepeater(kind: .cumulate, value: repeatInterval, unit: repeatUnit)
             : nil
 
@@ -315,9 +334,9 @@ struct AgendaView: View {
         var text = repo.text(of: inbox)
         if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
         if !text.isEmpty { text += "\n" }
-        text += "* \(status) \(title)\(tagSuffix)\n"
-        if includesScheduledDate {
-            var timestamp = OrgTimestamp(date: scheduledDate, isActive: true, includeTime: false)
+        text += "* \(status) \(priorityPrefix)\(title)\(tagSuffix)\n"
+        if useScheduled {
+            var timestamp = OrgTimestamp(date: scheduledValue, isActive: true, includeTime: scheduledIncludesTime)
             timestamp.repeater = repeater
             text += "SCHEDULED: \(timestamp.serialize())\n"
         }
