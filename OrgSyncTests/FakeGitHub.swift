@@ -67,6 +67,20 @@ final class FakeGitHubRepo: @unchecked Sendable {
         return refs[branch]
     }
 
+    /// Total commit objects created (seed + pushed). Lets tests detect
+    /// duplicate commits from unserialized operations.
+    var commitCount: Int {
+        lock.lock(); defer { lock.unlock() }
+        return commits.count
+    }
+
+    /// A URLSession routed to this repo's fake API, for constructing engines.
+    func makeSession() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [FakeGitHubProtocol.self]
+        return URLSession(configuration: config)
+    }
+
     /// Path -> content at the current head of `branch`.
     func filesAtHead(branch: String) -> [String: Data] {
         lock.lock(); defer { lock.unlock() }
@@ -189,10 +203,24 @@ final class FakeGitHubProtocol: URLProtocol {
     override func stopLoading() {}
 
     override func startLoading() {
-        // Expected path: /repos/<owner>/<repo>/git/<...>
         let components = (request.url?.path ?? "").split(separator: "/").map(String.init)
-        guard components.count >= 5, components[0] == "repos", components[3] == "git",
+        guard components.count >= 3, components[0] == "repos",
               let repo = Self.repo(for: "\(components[1])/\(components[2])") else {
+            respond(status: 404, json: ["message": "Not Found"])
+            return
+        }
+        // Repository metadata: /repos/<owner>/<repo>
+        if components.count == 3 {
+            respond(status: 200, json: [
+                "name": repo.repo,
+                "full_name": "\(repo.owner)/\(repo.repo)",
+                "default_branch": "main",
+                "private": true,
+            ])
+            return
+        }
+        // Git Data API: /repos/<owner>/<repo>/git/<...>
+        guard components.count >= 5, components[3] == "git" else {
             respond(status: 404, json: ["message": "Not Found"])
             return
         }

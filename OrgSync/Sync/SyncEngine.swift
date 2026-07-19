@@ -42,14 +42,22 @@ final class SyncEngine {
     private let repo: RepoStore
     private let settings: SettingsStore
     private let worker: SyncWorker
+    private let session: URLSession
     private let fileManager = FileManager.default
     private var state: SyncRepoState? {
         didSet { lastSyncDate = state?.lastSyncDate }
     }
 
-    init(repo: RepoStore, settings: SettingsStore) {
+    /// Serializes network operations. Independent triggers (scene-phase pull,
+    /// pull-to-refresh, background push, a Siri sync) would otherwise interleave
+    /// at their network `await`s and each act on a stale state snapshot; chaining
+    /// makes each run against the state the previous one left behind.
+    @ObservationIgnored private var pendingWork: Task<Void, Never>?
+
+    init(repo: RepoStore, settings: SettingsStore, session: URLSession = .shared) {
         self.repo = repo
         self.settings = settings
+        self.session = session
         self.worker = SyncWorker(repoURL: repo.repoURL)
         self.state = Self.loadState(from: Self.stateURL(repoRoot: repo.repoURL))
         self.lastSyncDate = state?.lastSyncDate
@@ -99,15 +107,30 @@ final class SyncEngine {
         return try await worker.localDiffs(state: state, client: try makeClient(for: state))
     }
 
+    /// Runs `work` after any previously queued work completes. All state-touching
+    /// operations (sync, connect teardown) funnel through here so they never
+    /// interleave at their network `await`s.
+    private func chain(_ work: @escaping @MainActor () async -> Void) async {
+        let previous = pendingWork
+        let task = Task { @MainActor in
+            await previous?.value
+            await work()
+        }
+        pendingWork = task
+        await task.value
+    }
+
     private func run(_ label: String, _ operation: @escaping () async throws -> Void) async {
-        phase = .syncing(label)
-        do {
-            try await operation()
-            phase = .idle
-        } catch {
-            let text = message(for: error)
-            phase = .error(text)
-            lastError = text
+        await chain {
+            self.phase = .syncing(label)
+            do {
+                try await operation()
+                self.phase = .idle
+            } catch {
+                let text = self.message(for: error)
+                self.phase = .error(text)
+                self.lastError = text
+            }
         }
     }
 
@@ -142,14 +165,20 @@ final class SyncEngine {
     }
 
     func disconnect(deleteLocalFiles: Bool) async {
-        if deleteLocalFiles {
-            await worker.removeWorkingCopy()
-            repo.refresh()
+        // Runs through the same chain as sync operations. Whichever registers
+        // first wins the ordering: if a sync is already queued, disconnect waits
+        // for it and then clears state; if disconnect is queued first, a later
+        // sync sees `state == nil` and no-ops instead of resurrecting it.
+        await chain {
+            if deleteLocalFiles {
+                await self.worker.removeWorkingCopy()
+                self.repo.refresh()
+            }
+            await self.worker.removePersistedState()
+            self.state = nil
+            self.status = SyncStatus()
+            self.phase = .idle
         }
-        await worker.removePersistedState()
-        state = nil
-        status = SyncStatus()
-        phase = .idle
     }
 
     // MARK: - Conflict resolution
@@ -234,13 +263,13 @@ final class SyncEngine {
         let token = currentToken()
         guard !token.isEmpty else { throw GitHubError.notConfigured }
         let parsed = try GitHubClient.parseRepository(settings.repoURL)
-        return GitHubClient(token: token, owner: parsed.owner, repo: parsed.repo)
+        return GitHubClient(token: token, owner: parsed.owner, repo: parsed.repo, session: session)
     }
 
     private func makeClient(for state: SyncRepoState) throws -> GitHubClient {
         let token = currentToken()
         guard !token.isEmpty else { throw GitHubError.notConfigured }
-        return GitHubClient(token: token, owner: state.owner, repo: state.repo)
+        return GitHubClient(token: token, owner: state.owner, repo: state.repo, session: session)
     }
 
     private func currentToken() -> String {
