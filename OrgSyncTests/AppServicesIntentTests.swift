@@ -16,7 +16,10 @@ import Testing
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let repo = RepoStore(repoURL: root, seedsSampleContent: false)
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
-        AppServices.register(repo: repo, settings: settings, sync: SyncEngine(repo: repo, settings: settings))
+        AppServices.register(
+            repo: repo, settings: settings, sync: SyncEngine(repo: repo, settings: settings),
+            reminders: RemindersSyncEngine(settings: settings), calendar: CalendarSyncEngine(settings: settings)
+        )
         return (repo, root)
     }
 

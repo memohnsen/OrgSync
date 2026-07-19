@@ -26,11 +26,18 @@ enum AppServices {
     private static var registeredRepo: RepoStore?
     private static var registeredSettings: SettingsStore?
     private static var registeredSync: SyncEngine?
+    private static var registeredReminders: RemindersSyncEngine?
+    private static var registeredCalendar: CalendarSyncEngine?
 
-    static func register(repo: RepoStore, settings: SettingsStore, sync: SyncEngine) {
+    static func register(
+        repo: RepoStore, settings: SettingsStore, sync: SyncEngine,
+        reminders: RemindersSyncEngine, calendar: CalendarSyncEngine
+    ) {
         registeredRepo = repo
         registeredSettings = settings
         registeredSync = sync
+        registeredReminders = reminders
+        registeredCalendar = calendar
     }
 
     static var settings: SettingsStore {
@@ -44,6 +51,14 @@ enum AppServices {
     static var sync: SyncEngine {
         if let registeredSync { return registeredSync }
         let engine = SyncEngine(repo: repo, settings: settings); registeredSync = engine; return engine
+    }
+    static var reminders: RemindersSyncEngine {
+        if let registeredReminders { return registeredReminders }
+        let engine = RemindersSyncEngine(settings: settings); registeredReminders = engine; return engine
+    }
+    static var calendar: CalendarSyncEngine {
+        if let registeredCalendar { return registeredCalendar }
+        let engine = CalendarSyncEngine(settings: settings); registeredCalendar = engine; return engine
     }
 
     // MARK: Task queries

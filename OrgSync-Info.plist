@@ -11,6 +11,8 @@
 <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
 <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
 <key>LSRequiresIPhoneOS</key><true/>
+<key>UIBackgroundModes</key><array><string>fetch</string></array>
+<key>BGTaskSchedulerPermittedIdentifiers</key><array><string>com.memohnsen.OrgSync.refresh</string></array>
 <key>ITSAppUsesNonExemptEncryption</key><false/>
 <key>NSRemindersFullAccessUsageDescription</key><string>OrgSync needs access to sync scheduled and deadline TODOs with your reminders.</string>
 <key>NSCalendarsFullAccessUsageDescription</key><string>OrgSync needs access to mirror your upcoming calendar events into a read-only calendar note.</string>

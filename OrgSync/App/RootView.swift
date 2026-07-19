@@ -105,7 +105,7 @@ struct RootView: View {
         .task {
             // Share the live stores with App Intents so Siri/Shortcuts mutations
             // flow straight into the running UI.
-            AppServices.register(repo: repo, settings: settings, sync: sync)
+            AppServices.register(repo: repo, settings: settings, sync: sync, reminders: reminders, calendar: calendar)
             // An open intent that launched the app may have posted its request
             // before this view subscribed; apply any pending target now.
             let target = AppServices.consumePendingOpen()
@@ -128,7 +128,9 @@ struct RootView: View {
         let event: AutoSyncLifecycleEvent
         switch phase {
         case .active: event = .active
-        case .background: return
+        case .background:
+            BackgroundRefresh.schedule()
+            return
         default: event = .inactive
         }
         // Apply any TODO completions tapped in the widget before syncing, so the

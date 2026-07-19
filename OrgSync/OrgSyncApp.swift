@@ -13,5 +13,8 @@ struct OrgSyncApp: App {
         WindowGroup {
             RootView()
         }
+        .backgroundTask(.appRefresh(BackgroundRefresh.taskIdentifier)) {
+            await BackgroundRefresh.run()
+        }
     }
 }
