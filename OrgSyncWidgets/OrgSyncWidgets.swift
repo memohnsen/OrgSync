@@ -42,8 +42,8 @@ func loadAgendaSnapshot() -> WidgetAgendaSnapshot {
 
 // MARK: - Configurable time range
 
-/// User-selectable window for the Upcoming widget, chosen from the Home Screen
-/// "Edit Widget" panel.
+/// User-selectable window for the scheduled-TODO widget, chosen from the Home
+/// Screen "Edit Widget" panel.
 enum AgendaTimeRange: String, AppEnum {
     case today
     case week
@@ -70,14 +70,14 @@ enum AgendaTimeRange: String, AppEnum {
         }
     }
 
-    /// Keeps only dated items falling inside this window, earliest first. Overdue
-    /// items are always included (they still need attention today).
+    /// Keeps only items with a SCHEDULED date inside this window, earliest
+    /// first. Deadlines deliberately do not affect this widget's range.
     func filter(_ items: [WidgetAgendaItem]) -> [WidgetAgendaItem] {
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: .now)
         let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
         let dated = items.compactMap { item -> (item: WidgetAgendaItem, date: Date)? in
-            guard let date = item.relevantDate else { return nil }
+            guard let date = item.scheduled else { return nil }
             return (item, date)
         }
         let windowed = dated.filter { entry in
