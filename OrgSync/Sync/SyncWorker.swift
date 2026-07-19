@@ -270,7 +270,7 @@ actor SyncWorker {
 
     func commitAndPush(state: SyncRepoState, client: GitHubClient, message: String?, allowRetry: Bool = true) async throws -> Result {
         if state.pendingCommit != nil { return try await pushPending(state: state, client: client) }
-        if enumerateWorkingFiles().keys.contains(where: { $0.contains(" (conflict ") }) {
+        if enumerateWorkingFiles().keys.contains(where: { ConflictSidecar.isSidecar($0) }) {
             throw SyncError.unresolvedConflicts
         }
         let changes = localChanges(against: state)
@@ -400,9 +400,7 @@ actor SyncWorker {
 
     private func writeConflictSidecar(path: String, data: Data, remoteSHA: String) throws {
         let url = repoURL.appendingPathComponent(path)
-        let ext = url.pathExtension
-        let base = url.deletingPathExtension().lastPathComponent
-        let name = ext.isEmpty ? "\(base) (conflict \(remoteSHA.prefix(7)))" : "\(base) (conflict \(remoteSHA.prefix(7))).\(ext)"
+        let name = ConflictSidecar.name(for: url.lastPathComponent, remoteSHA: remoteSHA)
         let sidecar = url.deletingLastPathComponent().appendingPathComponent(name)
         try fileManager.createDirectory(at: sidecar.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: sidecar, options: .atomic)

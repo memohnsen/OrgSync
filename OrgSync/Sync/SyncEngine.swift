@@ -187,11 +187,7 @@ final class SyncEngine {
         let root = repo.repoURL
         guard let enumerator = fileManager.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [] }
         return enumerator.compactMap { $0 as? URL }.compactMap { sidecar in
-            let ext = sidecar.pathExtension
-            let stem = sidecar.deletingPathExtension().lastPathComponent
-            guard let range = stem.range(of: " (conflict ", options: .backwards) else { return nil }
-            let originalStem = String(stem[..<range.lowerBound])
-            let originalName = ext.isEmpty ? originalStem : originalStem + "." + ext
+            guard let originalName = ConflictSidecar.originalName(ofSidecar: sidecar.lastPathComponent) else { return nil }
             return ConflictCopy(sidecarURL: sidecar, originalURL: sidecar.deletingLastPathComponent().appendingPathComponent(originalName))
         }.sorted { $0.fileName.localizedCaseInsensitiveCompare($1.fileName) == .orderedAscending }
     }
