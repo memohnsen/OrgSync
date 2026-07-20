@@ -68,6 +68,9 @@ struct AgendaView: View {
             .navigationTitle("Agenda")
             .sensoryFeedback(.success, trigger: successPulse)
             .navigationBarTitleDisplayMode(.inline)
+            // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
+            // pre-27 translucent look.
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { beginQuickAdd() } label: {

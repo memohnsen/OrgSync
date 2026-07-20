@@ -87,13 +87,16 @@ struct FolderView: View {
                 if results.isEmpty {
                     ContentUnavailableView.search(text: searchText)
                 } else {
-                    ForEach(results) { row($0) }
+                    ForEach(results) { row($0.item, snippet: $0.snippet) }
                 }
             }
         }
         .navigationTitle(title)
         .accessibilityIdentifier(isRoot ? "notes.screen" : "folder.screen")
         .navigationBarTitleDisplayMode(.inline)
+        // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
+        // pre-27 translucent look.
+        .toolbarBackground(.hidden, for: .navigationBar)
         .searchable(text: $searchText, prompt: "Search notes")
         .refreshableIfRoot(isRoot: isRoot, sync: sync, reminders: reminders, repo: repo)
         .toolbar {
@@ -180,6 +183,9 @@ struct FolderView: View {
     private func sorted(_ items: [FileItem]) -> [FileItem] {
         sortBy == .name ? items : items.sorted { $0.modifiedDate > $1.modifiedDate }
     }
+    private func sorted(_ results: [RepoStore.SearchResult]) -> [RepoStore.SearchResult] {
+        sortBy == .name ? results : results.sorted { $0.item.modifiedDate > $1.item.modifiedDate }
+    }
 
     // MARK: - Sync UI
 
@@ -222,12 +228,17 @@ struct FolderView: View {
     // MARK: - Rows
 
     @ViewBuilder
-    private func row(_ item: FileItem) -> some View {
+    private func row(_ item: FileItem, snippet: String? = nil) -> some View {
         NavigationLink(value: item) {
             Label {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.displayName)
-                    if !item.isDirectory {
+                    if let snippet {
+                        Text(highlighted(snippet))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else if !item.isDirectory {
                         Text(item.modifiedDate, format: .dateTime.year().month().day())
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -268,6 +279,20 @@ struct FolderView: View {
                 .tint(.yellow)
             }
         }
+    }
+
+    /// Bolds every occurrence of the current search term in a snippet.
+    private func highlighted(_ snippet: String) -> AttributedString {
+        var attributed = AttributedString(snippet)
+        let term = searchText.trimmingCharacters(in: .whitespaces)
+        guard !term.isEmpty else { return attributed }
+        var searchStart = attributed.startIndex
+        while let range = attributed[searchStart...].range(of: term, options: [.caseInsensitive, .diacriticInsensitive]) {
+            attributed[range].font = .caption.bold()
+            attributed[range].foregroundColor = .primary
+            searchStart = range.upperBound
+        }
+        return attributed
     }
 
     // MARK: - Favorites

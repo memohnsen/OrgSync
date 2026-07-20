@@ -94,9 +94,18 @@ final class RepoStore {
         }
     }
 
+    /// One full-text search hit: the matching file plus, when the match was in
+    /// the note's text, the first matching line to show as a preview snippet.
+    /// `snippet` is nil when only the filename matched.
+    struct SearchResult: Identifiable {
+        let item: FileItem
+        let snippet: String?
+        var id: FileItem.ID { item.id }
+    }
+
     /// All `.org` files anywhere under `directory` whose filename or text
     /// contents match `query`. Used for recursive full-text note search.
-    func search(_ query: String, under directory: URL) -> [FileItem] {
+    func search(_ query: String, under directory: URL) -> [SearchResult] {
         _ = revision
 
         let trimmed = query.trimmingCharacters(in: .whitespaces)
@@ -111,25 +120,45 @@ final class RepoStore {
             return []
         }
 
-        var results: [FileItem] = []
+        var results: [SearchResult] = []
         for case let url as URL in enumerator {
             let values = try? url.resourceValues(forKeys: Set(keys))
             let isDirectory = values?.isDirectory ?? false
             guard !isDirectory, url.pathExtension.lowercased() == "org" else { continue }
             let matchesName = url.lastPathComponent.localizedCaseInsensitiveContains(trimmed)
-            let matchesText = (try? String(contentsOf: url, encoding: .utf8))?
-                .localizedCaseInsensitiveContains(trimmed) ?? false
-            guard matchesName || matchesText else { continue }
-            results.append(FileItem(
-                url: url,
-                relativePath: relativePath(for: url),
-                isDirectory: false,
-                modifiedDate: values?.contentModificationDate ?? .distantPast
+            let snippet = (try? String(contentsOf: url, encoding: .utf8))
+                .flatMap { Self.snippet(for: trimmed, in: $0) }
+            guard matchesName || snippet != nil else { continue }
+            results.append(SearchResult(
+                item: FileItem(
+                    url: url,
+                    relativePath: relativePath(for: url),
+                    isDirectory: false,
+                    modifiedDate: values?.contentModificationDate ?? .distantPast
+                ),
+                snippet: snippet
             ))
         }
         return results.sorted {
-            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            $0.item.name.localizedCaseInsensitiveCompare($1.item.name) == .orderedAscending
         }
+    }
+
+    /// First line of `text` containing `query`, trimmed for display. When the
+    /// match sits deep in a long line, the leading text is elided so the match
+    /// stays visible in a single truncated row.
+    static func snippet(for query: String, in text: String) -> String? {
+        for rawLine in text.split(separator: "\n", omittingEmptySubsequences: true) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard let range = line.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) else { continue }
+            let lead = line.distance(from: line.startIndex, to: range.lowerBound)
+            if lead <= 30 { return line }
+            // Start a little before the match so it has context but isn't
+            // pushed past the row's truncation point.
+            let start = line.index(range.lowerBound, offsetBy: -20, limitedBy: line.startIndex) ?? line.startIndex
+            return "…" + line[start...].trimmingCharacters(in: .whitespaces)
+        }
+        return nil
     }
 
     /// Every org file in the local mirror, using the repository's single

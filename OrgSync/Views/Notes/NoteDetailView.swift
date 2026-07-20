@@ -54,6 +54,9 @@ struct NoteDetailView: View {
         }
         .navigationTitle(item.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
+        // pre-27 translucent look.
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

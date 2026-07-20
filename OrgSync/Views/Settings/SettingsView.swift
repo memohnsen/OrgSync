@@ -141,6 +141,9 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
+            // pre-27 translucent look.
+            .toolbarBackground(.hidden, for: .navigationBar)
             .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("settings.screen")
             .alert("Reminders Synced", isPresented: $showRemindersSyncSuccess) {
