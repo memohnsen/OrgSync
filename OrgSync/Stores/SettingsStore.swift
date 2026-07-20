@@ -30,6 +30,9 @@ final class SettingsStore {
         static let appearance = "settings.appearance"
         static let todoKeywords = "settings.todo.keywords"
         static let todoStatusColors = "settings.todo.statusColors"
+        static let todoNotifications = "settings.notifications.enabled"
+        static let allDayNotificationMinutes = "settings.notifications.allDayMinutes"
+        static let timedNotificationOffsets = "settings.notifications.timedOffsets"
     }
 
     private let defaults: UserDefaults
@@ -97,6 +100,26 @@ final class SettingsStore {
         didSet { defaults.set(todoStatusColors, forKey: Key.todoStatusColors) }
     }
 
+    // MARK: - Notifications
+
+    /// Master switch for local TODO notifications. Notifications are a layer on
+    /// top of the org files and never written into them.
+    var todoNotifications: Bool {
+        didSet { defaults.set(todoNotifications, forKey: Key.todoNotifications) }
+    }
+
+    /// Minutes after midnight at which all-day TODOs fire a notification, or
+    /// nil when all-day TODOs should not notify. Defaults to 9:00 AM.
+    var allDayNotificationMinutes: Int? {
+        didSet { defaults.set(allDayNotificationMinutes ?? -1, forKey: Key.allDayNotificationMinutes) }
+    }
+
+    /// Minutes before a timed TODO at which notifications fire. Multiple
+    /// selections are allowed; 0 means at the time of the event.
+    var timedNotificationOffsets: [Int] {
+        didSet { defaults.set(timedNotificationOffsets, forKey: Key.timedNotificationOffsets) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         repoURL = defaults.string(forKey: Key.repoURL) ?? ""
@@ -118,6 +141,10 @@ final class SettingsStore {
             )
         } ?? OrgTodoConfig.defaultPreference
         todoStatusColors = defaults.dictionary(forKey: Key.todoStatusColors) as? [String: String] ?? [:]
+        todoNotifications = defaults.bool(forKey: Key.todoNotifications)
+        let storedAllDay = defaults.object(forKey: Key.allDayNotificationMinutes) as? Int ?? 9 * 60
+        allDayNotificationMinutes = storedAllDay >= 0 ? storedAllDay : nil
+        timedNotificationOffsets = defaults.object(forKey: Key.timedNotificationOffsets) as? [Int] ?? [0]
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }

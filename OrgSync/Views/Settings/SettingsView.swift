@@ -56,6 +56,8 @@ struct SettingsView: View {
                     Text("Recurring tasks remain in inbox.org and advance to their next scheduled occurrence.")
                 }
 
+                NotificationSettingsSection()
+
                 Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                         .disabled(reminders.access != .granted)

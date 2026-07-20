@@ -18,6 +18,7 @@ struct RootView: View {
     @State private var reminders: RemindersSyncEngine
     @State private var calendar: CalendarSyncEngine
     @State private var onboarding: OnboardingState
+    @State private var notifications = TodoNotificationScheduler()
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
     @State private var isShowingAgendaQuickAdd = false
@@ -68,6 +69,8 @@ struct RootView: View {
         .environment(reminders)
         .environment(calendar)
         .environment(onboarding)
+        .environment(notifications)
+        .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications))
         .fullScreenCover(isPresented: $onboarding.isPresented) {
             OnboardingView(
                 openInbox: {
@@ -115,6 +118,9 @@ struct RootView: View {
             // Initial launch doesn't always fire the scenePhase change, so drain
             // the widget completion queue here too. Idempotent.
             WidgetCompletionReconciler.reconcile(repo: repo)
+            // Refresh the pending notification set on launch: fire dates in the
+            // past are dropped and note edits made outside the app are picked up.
+            await notifications.reschedule(repo: repo, settings: settings)
             guard !holdsSplashForUITesting else { return }
             try? await Task.sleep(for: .milliseconds(850))
             guard !Task.isCancelled else { return }
@@ -176,6 +182,27 @@ struct RootView: View {
             case .syncReminders:
                 Task { await reminders.sync(repo: repo) }
             }
+        }
+    }
+}
+
+/// Rebuilds the pending local-notification set whenever a note changes or a
+/// notification preference changes. Lives outside RootView.body to keep that
+/// expression within the type-checker's budget.
+private struct TodoNotificationRescheduling: ViewModifier {
+    let repo: RepoStore
+    let settings: SettingsStore
+    let scheduler: TodoNotificationScheduler
+
+    /// One equatable fingerprint of every input the plan depends on, so a
+    /// single onChange covers note edits and all three notification settings.
+    private var fingerprint: String {
+        "\(repo.revision)|\(settings.todoNotifications)|\(settings.allDayNotificationMinutes ?? -1)|\(settings.timedNotificationOffsets)"
+    }
+
+    func body(content: Content) -> some View {
+        content.onChange(of: fingerprint) { _, _ in
+            Task { await scheduler.reschedule(repo: repo, settings: settings) }
         }
     }
 }
