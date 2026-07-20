@@ -137,6 +137,10 @@ struct RootView: View {
         } message: {
             Text(sync.lastError ?? "")
         }
+        // Haptics for sync outcomes: a light success tap when a sync/pull/push
+        // completes, an error buzz when one fails.
+        .sensoryFeedback(.success, trigger: sync.lastSyncDate) { old, new in old != nil && new != nil }
+        .sensoryFeedback(.error, trigger: sync.lastError) { _, new in new != nil }
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
     }
 

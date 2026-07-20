@@ -25,6 +25,8 @@ struct AgendaView: View {
     @State private var items: [OrgTodoItem] = []
     @State private var rescheduling: OrgTodoItem?
     @State private var rescheduleDate = Date()
+    /// Incremented on completion / quick-add so sensoryFeedback fires once per action.
+    @State private var successPulse = 0
     @State private var quickAddTitle = ""
     @State private var quickAddStatus = "TODO"
     @State private var quickAddTags = ""
@@ -64,6 +66,7 @@ struct AgendaView: View {
                 }
             }
             .navigationTitle("Agenda")
+            .sensoryFeedback(.success, trigger: successPulse)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -345,6 +348,7 @@ struct AgendaView: View {
             text += "DEADLINE: \(timestamp.serialize())\n"
         }
         guard repo.write(text, to: inbox) else { return }
+        successPulse += 1
         showQuickAdd = false
         reload()
         if settings.remindersSync {
@@ -385,7 +389,9 @@ struct AgendaView: View {
     }
 
     private func complete(_ item: OrgTodoItem) {
-        _ = TaskCompletionService.complete(item, repo: repo, settings: settings)
+        if TaskCompletionService.complete(item, repo: repo, settings: settings) {
+            successPulse += 1
+        }
         reload()
     }
 
