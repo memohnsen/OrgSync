@@ -36,9 +36,7 @@ struct NotificationSettingsView: View {
                          destination: URL(string: UIApplication.openSettingsURLString)!)
                         .accessibilityHint("Opens iOS Settings, where you can allow notifications for OrgSync.")
                 }
-            } footer: {
-                Text("Notifications are a layer on top of your notes — nothing is written into the org files.")
-            }
+            } 
 
             if settings.todoNotifications {
                 Section {
@@ -50,9 +48,7 @@ struct NotificationSettingsView: View {
                     }
                 } header: {
                     Text("All-Day TODOs")
-                } footer: {
-                    Text("TODOs dated without a time notify once, at this time of day.")
-                }
+                } 
 
                 Section {
                     ForEach(Self.standardOffsets, id: \.self) { offset in
@@ -74,9 +70,7 @@ struct NotificationSettingsView: View {
                     .accessibilityIdentifier("settings.notifications.addCustomOffset")
                 } header: {
                     Text("Timed TODOs")
-                } footer: {
-                    Text("TODOs dated with a time can notify at several lead times. Swipe to remove a custom lead time.")
-                }
+                }  
             }
         }
         .navigationTitle("Notifications")
