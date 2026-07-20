@@ -39,8 +39,7 @@ final class RepoStore {
     }
 
     init() {
-        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        repoURL = documents.appendingPathComponent("repo", isDirectory: true)
+        repoURL = NotesLocation.currentRepoURL(fileManager: fileManager)
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-repo") {
             try? fileManager.removeItem(at: repoURL)
         }

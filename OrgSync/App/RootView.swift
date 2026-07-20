@@ -19,6 +19,7 @@ struct RootView: View {
     @State private var calendar: CalendarSyncEngine
     @State private var onboarding: OnboardingState
     @State private var notifications = TodoNotificationScheduler()
+    @State private var subscriptions = SubscriptionStore()
     @State private var selectedTab = "notes"
     @State private var openedNotePath: String?
     @State private var isShowingAgendaQuickAdd = false
@@ -70,6 +71,7 @@ struct RootView: View {
         .environment(calendar)
         .environment(onboarding)
         .environment(notifications)
+        .environment(subscriptions)
         .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications))
         .fullScreenCover(isPresented: $onboarding.isPresented) {
             OnboardingView(

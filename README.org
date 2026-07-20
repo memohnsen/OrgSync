@@ -8,15 +8,36 @@ GitHub synchronization.
 
 [[./gh_assets/overview.png]]
 
+* Free and Pro
+
+OrgSync is freemium. Writing and organizing notes, the agenda, search,
+favorites, Siri and Shortcuts, notifications, and iCloud Drive syncing are
+free forever. An *OrgSync Pro* subscription unlocks three features:
+
+- GitHub repository sync,
+- Home Screen widgets,
+- two-way Reminders and read-only Calendar sync.
+
+Subscriptions are handled by [[https://www.revenuecat.com/][RevenueCat]] and
+require *no account*: the only identifier attached to a purchase is a random,
+anonymous RevenueCat ID — never a name, email, or note content.
+
+Without Pro you can still sync notes across devices for free: enable *Store
+Notes in iCloud Drive* in Settings and your notes folder lives in the app's
+iCloud Drive directory, which Apple keeps in sync across your devices.
+
 * Privacy first
 
 OrgSync does not collect, track, analyze, or sell any data. There is no
 analytics SDK, telemetry, account system, advertising, or OrgSync-operated
-server.
+server. The optional Pro subscription is anonymous: RevenueCat processes the
+purchase against a random ID with no personal information attached.
 
 All app data lives on your device:
 
-- Notes are stored in the app's local Documents directory.
+- Notes are stored in the app's local Documents directory — or, if you enable
+  it in Settings, in the app's iCloud Drive folder so Apple syncs them across
+  your devices.
 - Preferences and widget snapshots are stored locally in the app's App Group
   container.
 - Your GitHub Personal Access Token is stored in the device Keychain.

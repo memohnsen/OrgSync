@@ -12,6 +12,7 @@ import SwiftUI
 struct ConnectRepositoryView: View {
     @Environment(SyncEngine.self) private var sync
     @Environment(SettingsStore.self) private var settings
+    @Environment(SubscriptionStore.self) private var subscriptions: SubscriptionStore?
 
     @State private var isWorking = false
     @State private var workingLabel = ""
@@ -21,7 +22,11 @@ struct ConnectRepositoryView: View {
     var body: some View {
         Group {
             if sync.isConnected {
+                // An existing connection keeps working even without Pro — a
+                // lapsed subscription must never strand notes mid-sync.
                 connectedSection
+            } else if let subscriptions, !subscriptions.isUnlocked {
+                ProLockedSection(feature: .githubSync)
             } else {
                 connectFlow
             }

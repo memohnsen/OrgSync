@@ -12,6 +12,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(SubscriptionStore.self) private var subscriptions: SubscriptionStore?
+    @AppStorage(NotesLocation.useICloudKey) private var notesInICloud = false
+    @State private var migrationError: String?
+    @State private var showRelaunchNote = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -40,6 +44,15 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.iosSync")
                     .accessibilityHint("Configure Reminders and Calendar syncing.")
+                    if let subscriptions, subscriptions.isConfigured {
+                        NavigationLink {
+                            PaywallView()
+                        } label: {
+                            LabeledContent("OrgSync Pro", value: subscriptions.hasProEntitlement ? "Active" : "Free")
+                        }
+                        .accessibilityIdentifier("settings.pro")
+                        .accessibilityHint("View or purchase the OrgSync Pro subscription.")
+                    }
                     Toggle("Archive DONE to done.org", isOn: $settings.archiveCompletedInboxTasks)
                         .accessibilityIdentifier("settings.archiveCompletedInboxTasks")
                     Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
@@ -53,11 +66,28 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.appearance")
                 } header: {
                     Text("Preferences")
+                }
+
+                Section {
+                    Toggle("Store Notes in iCloud Drive", isOn: $notesInICloud)
+                        .accessibilityIdentifier("settings.notesInICloud")
+                        .accessibilityHint("Moves your notes into the app's iCloud Drive folder so they sync across your devices for free.")
+                        .onChange(of: notesInICloud) { old, new in
+                            guard old != new else { return }
+                            migrateNotes(toICloud: new)
+                        }
+                } header: {
+                    Text("Notes Storage")
+                } footer: {
+                    Text("In iCloud Drive, your notes sync across your devices through Apple — free, no account with us, no GitHub needed. Takes effect after relaunching OrgSync.")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Section {
                 } footer: {
                     Text("OrgSync • Version \(appVersion)")
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
-                        .padding(.top, 10)
                         .padding(.bottom, 6)
                 }
             }
@@ -68,6 +98,34 @@ struct SettingsView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .contentMargins(.top, 0, for: .scrollContent)
             .accessibilityIdentifier("settings.screen")
+            .alert("Couldn't Move Notes", isPresented: Binding(
+                get: { migrationError != nil },
+                set: { if !$0 { migrationError = nil } }
+            )) {
+                Button("OK", role: .cancel) { migrationError = nil }
+            } message: {
+                Text(migrationError ?? "")
+            }
+            .alert("Notes Moved", isPresented: $showRelaunchNote) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Quit and reopen OrgSync to use the new location.")
+            }
+        }
+    }
+
+    /// Moves the notes directory and reverts the toggle if the move fails.
+    private func migrateNotes(toICloud: Bool) {
+        Task.detached {
+            do {
+                try NotesLocation.migrate(toICloud: toICloud)
+                await MainActor.run { showRelaunchNote = true }
+            } catch {
+                await MainActor.run {
+                    migrationError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    notesInICloud = !toICloud
+                }
+            }
         }
     }
 

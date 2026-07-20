@@ -16,6 +16,7 @@ struct IOSSyncSettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(RemindersSyncEngine.self) private var reminders
     @Environment(CalendarSyncEngine.self) private var calendar
+    @Environment(SubscriptionStore.self) private var subscriptions: SubscriptionStore?
     @State private var showRemindersSyncSuccess = false
     @State private var showCalendarSyncSuccess = false
 
@@ -23,6 +24,34 @@ struct IOSSyncSettingsView: View {
         @Bindable var settings = settings
 
         Form {
+            if let subscriptions, !subscriptions.isUnlocked {
+                ProLockedSection(feature: .iosSync)
+            } else {
+                syncSections
+            }
+        }
+        .navigationTitle("iOS Sync")
+        .navigationBarTitleDisplayMode(.inline)
+        // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
+        // pre-27 translucent look.
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .alert("Reminders Synced", isPresented: $showRemindersSyncSuccess) {
+            Button("Done", role: .cancel) {}
+        } message: {
+            Text("The selected Reminders list is up to date.")
+        }
+        .alert("Calendar Synced", isPresented: $showCalendarSyncSuccess) {
+            Button("Done", role: .cancel) {}
+        } message: {
+            Text("calendar.org is up to date.")
+        }
+    }
+
+    @ViewBuilder
+    private var syncSections: some View {
+        @Bindable var settings = settings
+
+        Group {
             Section {
                 Toggle("Sync with Reminders", isOn: $settings.remindersSync)
                     .disabled(reminders.access != .granted)
@@ -97,21 +126,6 @@ struct IOSSyncSettingsView: View {
                     Button("Dismiss") { calendar.clearError() }
                 }
             }
-        }
-        .navigationTitle("iOS Sync")
-        .navigationBarTitleDisplayMode(.inline)
-        // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
-        // pre-27 translucent look.
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .alert("Reminders Synced", isPresented: $showRemindersSyncSuccess) {
-            Button("Done", role: .cancel) {}
-        } message: {
-            Text("The selected Reminders list is up to date.")
-        }
-        .alert("Calendar Synced", isPresented: $showCalendarSyncSuccess) {
-            Button("Done", role: .cancel) {}
-        } message: {
-            Text("calendar.org is up to date.")
         }
     }
 

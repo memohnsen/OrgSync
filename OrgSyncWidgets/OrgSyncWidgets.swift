@@ -166,16 +166,44 @@ struct CompleteTodoIntent: AppIntent {
     }
 }
 
+/// Whether the app last reported Pro as unlocked. Missing value (app not yet
+/// launched after install/update) counts as unlocked so the widget never locks
+/// prematurely.
+private var isProUnlocked: Bool {
+    UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)?
+        .object(forKey: AgendaSnapshot.proUnlockedKey) as? Bool ?? true
+}
+
+/// Shown in place of widget content when Pro is required.
+struct WidgetProLockView: View {
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "lock.fill")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+            Text("Widgets require OrgSync Pro")
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 struct FavoritesWidget: Widget {
     let kind = "OrgSyncFavorites"
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: AgendaProvider()) { entry in
-            let paths = Set(UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)?.stringArray(forKey: AgendaSnapshot.favoritesKey) ?? [])
-            let favoriteItems = paths.sorted().map { path in
-                entry.items.first(where: { $0.filePath == path })
-                    ?? AgendaSnapshotItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
+            if isProUnlocked {
+                let paths = Set(UserDefaults(suiteName: AgendaSnapshot.appGroupIdentifier)?.stringArray(forKey: AgendaSnapshot.favoritesKey) ?? [])
+                let favoriteItems = paths.sorted().map { path in
+                    entry.items.first(where: { $0.filePath == path })
+                        ?? AgendaSnapshotItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
+                }
+                WidgetNoteList(title: "Favorites", symbol: "star.fill", accent: .yellow, items: favoriteItems, empty: "Favorite notes appear here.")
+            } else {
+                WidgetProLockView()
             }
-            WidgetNoteList(title: "Favorites", symbol: "star.fill", accent: .yellow, items: favoriteItems, empty: "Favorite notes appear here.")
         }
         .configurationDisplayName("Favorite Notes").description("Quick links to your favorite OrgSync notes.")
         .supportedFamilies([.systemSmall, .systemMedium])
@@ -186,7 +214,11 @@ struct UpcomingWidget: Widget {
     let kind = "OrgSyncUpcoming"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
-            AgendaListView(items: entry.items, range: entry.range, accent: .cyan, empty: entry.range.emptyText)
+            if isProUnlocked {
+                AgendaListView(items: entry.items, range: entry.range, accent: .cyan, empty: entry.range.emptyText)
+            } else {
+                WidgetProLockView()
+            }
         }
         .configurationDisplayName("Upcoming TODOs")
         .description("Scheduled and deadline tasks grouped by day.")

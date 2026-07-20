@@ -19,6 +19,11 @@ struct AgendaSnapshot: Codable {
     static let pendingCompletionsKey = "widget.pendingCompletions"
     /// App-group key holding the favorite notes' relative paths.
     static let favoritesKey = "favorites.relativePaths"
+    /// App-group key mirroring whether Pro features (widgets among them) are
+    /// unlocked. Written by the app's SubscriptionStore; read by the widgets.
+    /// Absent (fresh install, app not yet launched) counts as unlocked so the
+    /// widget never shows a lock before the app has had a chance to check.
+    static let proUnlockedKey = "subscription.proUnlocked"
 
     var generatedAt: Date
     var items: [AgendaSnapshotItem]
