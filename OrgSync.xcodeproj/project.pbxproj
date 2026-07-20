@@ -367,7 +367,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Reads REVENUECAT_API_KEY from the gitignored .env and writes it into the\n# built app's Info.plist, so the key never lands in the repository.\nENV_FILE=\"$SRCROOT/.env\"\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n[ -f \"$ENV_FILE\" ] || exit 0\nKEY=$(grep -E '^REVENUECAT_API_KEY=' \"$ENV_FILE\" | tail -1 | cut -d= -f2-)\nif [ -n \"$KEY\" ] && [ -f \"$PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :RevenueCatAPIKey $KEY\" \"$PLIST\"\nfi\n";
+			shellScript = "# Reads the RevenueCat key from the gitignored .env and writes it into the\n# built app's Info.plist, so keys never land in the repository. Release\n# builds (archives) get the live key; everything else gets the test key.\nENV_FILE=\"$SRCROOT/.env\"\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n[ -f \"$ENV_FILE\" ] || exit 0\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  VAR=REVENUECAT_API_KEY_LIVE\nelse\n  VAR=REVENUECAT_API_KEY_TEST\nfi\nKEY=$(grep -E \"^$VAR=\" \"$ENV_FILE\" | tail -1 | cut -d= -f2-)\n# Legacy fallback for a .env that still uses the single-key name.\n[ -n \"$KEY\" ] || KEY=$(grep -E '^REVENUECAT_API_KEY=' \"$ENV_FILE\" | tail -1 | cut -d= -f2-)\nif [ \"$CONFIGURATION\" = \"Release\" ] && [ -z \"$KEY\" ]; then\n  echo \"error: REVENUECAT_API_KEY_LIVE missing from .env — refusing to archive without the live RevenueCat key.\"\n  exit 1\nfi\nif [ -n \"$KEY\" ] && [ -f \"$PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :RevenueCatAPIKey $KEY\" \"$PLIST\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
