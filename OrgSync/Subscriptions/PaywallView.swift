@@ -49,9 +49,12 @@ struct ProLockedSection: View {
                 showPaywall = true
             }
             .accessibilityIdentifier("pro.unlock.\(feature.rawValue)")
-        }
-        .sheet(isPresented: $showPaywall) {
-            ProPaywallSheet()
+            // The sheet must hang off a row, not the Section: modifying a
+            // Section wraps it in a plain view, which breaks Form styling and
+            // made the first presentation dismiss itself immediately.
+            .sheet(isPresented: $showPaywall) {
+                ProPaywallSheet()
+            }
         }
     }
 }

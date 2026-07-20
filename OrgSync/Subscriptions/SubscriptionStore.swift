@@ -49,7 +49,12 @@ final class SubscriptionStore {
     }
 
     private func apply(_ info: CustomerInfo) {
+        // Prefer the canonical "pro" entitlement, but accept any active
+        // entitlement: OrgSync sells exactly one thing, so a dashboard that
+        // names the entitlement differently must not leave paying customers
+        // locked out.
         hasProEntitlement = info.entitlements[Self.entitlementID]?.isActive == true
+            || !info.entitlements.active.isEmpty
         publishUnlockStateForWidgets()
     }
 
