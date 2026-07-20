@@ -1,0 +1,7 @@
+{
+  "description": "OrgSync 是一个原生、本地优先的 .org 文件之家。记录笔记、组织项目，并在专注的议程中工作——无需交出你对数据的所有权。\n\n用 ORG MODE 书写\n浏览、阅读并编辑纯文本 .org 文件，支持标题、TODO 状态、优先级、标签、时间戳、复选框、表格、链接、源代码块、抽屉和行内格式。\n\n把笔记变成计划\n使用议程查看今天到期、即将到来以及所有未完成的任务。为收件箱直接添加带有状态、日程、截止日期和标签的新条目。\n\n打造你的专属\n自定义 TODO 状态与颜色，选择外观，并把喜爱的笔记放在触手可及之处。\n\n永久免费\n书写、整理、议程、搜索、收藏以及 Siri 和快捷指令均永久免费，无需账户。想免费在多设备间同步吗？把笔记存入 App 的 iCloud 云盘文件夹，Apple 会为你保持同步。\n\nORGSYNC PRO\n订阅可解锁四项强大功能：GitHub 仓库同步（用你自己的细粒度个人访问令牌进行克隆、拉取、审查更改、解决冲突、提交和推送）、用于收藏和即将到来事项的主屏幕小组件、与提醒事项的双向同步以及只读的日历同步，还有在你所选提前时间提醒的计划与截止 TODO 本地通知。订阅保持匿名：唯一标识符是随机的 RevenueCat ID——绝不使用你的姓名、邮箱或笔记。\n\n默认隐私\nOrgSync 不收集、不追踪、不分析也不出售任何数据。没有账户系统、分析 SDK、广告、遥测，也没有 OrgSync 运营的服务器。除非你明确启用 iCloud 云盘存储、GitHub 同步或提醒事项/日历集成，你的笔记始终保留在你的设备上。\n\n隐私政策: https://github.com/memohnsen/OrgSync/blob/main/PRIVACY.org\n使用条款: https://github.com/memohnsen/OrgSync/blob/main/TERMS.org",
+  "keywords": "org mode,笔记,待办,议程,提醒,github,git,emacs,markdown,终端",
+  "marketingUrl": "https://github.com/memohnsen/OrgSync",
+  "promotionalText": "你的 .org 文件，始终在本地，始终属于你。",
+  "supportUrl": "https://github.com/memohnsen/OrgSync/issues"
+}
