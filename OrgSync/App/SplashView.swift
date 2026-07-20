@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SplashView: View {
+    @ScaledMetric(relativeTo: .largeTitle) private var brandSize: CGFloat = 30
+
     var body: some View {
         ZStack {
             Color("LaunchBackground")
@@ -28,7 +30,7 @@ struct SplashView: View {
 
                 VStack(spacing: 5) {
                     Text("OrgSync")
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .font(.system(size: brandSize, weight: .bold, design: .rounded))
                         .accessibilityAddTraits(.isHeader)
                     Text("Your notes, in sync.")
                         .font(.subheadline.weight(.medium))

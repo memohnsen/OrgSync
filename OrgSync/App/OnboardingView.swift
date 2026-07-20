@@ -9,6 +9,9 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    @ScaledMetric(relativeTo: .largeTitle) private var pageSymbolSize: CGFloat = 38
+    @ScaledMetric(relativeTo: .largeTitle) private var pageTitleSize: CGFloat = 36
+
     let openInbox: () -> Void
     let connectRepository: () -> Void
 
@@ -128,7 +131,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 22) {
             Spacer()
             Image(systemName: symbol)
-                .font(.system(size: 38, weight: .semibold))
+                .font(.system(size: pageSymbolSize, weight: .semibold))
                 .foregroundStyle(Color(red: 0.18, green: 0.45, blue: 0.76))
                 .frame(width: 78, height: 78)
                 .background(.white, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
@@ -136,7 +139,7 @@ struct OnboardingView: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .font(.system(size: pageTitleSize, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)

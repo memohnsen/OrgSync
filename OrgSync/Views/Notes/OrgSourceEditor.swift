@@ -269,16 +269,21 @@ private final class OrgEditorAccessoryView: UIToolbar {
 // MARK: - Highlighter
 
 enum OrgSyntaxHighlighter {
+    // UIFontMetrics-scaled fonts participate in adjustsFontForContentSizeCategory,
+    // so the editor tracks Dynamic Type changes live. (A plain monospaced font
+    // sized from preferredFont only captures the size at creation.)
     static var baseFont: UIFont {
-        UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
+        UIFontMetrics(forTextStyle: .body).scaledFont(for: .monospacedSystemFont(ofSize: 17, weight: .regular))
     }
     private static var boldFont: UIFont {
-        UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .bold)
+        UIFontMetrics(forTextStyle: .body).scaledFont(for: .monospacedSystemFont(ofSize: 17, weight: .bold))
     }
 
-    static let typingAttributes: [NSAttributedString.Key: Any] = [
+    // Computed, not a stored `let`: a cached dictionary would freeze the font
+    // at the text size of first access for the app's whole lifetime.
+    static var typingAttributes: [NSAttributedString.Key: Any] { [
         .font: baseFont, .foregroundColor: UIColor.label,
-    ]
+    ] }
 
     static func highlight(_ text: String) -> NSAttributedString {
         let result = NSMutableAttributedString(
