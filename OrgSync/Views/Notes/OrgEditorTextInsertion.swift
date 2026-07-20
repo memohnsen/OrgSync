@@ -52,6 +52,13 @@ struct OrgEditorTextInsertion: Equatable {
             insertAtLineStart("# ", into: text, selection: selection)
         case .sourceBlock:
             insert("#+begin_src\n\n#+end_src", into: text, selection: selection, caretOffsetFromEnd: 10)
+        case .table:
+            insertBlock(
+                "| Header | Header |\n|--------+--------|\n|        |        |",
+                into: text,
+                selection: selection,
+                caretOffsetFromStart: 2
+            )
         }
     }
 
@@ -71,6 +78,28 @@ struct OrgEditorTextInsertion: Equatable {
         let replacement = separator.before + snippet + separator.after
         let replaced = (text as NSString).replacingCharacters(in: range, with: replacement)
         let caret = range.location + (separator.before as NSString).length + (snippet as NSString).length - caretOffsetFromEnd
+        return OrgEditorTextInsertion(text: replaced, selection: NSRange(location: caret, length: 0))
+    }
+
+    /// Inserts a multi-line block on its own lines, adding a leading and/or
+    /// trailing newline only when the caret isn't already at a line boundary.
+    /// The caret lands `caretOffsetFromStart` UTF-16 units into the snippet so
+    /// callers can drop it inside the first editable cell.
+    private static func insertBlock(_ snippet: String,
+                                    into text: String,
+                                    selection: NSRange,
+                                    caretOffsetFromStart: Int) -> OrgEditorTextInsertion {
+        let range = validRange(selection, in: text)
+        let nsText = text as NSString
+        let newline: unichar = 10
+        let leadingNeeded = range.location > 0 && nsText.character(at: range.location - 1) != newline
+        let trailingEnd = range.location + range.length
+        let trailingNeeded = trailingEnd < nsText.length && nsText.character(at: trailingEnd) != newline
+        let leading = leadingNeeded ? "\n" : ""
+        let trailing = trailingNeeded ? "\n" : ""
+        let replacement = leading + snippet + trailing
+        let replaced = nsText.replacingCharacters(in: range, with: replacement)
+        let caret = range.location + (leading as NSString).length + caretOffsetFromStart
         return OrgEditorTextInsertion(text: replaced, selection: NSRange(location: caret, length: 0))
     }
 

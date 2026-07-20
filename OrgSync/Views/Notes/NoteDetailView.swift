@@ -31,6 +31,7 @@ struct NoteDetailView: View {
     /// over it by the next reader mutation.
     @State private var diskText = ""
     @State private var backlinks: [OrgReaderView.BacklinkRef] = []
+    @State private var backlinkTask: Task<Void, Never>?
     @State private var toolbarCommands = OrgEditorToolbarPreferences.load()
     @State private var isCustomizingToolbar = false
 
@@ -97,9 +98,29 @@ struct NoteDetailView: View {
         loaded = true
     }
 
+    /// Backlink discovery reads and scans every other note's text, so it runs
+    /// off the main actor: snapshot the candidate list here (RepoStore and its
+    /// cache stay main-actor-only), scan in a detached task, publish the result
+    /// back. A newer refresh cancels the one in flight.
     private func refreshBacklinks() {
-        backlinks = repo.backlinks(to: item).map {
-            OrgReaderView.BacklinkRef(relativePath: $0.relativePath, title: $0.displayName)
+        backlinkTask?.cancel()
+        let target = (name: item.displayName, path: item.relativePath)
+        let candidates = repo.allOrgFiles()
+            .filter { $0.relativePath != target.path }
+            .map { (path: $0.relativePath, url: $0.url, name: $0.displayName) }
+        backlinkTask = Task.detached(priority: .utility) {
+            var refs: [OrgReaderView.BacklinkRef] = []
+            for candidate in candidates {
+                if Task.isCancelled { return }
+                guard let text = try? String(contentsOf: candidate.url, encoding: .utf8) else { continue }
+                let linksHere = WikiLink.targets(in: text).contains {
+                    WikiLink.resolves($0, toNoteNamed: target.name, relativePath: target.path)
+                }
+                if linksHere { refs.append(.init(relativePath: candidate.path, title: candidate.name)) }
+            }
+            refs.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+            let result = refs
+            await MainActor.run { backlinks = result }
         }
     }
 

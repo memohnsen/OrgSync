@@ -54,12 +54,15 @@ final class SyncEngine {
     /// makes each run against the state the previous one left behind.
     @ObservationIgnored private var pendingWork: Task<Void, Never>?
 
+    @ObservationIgnored private let stateStore: SyncStateStore
+
     init(repo: RepoStore, settings: SettingsStore, session: URLSession = .shared) {
         self.repo = repo
         self.settings = settings
         self.session = session
         self.worker = SyncWorker(repoURL: repo.repoURL)
-        self.state = SyncStateStore(repoRoot: repo.repoURL).load()
+        self.stateStore = SyncStateStore(repoRoot: repo.repoURL)
+        self.state = stateStore.load()
         self.lastSyncDate = state?.lastSyncDate
     }
 
@@ -122,6 +125,11 @@ final class SyncEngine {
 
     private func run(_ label: String, _ operation: @escaping () async throws -> Void) async {
         await chain {
+            // Another engine instance (a Siri intent that ran before the app's
+            // stores registered) may have advanced the on-disk baseline since
+            // this instance loaded it. state.json is the source of truth, so
+            // re-read it before operating; a missing file means disconnected.
+            self.state = self.stateStore.load()
             self.phase = .syncing(label)
             do {
                 try await operation()

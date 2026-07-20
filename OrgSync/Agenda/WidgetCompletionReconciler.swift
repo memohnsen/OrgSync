@@ -32,14 +32,12 @@ enum WidgetCompletionReconciler {
         }
         guard !matches.isEmpty else { return }
 
-        var didWrite = false
-        for item in matches {
-            if TaskCompletionService.complete(item, repo: repo, settings: settings) { didWrite = true }
-        }
-
-        if didWrite {
-            repo.refresh()
-            AgendaSnapshotWriter.write(repo: repo)
+        // Batch so N completions produce one revision bump and one widget
+        // snapshot rewrite (each complete() write would otherwise publish).
+        repo.performMutationBatch {
+            for item in matches {
+                _ = TaskCompletionService.complete(item, repo: repo, settings: settings)
+            }
         }
     }
 }

@@ -13,6 +13,44 @@ import Testing
         #expect(commands.contains(.recurrence))
         #expect(commands.contains(.bold))
         #expect(commands.contains(.link))
+        #expect(commands.contains(.table))
+    }
+
+    @Test func tableCommandInsertsAnOrgTableSkeletonOnItsOwnLines() {
+        let skeleton = "| Header | Header |\n|--------+--------|\n|        |        |"
+
+        // Caret at the end of an existing populated line: the block is pushed
+        // onto a fresh line and the caret lands inside the first header cell.
+        let onPopulatedLine = OrgEditorTextInsertion.applying(
+            .table,
+            to: "Notes",
+            selection: NSRange(location: 5, length: 0),
+            timestamp: "<2026-07-18 Sat>"
+        )
+        #expect(onPopulatedLine.text == "Notes\n\(skeleton)")
+        #expect(onPopulatedLine.selection == NSRange(location: ("Notes\n" as NSString).length + 2, length: 0))
+
+        // On an already-empty line no extra leading newline is added.
+        let onEmptyLine = OrgEditorTextInsertion.applying(
+            .table,
+            to: "",
+            selection: NSRange(location: 0, length: 0),
+            timestamp: "<2026-07-18 Sat>"
+        )
+        #expect(onEmptyLine.text == skeleton)
+        #expect(onEmptyLine.selection == NSRange(location: 2, length: 0))
+    }
+
+    @Test func tableCommandSeparatesFromSurroundingContentOnBothSides() {
+        let skeleton = "| Header | Header |\n|--------+--------|\n|        |        |"
+        let result = OrgEditorTextInsertion.applying(
+            .table,
+            to: "Before\nAfter",
+            selection: NSRange(location: 6, length: 0),
+            timestamp: "<2026-07-18 Sat>"
+        )
+
+        #expect(result.text == "Before\n\(skeleton)\nAfter")
     }
 
     @Test func customToolbarOrderAndVisibilityPersistWithoutDuplicates() {

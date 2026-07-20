@@ -27,6 +27,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
     case link
     case comment
     case sourceBlock
+    case table
 
     var id: String { rawValue }
 
@@ -49,6 +50,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
         case .link: "Link"
         case .comment: "Comment"
         case .sourceBlock: "Source block"
+        case .table: "Table"
         }
     }
 
@@ -71,6 +73,7 @@ enum OrgEditorCommand: String, CaseIterable, Identifiable {
         case .link: "link"
         case .comment: "text.bubble"
         case .sourceBlock: "chevron.left.forwardslash.chevron.right"
+        case .table: "tablecells"
         }
     }
 }
@@ -80,7 +83,7 @@ enum OrgEditorToolbarPreferences {
 
     static let defaultCommands: [OrgEditorCommand] = [
         .headline, .todo, .checkbox, .timestamp, .scheduled, .deadline, .recurrence,
-        .priority, .tag, .bold, .italic, .underline, .strike, .code, .link,
+        .priority, .tag, .bold, .italic, .underline, .strike, .code, .link, .table,
     ]
 
     static func load(defaults: UserDefaults = .standard) -> [OrgEditorCommand] {

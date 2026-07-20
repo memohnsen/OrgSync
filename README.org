@@ -1,8 +1,10 @@
 #+TITLE: OrgSync
 
 OrgSync is a native, local-first iOS app for writing and organizing =.org=
-files. It includes an org-mode reader and editor, Agenda views, widgets,
-two-way Reminders integration, and optional GitHub synchronization.
+files. It includes an org-mode reader and editor, Agenda views with
+natural-language quick add, Home Screen widgets, two-way Reminders and
+read-only Calendar integration, Siri and Shortcuts support, and optional
+GitHub synchronization.
 
 [[./gh_assets/overview.png]]
 
@@ -27,6 +29,9 @@ Optional integrations follow your choices:
   GitHub for that repository.
 - Enabling Reminders sync reads and writes the Reminders list you choose through
   Apple's EventKit APIs.
+- Enabling Calendar sync reads events from the calendars you choose through
+  Apple's EventKit APIs and mirrors them into a local, read-only =calendar.org=
+  file.
 
 * Features
 
@@ -34,12 +39,22 @@ Optional integrations follow your choices:
 - Rendered org documents and a syntax-aware plain-text editor.
 - Headlines, TODO states, priorities, tags, timestamps, checkboxes, tables,
   links, source blocks, drawers, inline formatting, and more.
-- Agenda views for today, upcoming tasks, and all open TODOs.
-- Home Screen widgets for favorites and upcoming TODOs.
-- Optional GitHub clone, pull, three-way merge, commit, push, conflict copies,
-  sync status, and commit history.
+- Backlinks (Linked References) surfaced between notes.
+- Agenda tab with Today, Upcoming, and All views grouped into time buckets.
+- Natural-language quick add that parses a single line such as
+  ="call Sam tomorrow 3pm #work !!"= into a scheduled, tagged, prioritized TODO.
+- Home Screen widgets for favorites and a configurable, day-grouped agenda with
+  tap-to-complete, priority marks, tags, and an add button.
+- Siri and Shortcuts App Intents (add, complete, today, upcoming, sync, open
+  agenda) plus Apple Intelligence assistant schemas for notes.
+- Optional GitHub sync via a fine-grained Personal Access Token: a Git command
+  palette to pull, stage, commit, and push, three-way merge with conflict
+  resolution, discard of a pending commit, sync status, and commit history.
 - Optional two-way sync with a dedicated Apple Reminders list.
-- Configurable TODO keywords, agenda range, appearance, and automatic sync.
+- Optional read-only Calendar sync that mirrors events into =calendar.org=.
+- Background app refresh and a first-run onboarding experience.
+- Configurable TODO keywords and colors, agenda range, appearance, and
+  automatic sync.
 
 * Requirements
 

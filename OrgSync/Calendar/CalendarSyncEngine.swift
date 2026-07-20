@@ -47,6 +47,9 @@ final class CalendarSyncEngine {
     func sync(repo: RepoStore) async {
         guard settings.calendarSync else { return }
         guard access == .granted else { lastError = "Allow Calendar access in Settings first."; return }
+        // Regeneration is idempotent, so an overlapping run is only wasted
+        // work — skip it anyway.
+        guard !isSyncing else { return }
         isSyncing = true; defer { isSyncing = false }
 
         let window = CalendarSyncRules.window()

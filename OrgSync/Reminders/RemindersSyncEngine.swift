@@ -49,6 +49,10 @@ final class RemindersSyncEngine {
     func sync(repo: RepoStore) async {
         guard settings.remindersSync else { return }
         guard access == .granted else { lastError = "Allow Reminders access in Settings first."; return }
+        // Reentrancy guard: overlapping runs (scene-phase sync racing quick-add
+        // or background refresh) would read the same mapping snapshot, create
+        // duplicate inbox TODOs, and clobber each other's saved mappings.
+        guard !isSyncing else { return }
         isSyncing = true; defer { isSyncing = false }
         do {
             let list = try orgSyncList()

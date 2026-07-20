@@ -19,6 +19,9 @@ struct GitCommandPaletteView: View {
     @State private var showDiscardChangesPrompt = false
     @State private var showChanges = false
     @State private var showCommitLog = false
+    /// Populated on appear and after sync ops: conflictCopies() walks the whole
+    /// repo on disk, so it must not run in `body` on every re-render.
+    @State private var conflicts: [SyncEngine.ConflictCopy] = []
 
     var body: some View {
         NavigationStack {
@@ -111,7 +114,6 @@ struct GitCommandPaletteView: View {
 
                     }
 
-                    let conflicts = sync.conflictCopies()
                     if !conflicts.isEmpty {
                         Section("Conflicts") {
                             NavigationLink {
@@ -141,8 +143,13 @@ struct GitCommandPaletteView: View {
                 }
             }
             .task {
+                conflicts = sync.conflictCopies()
                 guard sync.isConnected else { return }
                 _ = try? await sync.refreshStatus()
+                conflicts = sync.conflictCopies()
+            }
+            .onChange(of: repo.revision) { _, _ in
+                conflicts = sync.conflictCopies()
             }
             .alert("Commit Staged Changes", isPresented: $showCommitPrompt) {
                 TextField("Commit message", text: $commitMessage)

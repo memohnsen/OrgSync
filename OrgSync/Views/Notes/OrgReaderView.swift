@@ -512,29 +512,63 @@ struct OrgListItemRow: View {
 struct OrgTableView: View {
     let table: OrgTable
 
+    /// Widest data row determines the column count; separator rows carry no cells.
+    private var columnCount: Int {
+        table.rows.filter { !$0.isSeparator }.map(\.cells.count).max() ?? 0
+    }
+
+    /// Rows preceding the first separator are the header; their cells render bold
+    /// and the separator itself becomes the rule beneath them. Zero when the
+    /// table has no separator row at all.
+    private var headerRowCount: Int {
+        table.rows.firstIndex(where: { $0.isSeparator }) ?? 0
+    }
+
+    private var dataRowCount: Int {
+        table.rows.filter { !$0.isSeparator }.count
+    }
+
     var body: some View {
-        let rows = table.rows.filter { !$0.isSeparator }
-        let columnCount = rows.map(\.cells.count).max() ?? 0
-        let hasHeader = table.rows.contains { $0.isSeparator }
+        let columns = columnCount
 
         ScrollView(.horizontal, showsIndicators: true) {
-            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
-                ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
-                    GridRow {
-                        ForEach(Array(0..<columnCount), id: \.self) { column in
-                            Text(column < row.cells.count ? row.cells[column] : "")
-                                .font(.system(.callout, design: .monospaced))
-                                .fontWeight(hasHeader && rowIndex == 0 ? .semibold : .regular)
+            Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
+                ForEach(Array(table.rows.enumerated()), id: \.offset) { rowIndex, row in
+                    if row.isSeparator {
+                        // Separator rows draw the horizontal rule (e.g. beneath the
+                        // header) rather than an empty text row.
+                        Divider()
+                    } else {
+                        GridRow {
+                            ForEach(0..<columns, id: \.self) { column in
+                                if column > 0 {
+                                    Divider()
+                                }
+                                cell(text: column < row.cells.count ? row.cells[column] : "",
+                                     isHeader: rowIndex < headerRowCount)
+                            }
                         }
                     }
                 }
             }
-            .padding(10)
         }
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.separator), lineWidth: 0.5)
+        )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Table with \(rows.count) rows and \(columnCount) columns")
+        .accessibilityLabel("Table with \(dataRowCount) rows and \(columns) columns")
         .accessibilityHint("Swipe left or right to view all columns.")
+    }
+
+    private func cell(text: String, isHeader: Bool) -> some View {
+        Text(text)
+            .font(.system(.callout, design: .monospaced))
+            .fontWeight(isHeader ? .bold : .regular)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .fixedSize(horizontal: true, vertical: false)
     }
 }
 

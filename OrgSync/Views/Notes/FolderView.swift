@@ -40,11 +40,14 @@ struct FolderView: View {
     // Delete confirmation
     @State private var deleteTarget: FileItem?
 
+    /// Populated on appear and on repo changes: conflictCopies() walks the
+    /// whole repo on disk, so it must not run in `body` on every re-render.
+    @State private var conflicts: [SyncEngine.ConflictCopy] = []
+
     var body: some View {
         List {
             if searchText.isEmpty {
-                if isRoot, let sync {
-                    let conflicts = sync.conflictCopies()
+                if isRoot, sync != nil {
                     if !conflicts.isEmpty {
                         Section {
                             NavigationLink {
@@ -130,6 +133,12 @@ struct FolderView: View {
                 .accessibilityHint("Create a new note or folder.")
                 .accessibilityIdentifier("notes.add")
             }
+        }
+        .task {
+            if isRoot, let sync { conflicts = sync.conflictCopies() }
+        }
+        .onChange(of: repo.revision) { _, _ in
+            if isRoot, let sync { conflicts = sync.conflictCopies() }
         }
         .onChange(of: syncError(sync)) { _, newValue in
             syncErrorShown = newValue != nil
