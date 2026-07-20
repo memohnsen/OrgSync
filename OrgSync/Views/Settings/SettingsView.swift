@@ -52,6 +52,27 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.iosSync")
                     .accessibilityHint("Configure Reminders and Calendar syncing.")
+                    if let subscriptions, subscriptions.isConfigured {
+                        if subscriptions.hasProEntitlement {
+                            NavigationLink {
+                                CustomerCenterView()
+                                    .navigationBarTitleDisplayMode(.inline)
+                            } label: {
+                                LabeledContent("OrgSync Pro", value: "Active")
+                            }
+                            .accessibilityIdentifier("settings.pro")
+                            .accessibilityHint("Manage your OrgSync Pro subscription in the Customer Center.")
+                        } else {
+                            Button {
+                                showProPaywall = true
+                            } label: {
+                                LabeledContent("OrgSync Pro", value: "Free")
+                            }
+                            .tint(.primary)
+                            .accessibilityIdentifier("settings.pro")
+                            .accessibilityHint("Shows the OrgSync Pro subscription options.")
+                        }
+                    }
                     Toggle("Archive DONE to done.org", isOn: $settings.archiveCompletedInboxTasks)
                         .accessibilityIdentifier("settings.archiveCompletedInboxTasks")
                     Stepper(
