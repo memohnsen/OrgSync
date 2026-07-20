@@ -138,9 +138,10 @@ struct OrgHeadlineView: View {
                 Button { actions.cycleTodo(path) } label: {
                     Text(keyword)
                         .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(todoColor(keyword).opacity(0.18), in: Capsule())
                         .foregroundStyle(todoColor(keyword))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Change TODO state for \(headline.title)")
@@ -173,7 +174,10 @@ struct OrgHeadlineView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .rotationEffect(.degrees(isCollapsed ? 0 : 90))
-                    .frame(width: 20, height: 24)
+                    // The fold control is among the most-tapped targets in the
+                    // reader; give it a comfortably larger hit area.
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(isCollapsed ? "Expand" : "Collapse") \(headline.title)")
@@ -482,6 +486,9 @@ struct OrgListItemRow: View {
             Button { toggle(contentIndex, path) } label: {
                 Image(systemName: checkboxSymbol(checkbox))
                     .foregroundStyle(checkbox == .checked ? Color.accentColor : Color.secondary)
+                    // A mis-tap here mutates the file; enlarge the hit area.
+                    .frame(minWidth: 30, minHeight: 30)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(checkbox == .checked ? "Mark \(OrgInlineRenderer.plainText(item.inlines)) incomplete" : "Mark \(OrgInlineRenderer.plainText(item.inlines)) complete")
