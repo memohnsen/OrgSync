@@ -37,7 +37,9 @@ final class TodoNotificationScheduler {
 
     /// Rebuild the pending notification set from the current TODOs + settings.
     /// Safe to call often; identifiers are stable so re-adding is idempotent.
-    func reschedule(repo: RepoStore, settings: SettingsStore) async {
+    /// `isProUnlocked` gates the feature: when Pro lapses, the pending set is
+    /// cleared and nothing new is scheduled.
+    func reschedule(repo: RepoStore, settings: SettingsStore, isProUnlocked: Bool = true) async {
         await refreshAuthorization()
 
         let ours = await center.pendingNotificationRequests()
@@ -45,7 +47,8 @@ final class TodoNotificationScheduler {
             .filter { $0.hasPrefix(TodoNotificationPlanner.identifierPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: ours)
 
-        guard settings.todoNotifications,
+        guard isProUnlocked,
+              settings.todoNotifications,
               authorization == .authorized || authorization == .provisional else { return }
 
         let plan = TodoNotificationPlanner.plan(

@@ -25,8 +25,8 @@ import Testing
         #expect(SubscriptionGate.isUnlocked(purchasesConfigured: false, hasProEntitlement: false))
     }
 
-    @Test func gatedFeaturesAreExactlyGitHubWidgetsAndIOSSync() {
-        #expect(Set(ProFeature.allCases.map(\.rawValue)) == ["githubSync", "widgets", "iosSync"])
+    @Test func gatedFeaturesAreExactlyGitHubWidgetsIOSSyncAndNotifications() {
+        #expect(Set(ProFeature.allCases.map(\.rawValue)) == ["githubSync", "widgets", "iosSync", "notifications"])
     }
 }
 

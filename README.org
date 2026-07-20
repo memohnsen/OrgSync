@@ -11,12 +11,13 @@ GitHub synchronization.
 * Free and Pro
 
 OrgSync is freemium. Writing and organizing notes, the agenda, search,
-favorites, Siri and Shortcuts, notifications, and iCloud Drive syncing are
-free forever. An *OrgSync Pro* subscription unlocks three features:
+favorites, Siri and Shortcuts, and iCloud Drive syncing are free forever. An
+*OrgSync Pro* subscription unlocks four features:
 
 - GitHub repository sync,
 - Home Screen widgets,
-- two-way Reminders and read-only Calendar sync.
+- two-way Reminders and read-only Calendar sync,
+- local notifications for scheduled and deadline TODOs.
 
 Subscriptions are handled by [[https://www.revenuecat.com/][RevenueCat]] and
 require *no account*: the only identifier attached to a purchase is a random,

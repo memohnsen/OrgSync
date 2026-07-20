@@ -113,7 +113,7 @@ struct RootView: View {
             WidgetCompletionReconciler.reconcile(repo: repo)
             // Refresh the pending notification set on launch: fire dates in the
             // past are dropped and note edits made outside the app are picked up.
-            await notifications.reschedule(repo: repo, settings: settings)
+            await notifications.reschedule(repo: repo, settings: settings, isProUnlocked: subscriptions.isUnlocked)
             guard !holdsSplashForUITesting else { return }
             try? await Task.sleep(for: .milliseconds(850))
             guard !Task.isCancelled else { return }
@@ -212,7 +212,7 @@ private struct AppEnvironmentModifier: ViewModifier {
             .environment(onboarding)
             .environment(notifications)
             .environment(subscriptions)
-            .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications))
+            .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications, subscriptions: subscriptions))
             .modifier(PostOnboardingPaywall(onboarding: onboarding, subscriptions: subscriptions))
     }
 }
@@ -224,16 +224,18 @@ private struct TodoNotificationRescheduling: ViewModifier {
     let repo: RepoStore
     let settings: SettingsStore
     let scheduler: TodoNotificationScheduler
+    let subscriptions: SubscriptionStore
 
     /// One equatable fingerprint of every input the plan depends on, so a
-    /// single onChange covers note edits and all three notification settings.
+    /// single onChange covers note edits, the notification settings, and the
+    /// Pro entitlement (notifications are a Pro feature).
     private var fingerprint: String {
-        "\(repo.revision)|\(settings.todoNotifications)|\(settings.allDayNotificationMinutes ?? -1)|\(settings.timedNotificationOffsets)"
+        "\(repo.revision)|\(settings.todoNotifications)|\(settings.allDayNotificationMinutes ?? -1)|\(settings.timedNotificationOffsets)|\(subscriptions.isUnlocked)"
     }
 
     func body(content: Content) -> some View {
         content.onChange(of: fingerprint) { _, _ in
-            Task { await scheduler.reschedule(repo: repo, settings: settings) }
+            Task { await scheduler.reschedule(repo: repo, settings: settings, isProUnlocked: subscriptions.isUnlocked) }
         }
     }
 }

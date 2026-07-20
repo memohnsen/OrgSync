@@ -4,7 +4,8 @@
 //
 //  Pure gating rules for the freemium model. The core note-taking experience
 //  (org editor, agenda, search, favorites, Siri) is free forever; GitHub sync,
-//  Home Screen widgets, and iOS (Reminders/Calendar) sync require OrgSync Pro.
+//  Home Screen widgets, iOS (Reminders/Calendar) sync, and TODO notifications
+//  require OrgSync Pro.
 //
 //  When RevenueCat is not configured (no API key in the build), every feature
 //  stays unlocked: a misconfigured build must never lock users out of features
@@ -18,12 +19,14 @@ enum ProFeature: String, CaseIterable {
     case githubSync
     case widgets
     case iosSync
+    case notifications
 
     var displayName: String {
         switch self {
         case .githubSync: "GitHub Sync"
         case .widgets: "Home Screen Widgets"
         case .iosSync: "Reminders & Calendar Sync"
+        case .notifications: "TODO Notifications"
         }
     }
 }

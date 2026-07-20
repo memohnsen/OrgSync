@@ -14,6 +14,7 @@ import UIKit
 struct NotificationSettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(TodoNotificationScheduler.self) private var scheduler: TodoNotificationScheduler?
+    @Environment(SubscriptionStore.self) private var subscriptions: SubscriptionStore?
 
     /// Built-in lead-time choices, in minutes before the event.
     static let standardOffsets = [0, 5, 10, 15, 30, 60]
@@ -24,6 +25,9 @@ struct NotificationSettingsView: View {
         @Bindable var settings = settings
 
         Form {
+            if let subscriptions, !subscriptions.isUnlocked {
+                ProLockedSection(feature: .notifications)
+            } else {
             Section {
                 Toggle("TODO Notifications", isOn: $settings.todoNotifications)
                     .accessibilityIdentifier("settings.todoNotifications")
@@ -70,7 +74,8 @@ struct NotificationSettingsView: View {
                     .accessibilityIdentifier("settings.notifications.addCustomOffset")
                 } header: {
                     Text("Timed TODOs")
-                }  
+                }
+            }
             }
         }
         .navigationTitle("Notifications")
