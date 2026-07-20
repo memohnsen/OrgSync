@@ -157,6 +157,7 @@
 				714B5428300BB52500C2F7A9 /* Frameworks */,
 				714B5429300BB52500C2F7A9 /* Resources */,
 				99A000000000000000000014 /* Embed Foundation Extensions */,
+				AB0000000000000000000004 /* Inject RevenueCat API Key */,
 			);
 			buildRules = (
 			);
@@ -343,6 +344,25 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AB0000000000000000000004 /* Inject RevenueCat API Key */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Inject RevenueCat API Key";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Reads REVENUECAT_API_KEY from the gitignored .env and writes it into the\n# built app's Info.plist, so the key never lands in the repository.\nENV_FILE=\"$SRCROOT/.env\"\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n[ -f \"$ENV_FILE\" ] || exit 0\nKEY=$(grep -E '^REVENUECAT_API_KEY=' \"$ENV_FILE\" | tail -1 | cut -d= -f2-)\nif [ -n \"$KEY\" ] && [ -f \"$PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :RevenueCatAPIKey $KEY\" \"$PLIST\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		714B5427300BB52500C2F7A9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -433,7 +453,7 @@
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -497,7 +517,7 @@
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
