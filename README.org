@@ -74,7 +74,6 @@ Optional integrations follow your choices:
   resolution, discard of a pending commit, sync status, and commit history.
 - Optional two-way sync with a dedicated Apple Reminders list.
 - Optional read-only Calendar sync that mirrors events into =calendar.org=.
-- Background app refresh and a first-run onboarding experience.
 - Configurable TODO keywords and colors, agenda range, appearance, and
   automatic sync.
 

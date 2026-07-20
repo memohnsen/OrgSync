@@ -58,7 +58,7 @@ struct SettingsView: View {
                                 CustomerCenterView()
                                     .navigationBarTitleDisplayMode(.inline)
                             } label: {
-                                LabeledContent("OrgSync Pro", value: "Active")
+                                LabeledContent("Customer Center", value: "Pro Active")
                             }
                             .accessibilityIdentifier("settings.pro")
                             .accessibilityHint("Manage your OrgSync Pro subscription in the Customer Center.")
