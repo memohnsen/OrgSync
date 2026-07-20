@@ -35,6 +35,13 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.todoStates")
                     .accessibilityHint("Add or delete active and completed TODO statuses.")
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
+                        LabeledContent("Notifications", value: settings.todoNotifications ? "On" : "Off")
+                    }
+                    .accessibilityIdentifier("settings.notifications")
+                    .accessibilityHint("Configure local notifications for scheduled and deadline TODOs.")
                     Stepper("Upcoming agenda: \(settings.agendaDays) days", value: $settings.agendaDays, in: 1...30)
                         .accessibilityIdentifier("settings.agendaDays")
                         .accessibilityHint("Sets how many days appear in the Upcoming agenda.")
@@ -55,8 +62,6 @@ struct SettingsView: View {
                 } footer: {
                     Text("Recurring tasks remain in inbox.org and advance to their next scheduled occurrence.")
                 }
-
-                NotificationSettingsSection()
 
                 Section {
                     Toggle("Sync with Reminders", isOn: $settings.remindersSync)

@@ -115,11 +115,15 @@ import Testing
         #expect(plan1.first?.id.hasPrefix(TodoNotificationPlanner.identifierPrefix) == true)
     }
 
-    @Test func offsetLabelsUseMinutesAndHours() {
+    @Test func offsetLabelsUseMinutesHoursAndDays() {
         #expect(TodoNotificationPlanner.offsetLabel(5) == "5 min")
         #expect(TodoNotificationPlanner.offsetLabel(90) == "90 min")
         #expect(TodoNotificationPlanner.offsetLabel(60) == "1 hr")
         #expect(TodoNotificationPlanner.offsetLabel(120) == "2 hr")
+        #expect(TodoNotificationPlanner.offsetLabel(24 * 60) == "1 day")
+        #expect(TodoNotificationPlanner.offsetLabel(2 * 24 * 60) == "2 days")
+        // 25 hours is not a whole day; falls back to hours.
+        #expect(TodoNotificationPlanner.offsetLabel(25 * 60) == "25 hr")
     }
 }
 

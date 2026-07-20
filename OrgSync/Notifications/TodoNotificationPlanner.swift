@@ -84,9 +84,15 @@ enum TodoNotificationPlanner {
             .map { $0 }
     }
 
-    /// "5 min" / "1 hr" / "90 min" — used in notification bodies and settings.
+    /// "5 min" / "90 min" / "1 hr" / "2 days" — used in notification bodies
+    /// and the settings lead-time rows.
     static func offsetLabel(_ minutes: Int) -> String {
-        minutes % 60 == 0 && minutes >= 60 ? "\(minutes / 60) hr" : "\(minutes) min"
+        if minutes >= 24 * 60, minutes % (24 * 60) == 0 {
+            let days = minutes / (24 * 60)
+            return days == 1 ? "1 day" : "\(days) days"
+        }
+        if minutes >= 60, minutes % 60 == 0 { return "\(minutes / 60) hr" }
+        return "\(minutes) min"
     }
 
     private static func identifier(for todo: OrgTodoItem, offset: Int?) -> String {
