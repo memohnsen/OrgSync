@@ -13,6 +13,7 @@ struct NotesView: View {
     @Environment(RepoStore.self) private var repo
     @Binding var openNotePath: String?
     @State private var navigationPath: [FileItem] = []
+    @State private var missingNoteName: String?
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -26,9 +27,23 @@ struct NotesView: View {
                 }
         }
         .onChange(of: openNotePath) { _, path in
-            guard let path, let item = repo.item(forRelativePath: path), !item.isDirectory else { return }
-            navigationPath = [item]
+            guard let path else { return }
             openNotePath = nil
+            if let item = repo.item(forRelativePath: path), !item.isDirectory {
+                navigationPath = [item]
+            } else {
+                // A widget or link can point at a note that was since renamed
+                // or deleted — say so instead of silently landing on the root.
+                missingNoteName = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+            }
+        }
+        .alert("Note Not Found", isPresented: Binding(
+            get: { missingNoteName != nil },
+            set: { if !$0 { missingNoteName = nil } }
+        )) {
+            Button("OK", role: .cancel) { missingNoteName = nil }
+        } message: {
+            Text("“\(missingNoteName ?? "")” may have been renamed or deleted.")
         }
     }
 }
