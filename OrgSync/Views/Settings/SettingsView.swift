@@ -61,7 +61,8 @@ struct SettingsView: View {
                                 LabeledContent("Customer Center", value: "Pro Active")
                             }
                             .accessibilityIdentifier("settings.pro")
-                            .accessibilityHint("Manage your OrgSync Pro subscription in the Customer Center.")
+                            .accessibilityHint(
+                                "Manage your OrgSync Pro subscription in the Customer Center.")
                         } else {
                             Button {
                                 showProPaywall = true
@@ -73,6 +74,15 @@ struct SettingsView: View {
                             .accessibilityHint("Shows the OrgSync Pro subscription options.")
                         }
                     }
+                    Toggle("Store Notes in iCloud Drive", isOn: $notesInICloud)
+                        .accessibilityIdentifier("settings.notesInICloud")
+                        .accessibilityHint(
+                            "Moves your notes into the app's iCloud Drive folder so they sync across your devices for free."
+                        )
+                        .onChange(of: notesInICloud) { old, new in
+                            guard old != new else { return }
+                            migrateNotes(toICloud: new)
+                        }
                     Toggle("Archive DONE to done.org", isOn: $settings.archiveCompletedInboxTasks)
                         .accessibilityIdentifier("settings.archiveCompletedInboxTasks")
                     Stepper(
@@ -89,25 +99,6 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.appearance")
                 } header: {
                     Text("Preferences")
-                }
-
-                Section {
-                    Toggle("Store Notes in iCloud Drive", isOn: $notesInICloud)
-                        .accessibilityIdentifier("settings.notesInICloud")
-                        .accessibilityHint(
-                            "Moves your notes into the app's iCloud Drive folder so they sync across your devices for free."
-                        )
-                        .onChange(of: notesInICloud) { old, new in
-                            guard old != new else { return }
-                            migrateNotes(toICloud: new)
-                        }
-                } header: {
-                    Text("Notes Storage")
-                } footer: {
-                    Text(
-                        "In iCloud Drive, your notes sync across your devices through Apple — free, no account with us, no GitHub needed. Takes effect after relaunching OrgSync."
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 Section {

@@ -15,11 +15,13 @@ import RevenueCatUI
 /// The remotely configured RevenueCat paywall, with a graceful fallback for
 /// builds where purchases aren't configured.
 struct ProPaywallSheet: View {
-    @Environment(SubscriptionStore.self) private var subscriptions
+    // Optional lookup: a missing store must degrade to the fallback text, not
+    // trap the environment assertion mid-presentation.
+    @Environment(SubscriptionStore.self) private var subscriptions: SubscriptionStore?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        if subscriptions.isConfigured {
+        if let subscriptions, subscriptions.isConfigured {
             RevenueCatUI.PaywallView(displayCloseButton: true)
                 .onPurchaseCompleted { _ in dismiss() }
                 .onRestoreCompleted { _ in dismiss() }

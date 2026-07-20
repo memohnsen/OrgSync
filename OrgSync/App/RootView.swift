@@ -203,6 +203,12 @@ private struct AppEnvironmentModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            // Presentation modifiers must sit INSIDE the .environment calls:
+            // a sheet's content inherits the environment visible at its
+            // attachment point, so attaching it above the injections crashed
+            // ProPaywallSheet's @Environment(SubscriptionStore.self) lookup.
+            .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications, subscriptions: subscriptions))
+            .modifier(PostOnboardingPaywall(onboarding: onboarding, subscriptions: subscriptions))
             .environment(repo)
             .environment(favorites)
             .environment(settings)
@@ -212,8 +218,6 @@ private struct AppEnvironmentModifier: ViewModifier {
             .environment(onboarding)
             .environment(notifications)
             .environment(subscriptions)
-            .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications, subscriptions: subscriptions))
-            .modifier(PostOnboardingPaywall(onboarding: onboarding, subscriptions: subscriptions))
     }
 }
 
