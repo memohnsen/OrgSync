@@ -11,6 +11,7 @@
 		AA0000000000000000000D01 /* AgendaSnapshotShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000F01 /* AgendaSnapshotShared.swift */; };
 		99A000000000000000000013 /* OrgSyncWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 99A000000000000000000001 /* OrgSyncWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB0000000000000000000001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = AB0000000000000000000002 /* RevenueCat */; };
+		AB0000000000000000000005 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = AB0000000000000000000006 /* RevenueCatUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +89,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB0000000000000000000001 /* RevenueCat in Frameworks */,
+				AB0000000000000000000005 /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +172,7 @@
 			name = OrgSync;
 			packageProductDependencies = (
 				AB0000000000000000000002 /* RevenueCat */,
+				AB0000000000000000000006 /* RevenueCatUI */,
 			);
 			productName = OrgSync;
 			productReference = 714B542B300BB52500C2F7A9 /* OrgSync.app */;
@@ -310,6 +313,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AB0000000000000000000003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		AB0000000000000000000006 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB0000000000000000000003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 

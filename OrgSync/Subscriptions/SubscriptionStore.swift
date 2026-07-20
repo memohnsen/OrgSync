@@ -26,10 +26,6 @@ final class SubscriptionStore {
     private(set) var isConfigured = false
     /// True when the customer has the Pro entitlement.
     private(set) var hasProEntitlement = false
-    /// Current offering's packages, for the paywall.
-    private(set) var packages: [Package] = []
-    private(set) var lastError: String?
-    private(set) var isPurchasing = false
 
     /// Whether Pro features are usable right now.
     var isUnlocked: Bool {
@@ -42,40 +38,13 @@ final class SubscriptionStore {
         // No appUserID: RevenueCat generates and persists an anonymous ID.
         Purchases.configure(withAPIKey: key)
         isConfigured = true
-        Task { await refresh() }
-    }
-
-    /// Re-read entitlements and the current offering.
-    func refresh() async {
-        guard isConfigured else { return }
-        if let info = try? await Purchases.shared.customerInfo() {
-            apply(info)
-        }
-        if let offerings = try? await Purchases.shared.offerings() {
-            packages = offerings.current?.availablePackages ?? []
-        }
-    }
-
-    func purchase(_ package: Package) async {
-        guard isConfigured, !isPurchasing else { return }
-        isPurchasing = true
-        defer { isPurchasing = false }
-        lastError = nil
-        do {
-            let result = try await Purchases.shared.purchase(package: package)
-            if !result.userCancelled { apply(result.customerInfo) }
-        } catch {
-            lastError = error.localizedDescription
-        }
-    }
-
-    func restorePurchases() async {
-        guard isConfigured else { return }
-        lastError = nil
-        do {
-            apply(try await Purchases.shared.restorePurchases())
-        } catch {
-            lastError = error.localizedDescription
+        // The stream delivers the current info immediately and then every
+        // change — including purchases made inside RevenueCat's paywall and
+        // Customer Center UI, which is why no manual purchase plumbing exists.
+        Task { [weak self] in
+            for await info in Purchases.shared.customerInfoStream {
+                self?.apply(info)
+            }
         }
     }
 

@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
@@ -16,6 +17,7 @@ struct SettingsView: View {
     @AppStorage(NotesLocation.useICloudKey) private var notesInICloud = false
     @State private var migrationError: String?
     @State private var showRelaunchNote = false
+    @State private var showProPaywall = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -45,13 +47,25 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.iosSync")
                     .accessibilityHint("Configure Reminders and Calendar syncing.")
                     if let subscriptions, subscriptions.isConfigured {
-                        NavigationLink {
-                            PaywallView()
-                        } label: {
-                            LabeledContent("OrgSync Pro", value: subscriptions.hasProEntitlement ? "Active" : "Free")
+                        if subscriptions.hasProEntitlement {
+                            NavigationLink {
+                                CustomerCenterView()
+                                    .navigationBarTitleDisplayMode(.inline)
+                            } label: {
+                                LabeledContent("OrgSync Pro", value: "Active")
+                            }
+                            .accessibilityIdentifier("settings.pro")
+                            .accessibilityHint("Manage your OrgSync Pro subscription.")
+                        } else {
+                            Button {
+                                showProPaywall = true
+                            } label: {
+                                LabeledContent("OrgSync Pro", value: "Free")
+                            }
+                            .tint(.primary)
+                            .accessibilityIdentifier("settings.pro")
+                            .accessibilityHint("Shows the OrgSync Pro subscription options.")
                         }
-                        .accessibilityIdentifier("settings.pro")
-                        .accessibilityHint("View or purchase the OrgSync Pro subscription.")
                     }
                     Toggle("Archive DONE to done.org", isOn: $settings.archiveCompletedInboxTasks)
                         .accessibilityIdentifier("settings.archiveCompletedInboxTasks")
@@ -105,6 +119,9 @@ struct SettingsView: View {
                 Button("OK", role: .cancel) { migrationError = nil }
             } message: {
                 Text(migrationError ?? "")
+            }
+            .sheet(isPresented: $showProPaywall) {
+                ProPaywallSheet()
             }
             .alert("Notes Moved", isPresented: $showRelaunchNote) {
                 Button("OK", role: .cancel) {}

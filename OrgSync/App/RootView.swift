@@ -63,16 +63,7 @@ struct RootView: View {
                     .zIndex(1)
             }
         }
-        .environment(repo)
-        .environment(favorites)
-        .environment(settings)
-        .environment(sync)
-        .environment(reminders)
-        .environment(calendar)
-        .environment(onboarding)
-        .environment(notifications)
-        .environment(subscriptions)
-        .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications))
+        .modifier(appEnvironment)
         .fullScreenCover(isPresented: $onboarding.isPresented) {
             OnboardingView(
                 openInbox: {
@@ -152,6 +143,16 @@ struct RootView: View {
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
     }
 
+    /// Store injection plus the cross-cutting behaviors (notification
+    /// rescheduling, post-onboarding paywall), bundled outside `body` to keep
+    /// that expression within the type-checker's budget.
+    private var appEnvironment: some ViewModifier {
+        AppEnvironmentModifier(
+            repo: repo, favorites: favorites, settings: settings, sync: sync,
+            reminders: reminders, calendar: calendar, onboarding: onboarding,
+            notifications: notifications, subscriptions: subscriptions)
+    }
+
     private func handleScenePhase(_ phase: ScenePhase) {
         let event: AutoSyncLifecycleEvent
         switch phase {
@@ -185,6 +186,34 @@ struct RootView: View {
                 Task { await reminders.sync(repo: repo) }
             }
         }
+    }
+}
+
+/// Injects every shared store and attaches the cross-cutting app behaviors.
+private struct AppEnvironmentModifier: ViewModifier {
+    let repo: RepoStore
+    let favorites: FavoritesStore
+    let settings: SettingsStore
+    let sync: SyncEngine
+    let reminders: RemindersSyncEngine
+    let calendar: CalendarSyncEngine
+    let onboarding: OnboardingState
+    let notifications: TodoNotificationScheduler
+    let subscriptions: SubscriptionStore
+
+    func body(content: Content) -> some View {
+        content
+            .environment(repo)
+            .environment(favorites)
+            .environment(settings)
+            .environment(sync)
+            .environment(reminders)
+            .environment(calendar)
+            .environment(onboarding)
+            .environment(notifications)
+            .environment(subscriptions)
+            .modifier(TodoNotificationRescheduling(repo: repo, settings: settings, scheduler: notifications))
+            .modifier(PostOnboardingPaywall(onboarding: onboarding, subscriptions: subscriptions))
     }
 }
 
