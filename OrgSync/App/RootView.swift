@@ -22,6 +22,7 @@ struct RootView: View {
     @State private var openedNotePath: String?
     @State private var isShowingAgendaQuickAdd = false
     @State private var isShowingSplash = true
+    @State private var isShowingSyncError = false
 
     private let holdsSplashForUITesting = ProcessInfo.processInfo.arguments.contains("-ui-testing-hold-splash")
 
@@ -120,6 +121,21 @@ struct RootView: View {
             withAnimation(.easeOut(duration: 0.25)) {
                 isShowingSplash = false
             }
+            // An error left over from a previous session (e.g. a failed
+            // push-on-close) is already set, so onChange never fires for it.
+            if sync.lastError != nil { isShowingSyncError = true }
+        }
+        // One app-level presenter for sync failures, so an error surfaces no
+        // matter which tab is frontmost — including failures from auto-pushes
+        // that happened while the app was closing and are only seen on the
+        // next foreground. The toolbar badge persists until dismissed here.
+        .onChange(of: sync.lastError) { _, newValue in
+            isShowingSyncError = newValue != nil && !isShowingSplash
+        }
+        .alert("Sync Failed", isPresented: $isShowingSyncError) {
+            Button("OK", role: .cancel) { sync.lastError = nil }
+        } message: {
+            Text(sync.lastError ?? "")
         }
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
     }

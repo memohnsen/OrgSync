@@ -25,7 +25,6 @@ struct FolderView: View {
 
     @State private var searchText = ""
     @State private var sortBy: Sort = .name
-    @State private var syncErrorShown = false
     @State private var showGitCommands = false
 
     // Create dialogs
@@ -140,14 +139,6 @@ struct FolderView: View {
         .onChange(of: repo.revision) { _, _ in
             if isRoot, let sync { conflicts = sync.conflictCopies() }
         }
-        .onChange(of: syncError(sync)) { _, newValue in
-            syncErrorShown = newValue != nil
-        }
-        .alert("Sync Failed", isPresented: $syncErrorShown) {
-            Button("OK", role: .cancel) { sync?.lastError = nil }
-        } message: {
-            Text(syncError(sync) ?? "")
-        }
         .alert("New Note", isPresented: $showNewNote) {
             TextField("Name", text: $newName)
                 .textInputAutocapitalization(.words)
@@ -201,9 +192,17 @@ struct FolderView: View {
                 ProgressView()
             } else {
                 Image(systemName: "arrow.triangle.branch")
+                    // Persistent failure indicator: stays until the error is
+                    // dismissed, so a missed alert isn't a silently lost sync.
+                    .overlay(alignment: .topTrailing) {
+                        if sync.lastError != nil {
+                            Circle().fill(.red).frame(width: 7, height: 7).offset(x: 3, y: -2)
+                        }
+                    }
             }
         }
         .disabled(sync.phase.isBusy)
+        .accessibilityValue(sync.lastError != nil ? "Last sync failed" : "")
         .accessibilityLabel("Git commands")
         .accessibilityHint("Open Pull, Stage, Commit, Push, and Sync commands.")
         .accessibilityIdentifier("notes.gitCommands")
@@ -218,10 +217,6 @@ struct FolderView: View {
         } else {
             Text("Not synced yet")
         }
-    }
-
-    private func syncError(_ sync: SyncEngine?) -> String? {
-        sync?.lastError
     }
 
     // MARK: - Rows
