@@ -69,19 +69,17 @@ enum AppServices {
 
     /// Open, dated tasks inside a window, earliest first (overdue included).
     static func tasks(in range: TaskRange) -> [OrgTodoItem] {
-        let calendar = Calendar.current
-        let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now)) ?? .now
-        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
+        let window: AgendaDateWindow = switch range {
+        case .today: .todayAndOverdue
+        case .week: .upcoming(days: 7, includesOverdue: true)
+        case .upcoming: .all
+        }
         return openTasks().compactMap { item -> (item: OrgTodoItem, date: Date)? in
             guard let date = ReminderSyncRules.relevantDate(for: item) else { return nil }
             return (item, date)
-        }.filter { entry in
-            switch range {
-            case .today: entry.date < startOfTomorrow
-            case .week: entry.date < endOfWeek
-            case .upcoming: true
-            }
-        }.sorted { $0.date < $1.date }.map(\.item)
+        }
+        .filter { window.contains($0.date) }
+        .sorted { $0.date < $1.date }.map(\.item)
     }
 
     static func task(id: String) -> OrgTodoItem? {

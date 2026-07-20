@@ -33,3 +33,33 @@ struct AgendaSnapshotItem: Codable, Identifiable {
     var priority: String?
     var tags: [String]
 }
+
+/// The single definition of agenda date windows, used by every surface — the
+/// Agenda tab, the Siri intents, and the widget — so "today" and "this week"
+/// can never drift apart between them. What varies per surface (which date a
+/// task contributes, whether overdue items belong in an upcoming window) is an
+/// explicit choice at the call site, not a re-implementation.
+enum AgendaDateWindow: Sendable {
+    /// Today plus anything overdue.
+    case todayAndOverdue
+    /// From today's midnight through `days` days out. `includesOverdue` pulls
+    /// overdue items in (Siri, widget); the Agenda tab's Upcoming scope
+    /// excludes them because it shows overdue under Today instead.
+    case upcoming(days: Int, includesOverdue: Bool)
+    /// No bounds.
+    case all
+
+    func contains(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> Bool {
+        let startOfToday = calendar.startOfDay(for: now)
+        switch self {
+        case .todayAndOverdue:
+            guard let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: startOfToday) else { return false }
+            return date < startOfTomorrow
+        case let .upcoming(days, includesOverdue):
+            guard let end = calendar.date(byAdding: .day, value: days, to: startOfToday) else { return false }
+            return date < end && (includesOverdue || date >= startOfToday)
+        case .all:
+            return true
+        }
+    }
+}

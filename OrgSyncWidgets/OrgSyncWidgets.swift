@@ -69,25 +69,20 @@ enum AgendaTimeRange: String {
     /// Keeps only items with a SCHEDULED date inside this window, earliest
     /// first. Deadlines deliberately do not affect this widget's range.
     func filter(_ items: [AgendaSnapshotItem]) -> [AgendaSnapshotItem] {
-        let calendar = Calendar.current
-        let startOfToday = calendar.startOfDay(for: .now)
-        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: calendar.startOfDay(for: .now)) ?? .now
-        let dated = items.compactMap { item -> (item: AgendaSnapshotItem, date: Date)? in
+        let window: AgendaDateWindow = switch self {
+        case .today: .todayAndOverdue
+        case .week: .upcoming(days: 7, includesOverdue: true)
+        case .upcoming: .all
+        }
+        // This widget deliberately keys on SCHEDULED only (deadlines don't
+        // affect its range); the window boundaries themselves come from the
+        // shared AgendaDateWindow so they match the app and Siri exactly.
+        return items.compactMap { item -> (item: AgendaSnapshotItem, date: Date)? in
             guard let date = item.scheduled else { return nil }
             return (item, date)
         }
-        let windowed = dated.filter { entry in
-            switch self {
-            case .today:
-                // Use a calendar-day comparison rather than a timestamp
-                // cutoff so a configured Today widget can never show tomorrow
-                // because of timezone or midnight conversion differences.
-                entry.date < startOfToday || calendar.isDate(entry.date, inSameDayAs: .now)
-            case .week: entry.date < endOfWeek
-            case .upcoming: true
-            }
-        }
-        return windowed.sorted { $0.date < $1.date }.map(\.item)
+        .filter { window.contains($0.date) }
+        .sorted { $0.date < $1.date }.map(\.item)
     }
 }
 

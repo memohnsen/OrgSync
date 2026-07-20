@@ -243,18 +243,16 @@ struct AgendaView: View {
     private var visibleSections: [AgendaSection] {
         switch scope {
         case .today:
-            let today = Calendar.current.startOfDay(for: .now)
-            let due = items.filter { isTodayOrOverdue($0, relativeTo: today) }
+            let window = AgendaDateWindow.todayAndOverdue
+            let due = items.filter { relevantDate($0).map { window.contains($0) } == true }
                 .sorted(by: agendaSort)
             return due.isEmpty ? [] : [AgendaSection(title: "Today", items: due)]
         case .upcoming:
-            let calendar = Calendar.current
-            let start = calendar.startOfDay(for: .now)
-            let end = calendar.date(byAdding: .day, value: settings.agendaDays + 1, to: start)!
-            let due = items.filter { item in
-                guard let date = relevantDate(item) else { return false }
-                return date >= start && date < end
-            }.sorted(by: agendaSort)
+            // Overdue is excluded here on purpose: this scope shows it under
+            // Today instead. +1 keeps today itself inside "Next N Days".
+            let window = AgendaDateWindow.upcoming(days: settings.agendaDays + 1, includesOverdue: false)
+            let due = items.filter { relevantDate($0).map { window.contains($0) } == true }
+                .sorted(by: agendaSort)
             return due.isEmpty ? [] : [AgendaSection(title: "Next \(settings.agendaDays) Days", items: due)]
         case .all:
             let grouped = Dictionary(grouping: items) { AgendaTimeBucket.bucket(for: relevantDate($0)) }
@@ -419,10 +417,6 @@ struct AgendaView: View {
         ReminderSyncRules.relevantDate(for: item)
     }
 
-    private func isTodayOrOverdue(_ item: OrgTodoItem, relativeTo today: Date) -> Bool {
-        guard let date = relevantDate(item) else { return false }
-        return date < Calendar.current.date(byAdding: .day, value: 1, to: today)!
-    }
 
     private func agendaSort(_ lhs: OrgTodoItem, _ rhs: OrgTodoItem) -> Bool {
         switch (relevantDate(lhs), relevantDate(rhs)) {
