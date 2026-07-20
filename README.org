@@ -151,6 +151,11 @@ Archive pre-action. Every archive increments all =CURRENT_PROJECT_VERSION=
 values in the Xcode project together. Builds, runs, and tests do not change the
 build number.
 
+* Privacy and Terms
+
+- [[PRIVACY.org][Privacy Policy]]
+- [[TERMS.org][Terms of Use]]
+
 * License
 
 OrgSync is released under the [[LICENSE][MIT License]].

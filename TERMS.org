@@ -1,0 +1,99 @@
+#+TITLE: OrgSync Terms of Use
+
+/Last updated: July 20, 2026/
+
+These Terms of Use ("Terms") govern your use of the OrgSync iOS application
+("OrgSync", "the app"), published by MeetCal LLC ("we", "us"). By downloading
+or using OrgSync, you agree to these Terms.
+
+* The service
+
+OrgSync is a local-first app for writing and organizing org-mode (=.org=)
+notes on iOS, with an agenda, widgets, Siri and Shortcuts support, and
+optional integrations (iCloud Drive storage, GitHub sync, Apple Reminders and
+Calendar sync, and local notifications).
+
+OrgSync requires no account. The core note-taking features are free. Certain
+features — GitHub repository sync, Home Screen widgets, Reminders and Calendar
+sync, and TODO notifications — require the *OrgSync Pro* auto-renewing
+subscription ("Pro").
+
+* Subscriptions
+
+- Pro is an auto-renewing subscription purchased through Apple's App Store.
+  Pricing and available periods are shown in the app before purchase.
+- Payment is charged to your Apple Account at confirmation of purchase. The
+  subscription renews automatically unless cancelled at least 24 hours before
+  the end of the current period.
+- You can manage or cancel your subscription in your Apple Account settings,
+  or from the app via Settings → Customer Center. Cancellation takes effect at
+  the end of the current billing period; fees already paid are non-refundable
+  except where required by law or granted by Apple.
+- Subscription validation is handled anonymously by RevenueCat, as described
+  in our Privacy Policy. No account is created and no personal information is
+  attached to your purchase.
+- If a subscription lapses, Pro features stop being available, but your notes
+  always remain yours and readable: they are plain-text files on your device
+  (an existing GitHub connection also keeps working so your notes are never
+  stranded mid-sync).
+
+* Your content
+
+- Your notes are yours. We claim no ownership of, and have no access to,
+  anything you write in OrgSync.
+- You are responsible for the content you store and sync, and for complying
+  with the terms of any third-party service you connect (Apple iCloud, GitHub,
+  Apple Reminders/Calendar).
+- Back up anything important. Notes are plain files — deleting a note in the
+  app deletes the file permanently, and unpushed changes cannot be recovered
+  by us (we have no copy).
+
+* Acceptable use
+
+You agree not to use OrgSync to violate any law, to infringe others' rights,
+or to attempt to interfere with or reverse the app's licensing and
+subscription enforcement.
+
+* Third-party services
+
+Optional integrations rely on services we do not operate (Apple iCloud,
+GitHub, Apple EventKit, the App Store, RevenueCat). Their availability,
+performance, and terms are outside our control, and your use of them is
+governed by their respective agreements.
+
+* Disclaimer of warranty
+
+OrgSync is provided *"as is"* without warranty of any kind, express or
+implied, including merchantability, fitness for a particular purpose, and
+non-infringement. We do not warrant that the app will be uninterrupted or
+error-free, or that data loss will never occur.
+
+* Limitation of liability
+
+To the maximum extent permitted by law, MeetCal LLC shall not be liable for
+any indirect, incidental, special, consequential, or exemplary damages, or for
+loss of data, arising from or related to your use of the app. Our total
+liability for any claim shall not exceed the amount you paid us in the twelve
+months preceding the claim.
+
+* Changes to the app or these Terms
+
+We may update the app and these Terms from time to time. Material changes to
+these Terms will be published at this URL with a new "last updated" date.
+Continued use of the app after a change constitutes acceptance.
+
+* Termination
+
+You may stop using OrgSync at any time by deleting the app. We may suspend or
+terminate access to Pro features for violation of these Terms (your local
+files always remain yours).
+
+* Governing law
+
+These Terms are governed by the laws of the United States and the state in
+which MeetCal LLC is organized, without regard to conflict-of-law rules.
+
+* Contact
+
+Questions about these Terms? Open an issue at
+https://github.com/memohnsen/OrgSync/issues
