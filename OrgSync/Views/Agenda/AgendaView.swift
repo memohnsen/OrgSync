@@ -42,15 +42,9 @@ struct AgendaView: View {
     var body: some View {
         NavigationStack {
             List {
-                Picker("Agenda View", selection: $scope) {
-                    ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
+                agendaScopePicker
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                .accessibilityIdentifier("agenda.scope")
-                .accessibilityLabel("Agenda View")
-                .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
 
                 if visibleSections.isEmpty {
                     ContentUnavailableView(emptyTitle, systemImage: "calendar",
@@ -167,6 +161,53 @@ struct AgendaView: View {
                     }
                 }
             }
+        }
+    }
+
+    /// Keeps every scope visible while reserving more of the row for its longest label.
+    private var agendaScopePicker: some View {
+        GeometryReader { proxy in
+            let spacing: CGFloat = 4
+            let availableWidth = proxy.size.width - 8 - spacing * CGFloat(Scope.allCases.count - 1)
+
+            HStack(spacing: spacing) {
+                ForEach(Scope.allCases) { option in
+                    Button {
+                        scope = option
+                    } label: {
+                        Text(option.rawValue)
+                            .font(.body.weight(.medium))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 9)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: availableWidth * scopeWidth(for: option))
+                    .background {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(option == scope
+                                  ? Color.primary.opacity(0.22)
+                                  : Color.clear)
+                    }
+                    .accessibilityLabel(option.rawValue)
+                    .accessibilityAddTraits(option == scope ? .isSelected : [])
+                }
+            }
+            .padding(4)
+            .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .frame(height: 44)
+        .accessibilityIdentifier("agenda.scope")
+        .accessibilityLabel("Agenda View")
+        .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
+    }
+
+    private func scopeWidth(for option: Scope) -> CGFloat {
+        switch option {
+        case .today: 0.21
+        case .upcoming: 0.28
+        case .all: 0.12
+        case .unscheduled: 0.39
         }
     }
 

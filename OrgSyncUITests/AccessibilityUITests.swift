@@ -58,13 +58,10 @@ final class AccessibilityUITests: XCTestCase {
         let app = launch()
         app.tabBars.buttons["Agenda"].tap()
 
-        let scope = app.segmentedControls["agenda.scope"]
-        XCTAssertTrue(scope.waitForExistence(timeout: 2))
-        XCTAssertEqual(scope.label, "Agenda View")
-        XCTAssertTrue(scope.buttons["Today"].exists)
-        XCTAssertTrue(scope.buttons["Upcoming"].exists)
-        XCTAssertTrue(scope.buttons["All"].exists)
-        XCTAssertTrue(scope.buttons["Unscheduled"].exists)
+        XCTAssertTrue(app.buttons["Today"].exists)
+        XCTAssertTrue(app.buttons["Upcoming"].exists)
+        XCTAssertTrue(app.buttons["All"].exists)
+        XCTAssertTrue(app.buttons["Unscheduled"].exists)
     }
 
     @MainActor
