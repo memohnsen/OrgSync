@@ -109,6 +109,9 @@ final class RemindersSyncEngine {
                 }
                 if reminder.isCompleted && !item.isDone {
                     _ = TaskCompletionService.complete(item, repo: repo, settings: settings)
+                    if let refreshed = repo.allTodoItems().first(where: { key($0) == mapKey }) {
+                        item = refreshed
+                    }
                 }
                 if let due = reminder.dueDateComponents, let date = Calendar.current.date(from: due),
                    ReminderSyncRules.shouldApplyIncomingDueDate(date, to: item) {

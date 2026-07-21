@@ -53,6 +53,25 @@ import Testing
         }
     }
 
+    @Test func inboundDueDatePreservesRepeaterWarningAndTime() {
+        let newDate = date(year: 2026, month: 8, day: 3)
+        var scheduled = OrgParser.parse("* TODO Weekly\nSCHEDULED: <2026-07-20 Mon 09:30 +1w -2d>\n").headlines[0]
+        ReminderSyncRules.applyIncomingDueDate(newDate, to: &scheduled)
+        #expect(scheduled.planning.scheduled?.day == 3)
+        #expect(scheduled.planning.scheduled?.repeater?.text == "+1w")
+        #expect(scheduled.planning.scheduled?.warning?.text == "-2d")
+        #expect(scheduled.planning.scheduled?.startHour == 9)
+        #expect(scheduled.planning.scheduled?.startMinute == 30)
+        let after = OrgDocument(headlines: [scheduled]).todoItems(filePath: "t.org")[0]
+        #expect(ReminderSyncRules.recurrenceRules(for: after)?.first?.frequency == .weekly)
+        #expect(ReminderSyncRules.recurrenceRules(for: after)?.first?.interval == 1)
+
+        var deadline = OrgParser.parse("* TODO Daily\nDEADLINE: <2026-07-20 Mon ++1d>\n").headlines[0]
+        ReminderSyncRules.applyIncomingDueDate(newDate, to: &deadline)
+        #expect(deadline.planning.deadline?.day == 3)
+        #expect(deadline.planning.deadline?.repeater?.text == "++1d")
+    }
+
     @Test func inboundDueDateIgnoresTimeOnlyChangesButAcceptsDifferentDays() {
         let item = OrgParser.parse("* TODO Timed\nSCHEDULED: <2026-07-20 Mon 09:00>\n")
             .todoItems(filePath: "timed.org")[0]

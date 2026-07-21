@@ -67,10 +67,28 @@ enum ReminderSyncRules {
 
     static func applyIncomingDueDate(_ date: Date, to headline: inout OrgHeadline) {
         if headline.planning.deadline != nil && headline.planning.scheduled == nil {
-            headline.setDeadline(date: date)
+            headline.setDeadline(timestampReplacingDate(headline.planning.deadline, with: date))
         } else {
-            headline.setScheduled(date: date)
+            headline.setScheduled(timestampReplacingDate(headline.planning.scheduled, with: date))
         }
+    }
+
+    /// Keep repeater/warning/time from the existing org timestamp when only the
+    /// day changes (e.g. Reminders advances a recurring due date). Dropping the
+    /// repeater would make the next outbound pass wipe EventKit recurrence too.
+    private static func timestampReplacingDate(_ existing: OrgTimestamp?, with date: Date) -> OrgTimestamp {
+        var ts = OrgTimestamp(date: date, isActive: existing?.isActive ?? true, includeTime: false)
+        guard let existing else { return ts }
+        ts.isActive = existing.isActive
+        if existing.hasTime {
+            ts.startHour = existing.startHour
+            ts.startMinute = existing.startMinute
+            ts.endHour = existing.endHour
+            ts.endMinute = existing.endMinute
+        }
+        ts.repeater = existing.repeater
+        ts.warning = existing.warning
+        return ts
     }
 
     static func complete(_ headline: inout OrgHeadline, item: OrgTodoItem, document: OrgDocument, now: Date = .now) {
