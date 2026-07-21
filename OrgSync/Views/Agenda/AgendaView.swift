@@ -164,50 +164,41 @@ struct AgendaView: View {
         }
     }
 
-    /// Keeps every scope visible while reserving more of the row for its longest label.
     private var agendaScopePicker: some View {
-        GeometryReader { proxy in
-            let spacing: CGFloat = 4
-            let availableWidth = proxy.size.width - 8 - spacing * CGFloat(Scope.allCases.count - 1)
-
-            HStack(spacing: spacing) {
-                ForEach(Scope.allCases) { option in
-                    Button {
-                        scope = option
-                    } label: {
-                        Text(option.rawValue)
-                            .font(.body.weight(.medium))
-                            .lineLimit(1)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 9)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: availableWidth * scopeWidth(for: option))
-                    .background {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(option == scope
-                                  ? Color.primary.opacity(0.22)
-                                  : Color.clear)
-                    }
-                    .accessibilityLabel(option.rawValue)
-                    .accessibilityAddTraits(option == scope ? .isSelected : [])
-                }
-            }
-            .padding(4)
-            .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        }
-        .frame(height: 44)
-        .accessibilityIdentifier("agenda.scope")
-        .accessibilityLabel("Agenda View")
-        .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
+        AgendaScopeSegmentedControl(scope: $scope)
+            .accessibilityIdentifier("agenda.scope")
+            .accessibilityLabel("Agenda View")
+            .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
     }
 
-    private func scopeWidth(for option: Scope) -> CGFloat {
-        switch option {
-        case .today: 0.21
-        case .upcoming: 0.28
-        case .all: 0.12
-        case .unscheduled: 0.39
+    private struct AgendaScopeSegmentedControl: UIViewRepresentable {
+        @Binding var scope: Scope
+
+        func makeUIView(context: Context) -> UISegmentedControl {
+            let control = UISegmentedControl(items: Scope.allCases.map(\.rawValue))
+            // Preserve UIKit's native segmented-control appearance while giving the
+            // longer label the additional width it needs on compact screens.
+            control.apportionsSegmentWidthsByContent = true
+            control.addTarget(context.coordinator, action: #selector(Coordinator.changed), for: .valueChanged)
+            return control
+        }
+
+        func updateUIView(_ control: UISegmentedControl, context: Context) {
+            control.selectedSegmentIndex = Scope.allCases.firstIndex(of: scope) ?? 0
+        }
+
+        func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+        final class Coordinator: NSObject {
+            private var parent: AgendaScopeSegmentedControl
+
+            init(_ parent: AgendaScopeSegmentedControl) {
+                self.parent = parent
+            }
+
+            @objc func changed(_ sender: UISegmentedControl) {
+                parent.scope = Scope.allCases[sender.selectedSegmentIndex]
+            }
         }
     }
 
