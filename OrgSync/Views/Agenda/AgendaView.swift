@@ -2,7 +2,7 @@
 //  AgendaView.swift
 //  OrgSync
 //
-//  Aggregates open org TODOs from every note into Today, This Week, All, and
+//  Aggregates open org TODOs from every note into Today, Upcoming, All, and
 //  Unscheduled views. Changes are made against the original document through its outline
 //  address, keeping the agenda a view over notes rather than a second database.
 //
@@ -13,7 +13,7 @@ struct AgendaView: View {
     @Binding var showQuickAdd: Bool
     private enum Scope: String, CaseIterable, Identifiable {
         case today = "Today"
-        case upcoming = "This Week"
+        case upcoming = "Upcoming"
         case all = "All"
         case unscheduled = "Unscheduled"
         var id: String { rawValue }
@@ -50,7 +50,7 @@ struct AgendaView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .accessibilityIdentifier("agenda.scope")
                 .accessibilityLabel("Agenda View")
-                .accessibilityHint("Choose today, this week, all scheduled, or unscheduled tasks.")
+                .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
 
                 if visibleSections.isEmpty {
                     ContentUnavailableView(emptyTitle, systemImage: "calendar",
@@ -278,7 +278,7 @@ struct AgendaView: View {
     private var emptyTitle: String {
         switch scope {
         case .today: return "Nothing Due Today"
-        case .upcoming: return "Nothing This Week"
+        case .upcoming: return "Nothing Upcoming"
         case .all: return "No Open TODOs"
         case .unscheduled: return "Nothing Unscheduled"
         }
