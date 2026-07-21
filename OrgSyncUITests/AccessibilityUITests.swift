@@ -64,6 +64,7 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertTrue(scope.buttons["Today"].exists)
         XCTAssertTrue(scope.buttons["Upcoming"].exists)
         XCTAssertTrue(scope.buttons["All"].exists)
+        XCTAssertTrue(scope.buttons["Unscheduled"].exists)
     }
 
     @MainActor
