@@ -2,8 +2,8 @@
 //  AgendaView.swift
 //  OrgSync
 //
-//  Aggregates open org TODOs from every note into Today, Upcoming, and All
-//  views. Changes are made against the original document through its outline
+//  Aggregates open org TODOs from every note into Today, Upcoming, All, and
+//  Unscheduled views. Changes are made against the original document through its outline
 //  address, keeping the agenda a view over notes rather than a second database.
 //
 
@@ -15,6 +15,7 @@ struct AgendaView: View {
         case today = "Today"
         case upcoming = "Upcoming"
         case all = "All"
+        case unscheduled = "Unscheduled"
         var id: String { rawValue }
     }
 
@@ -49,7 +50,7 @@ struct AgendaView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .accessibilityIdentifier("agenda.scope")
                 .accessibilityLabel("Agenda View")
-                .accessibilityHint("Choose today, upcoming, or all open tasks.")
+                .accessibilityHint("Choose today, upcoming, all scheduled, or unscheduled tasks.")
 
                 if visibleSections.isEmpty {
                     ContentUnavailableView(emptyTitle, systemImage: "calendar",
@@ -261,11 +262,16 @@ struct AgendaView: View {
                 .sorted(by: agendaSort)
             return due.isEmpty ? [] : [AgendaSection(title: "Next \(settings.agendaDays) Days", items: due)]
         case .all:
+            // Unscheduled items live in their own scope, not at the end of All.
             let grouped = Dictionary(grouping: items) { AgendaTimeBucket.bucket(for: relevantDate($0)) }
             return AgendaTimeBucket.allCases.compactMap { bucket in
+                guard bucket != .unscheduled else { return nil }
                 let bucketItems = grouped[bucket, default: []].sorted(by: agendaSort)
                 return bucketItems.isEmpty ? nil : AgendaSection(title: bucket.rawValue, items: bucketItems)
             }
+        case .unscheduled:
+            let undated = items.filter { relevantDate($0) == nil }.sorted(by: agendaSort)
+            return undated.isEmpty ? [] : [AgendaSection(title: "Unscheduled", items: undated)]
         }
     }
 
@@ -274,12 +280,16 @@ struct AgendaView: View {
         case .today: return "Nothing Due Today"
         case .upcoming: return "Nothing Upcoming"
         case .all: return "No Open TODOs"
+        case .unscheduled: return "Nothing Unscheduled"
         }
     }
 
     private var emptyDescription: String {
-        scope == .all ? "Add TODO headlines to an org file to see them here."
-                      : "Scheduled and deadline items from your notes will appear here."
+        switch scope {
+        case .all: return "Add TODO headlines to an org file to see them here."
+        case .unscheduled: return "Open TODOs without a scheduled or deadline date will appear here."
+        case .today, .upcoming: return "Scheduled and deadline items from your notes will appear here."
+        }
     }
 
     private func reload() {
