@@ -1,0 +1,92 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "shouldTranslate": false
+    },
+    "CFBundleName": {
+      "shouldTranslate": false
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync benötigt Zugriff, um deine anstehenden Kalenderereignisse in eine schreibgeschützte Kalendernotiz zu spiegeln."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync necesita acceso para reflejar tus próximos eventos de calendario en una nota de calendario de solo lectura."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync a besoin d'un accès pour refléter vos prochains événements de calendrier dans une note de calendrier en lecture seule."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSyncは、今後のカレンダーイベントを読み取り専用のカレンダーメモにミラーリングするためにアクセスが必要です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O OrgSync precisa de acesso para espelhar seus próximos eventos de calendário em uma nota de calendário somente leitura."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync需要访问权限，以便将你即将到来的日历事件镜像到只读的日历笔记中。"
+          }
+        }
+      }
+    },
+    "NSRemindersFullAccessUsageDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync benötigt Zugriff, um geplante und fällige TODOs mit deinen Erinnerungen zu synchronisieren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync necesita acceso para sincronizar TODOs programados y con fecha límite con tus recordatorios."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync a besoin d'un accès pour synchroniser les TODOs planifiés et à échéance avec vos rappels."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSyncは、予定・締め切りのTODOをリマインダーと同期するためにアクセスが必要です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O OrgSync precisa de acesso para sincronizar TODOs agendados e com prazo com seus lembretes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync需要访问权限，以便将已计划和有截止日期的TODO与你的提醒事项同步。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

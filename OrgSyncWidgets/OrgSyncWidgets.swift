@@ -43,26 +43,28 @@ enum AgendaTimeRange: String {
     case upcoming
 
     init(configValue: String) {
+        // Stored config values may be raw identifiers or the localized picker
+        // labels (in whatever language the widget was configured under).
         switch configValue.lowercased() {
-        case "today": self = .today
-        case "week", "this week": self = .week
+        case "today", String(localized: "Today").lowercased(): self = .today
+        case "week", "this week", String(localized: "This Week").lowercased(): self = .week
         default: self = .upcoming
         }
     }
 
     var title: String {
         switch self {
-        case .today: "Today"
-        case .week: "This Week"
-        case .upcoming: "Upcoming"
+        case .today: String(localized: "Today")
+        case .week: String(localized: "This Week")
+        case .upcoming: String(localized: "Upcoming")
         }
     }
 
     var emptyText: String {
         switch self {
-        case .today: "Nothing scheduled for today."
-        case .week: "Nothing scheduled this week."
-        case .upcoming: "Scheduled TODOs appear here."
+        case .today: String(localized: "Nothing scheduled for today.")
+        case .week: String(localized: "Nothing scheduled this week.")
+        case .upcoming: String(localized: "Scheduled TODOs appear here.")
         }
     }
 
@@ -91,7 +93,7 @@ enum AgendaTimeRange: String {
 /// options provider still presents this as a fixed Edit Widget picker.
 struct ScheduledRangeOptionsProvider: DynamicOptionsProvider {
     func results() async throws -> [String] {
-        ["Today", "This Week", "All Upcoming"]
+        [String(localized: "Today"), String(localized: "This Week"), String(localized: "All Upcoming")]
     }
 
     func defaultResult() async -> String? { "upcoming" }
@@ -200,7 +202,7 @@ struct FavoritesWidget: Widget {
                     entry.items.first(where: { $0.filePath == path })
                         ?? AgendaSnapshotItem(id: path, title: URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent, filePath: path, scheduled: nil, deadline: nil, priority: nil, tags: [])
                 }
-                WidgetNoteList(title: "Favorites", symbol: "star.fill", accent: .yellow, items: favoriteItems, empty: "Favorite notes appear here.")
+                WidgetNoteList(title: String(localized: "Favorites"), symbol: "star.fill", accent: .yellow, items: favoriteItems, empty: String(localized: "Favorite notes appear here."))
             } else {
                 WidgetProLockView()
             }
@@ -254,9 +256,9 @@ enum AgendaRow {
     }
 
     private static func label(for day: Date, today: Date, calendar: Calendar) -> String {
-        if calendar.isDate(day, inSameDayAs: today) { return "Today" }
+        if calendar.isDate(day, inSameDayAs: today) { return String(localized: "Today") }
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
-           calendar.isDate(day, inSameDayAs: tomorrow) { return "Tomorrow" }
+           calendar.isDate(day, inSameDayAs: tomorrow) { return String(localized: "Tomorrow") }
         return day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 }

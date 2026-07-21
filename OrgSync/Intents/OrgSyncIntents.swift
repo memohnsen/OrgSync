@@ -76,7 +76,7 @@ struct TodaysTasksIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[OrgTaskEntity]> & ProvidesDialog {
         let tasks = AppServices.tasks(in: .today).map(OrgTaskEntity.init)
-        return .result(value: tasks, dialog: Self.dialog(for: tasks, scope: "today"))
+        return .result(value: tasks, dialog: Self.dialog(for: tasks, scope: String(localized: "today")))
     }
 
     static func dialog(for tasks: [OrgTaskEntity], scope: String) -> IntentDialog {
@@ -95,7 +95,7 @@ struct UpcomingTasksIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[OrgTaskEntity]> & ProvidesDialog {
         let tasks = AppServices.tasks(in: .week).map(OrgTaskEntity.init)
-        return .result(value: tasks, dialog: TodaysTasksIntent.dialog(for: tasks, scope: "this week"))
+        return .result(value: tasks, dialog: TodaysTasksIntent.dialog(for: tasks, scope: String(localized: "this week")))
     }
 }
 
