@@ -149,7 +149,24 @@ otherwise changes the remote repository.
 The shared =OrgSync= scheme runs =Scripts/increment_build_number.sh= as an
 Archive pre-action. Every archive increments all =CURRENT_PROJECT_VERSION=
 values in the Xcode project together. Builds, runs, and tests do not change the
-build number.
+build number. The TestFlight workflow supplies a unique =CI_BUILD_NUMBER=, so a
+fresh GitHub Actions checkout does not reuse a build number; local archives
+continue to increment the project version normally.
+
+* TestFlight deployment
+
+Pushes (including merged pull requests) to =main= run =just publish= in GitHub
+Actions. Before enabling the workflow, add these repository Action secrets:
+
+- =ASC_KEY_ID=, =ASC_ISSUER_ID=, and =ASC_PRIVATE_KEY_B64=: the App Store
+  Connect API key used by =asc=. Encode the =.p8= key with
+  =base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy=.
+- =BUILD_CERTIFICATE_BASE64= and =P12_PASSWORD=: the distribution certificate
+  exported as a password-protected =.p12= and base64-encoded.
+- =BUILD_PROVISION_PROFILE_BASE64=: the App Store provisioning profile,
+  base64-encoded.
+- =KEYCHAIN_PASSWORD=: an arbitrary strong, repository-secret password used
+  only for the temporary CI keychain.
 
 * Privacy and Terms
 

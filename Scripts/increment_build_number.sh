@@ -1,7 +1,9 @@
 #!/bin/zsh
 # Increment every CURRENT_PROJECT_VERSION in the Xcode project. This script is
 # invoked by the OrgSync scheme immediately before an Archive build, not during
-# ordinary builds, runs, or tests.
+# ordinary builds, runs, or tests. CI may set CI_BUILD_NUMBER to use a specific
+# build number; this prevents a fresh CI checkout from repeatedly uploading the
+# same incremented build number.
 
 set -euo pipefail
 
@@ -20,10 +22,23 @@ if (( ${#current_versions[@]} == 0 )); then
 fi
 
 current="${current_versions[-1]}"
-next=$((current + 1))
+
+if [[ -n "${CI_BUILD_NUMBER:-}" ]]; then
+    if [[ ! "$CI_BUILD_NUMBER" =~ '^[1-9][0-9]*$' ]]; then
+        print -u2 "CI_BUILD_NUMBER must be a positive integer; got: $CI_BUILD_NUMBER"
+        exit 1
+    fi
+    if (( CI_BUILD_NUMBER <= current )); then
+        print -u2 "CI_BUILD_NUMBER ($CI_BUILD_NUMBER) must be greater than the current build number ($current)"
+        exit 1
+    fi
+    next="$CI_BUILD_NUMBER"
+else
+    next=$((current + 1))
+fi
 
 NEXT_BUILD_NUMBER="$next" /usr/bin/perl -pi -e \
     's/(CURRENT_PROJECT_VERSION = )\d+;/$1 . $ENV{NEXT_BUILD_NUMBER} . q{;}/ge' \
     "$project_file"
 
-print "Incremented all build numbers: $current → $next"
+print "Updated all build numbers: $current → $next"
