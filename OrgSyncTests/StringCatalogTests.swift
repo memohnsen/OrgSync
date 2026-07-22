@@ -110,4 +110,16 @@ import Testing
             }
         }
     }
+
+    @Test func localizedBundlesDeclareTheDevelopmentLanguage() throws {
+        for path in ["OrgSync-Info.plist", "OrgSyncWidgets-Info.plist"] {
+            let url = Self.repoRoot.appendingPathComponent(path)
+            let plist = try PropertyListSerialization.propertyList(
+                from: Data(contentsOf: url),
+                format: nil
+            ) as? [String: Any]
+            #expect(plist?["CFBundleDevelopmentRegion"] as? String == "$(DEVELOPMENT_LANGUAGE)",
+                    "\(path) must declare the project development language")
+        }
+    }
 }
