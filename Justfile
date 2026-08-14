@@ -4,6 +4,10 @@ app_id := "6792388512"
 simulator := env_var_or_default("IOS_SIMULATOR_ID", "E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5")
 destination := "platform=iOS Simulator,id=" + simulator
 
+# Enter the Nix development shell without direnv.
+nix:
+    nix develop
+
 # Compile the app for the configured iOS Simulator.
 build:
     xcodebuild -project {{project}} -scheme {{scheme}} -destination '{{destination}}' build
