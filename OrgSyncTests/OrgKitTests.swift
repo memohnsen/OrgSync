@@ -406,7 +406,7 @@ import Foundation
         #expect(doc.serialize() == ":not-a-drawer no end")
     }
 
-    @Test func boundsAdversarialHeadlineAndListNesting() {
+    @Test func boundsAdversarialHeadlineAndListNesting() throws {
         let headlines = (1...500).map {
             String(repeating: "*", count: $0) + " Level \($0)"
         }.joined(separator: "\n")
@@ -414,6 +414,14 @@ import Foundation
         #expect(headlineDocument.allOutlines(filePath: "deep.org").count == 500)
         #expect(headlineDocument.allOutlines(filePath: "deep.org").map(\.headingPath.count).max()
                 == OrgParser.maxNestingDepth)
+
+        var mutableDocument = headlineDocument
+        let deepestOutline = try #require(
+            mutableDocument.allOutlines(filePath: "deep.org").last
+        )
+        #expect(mutableDocument.mutateHeadline(at: deepestOutline) { $0.setPriority("A") })
+        let deepestSerializedLine = try #require(mutableDocument.serialize().split(separator: "\n").last)
+        #expect(deepestSerializedLine.hasPrefix(String(repeating: "*", count: 500) + " [#A]"))
 
         let list = (0..<200).map {
             String(repeating: " ", count: $0 * 2) + "- Item \($0)"

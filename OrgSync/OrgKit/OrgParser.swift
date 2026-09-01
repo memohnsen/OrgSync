@@ -40,8 +40,15 @@ public enum OrgParser {
 
         let preamble = parseContent(preambleLines)
         let parsed = flat.map {
-            parseHeadline(level: min($0.level, maxNestingDepth),
-                          heading: $0.heading, body: $0.body, config: config)
+            (
+                structuralLevel: min($0.level, maxNestingDepth),
+                headline: parseHeadline(
+                    level: $0.level,
+                    heading: $0.heading,
+                    body: $0.body,
+                    config: config
+                )
+            )
         }
         let tree = buildTree(parsed)
 
@@ -133,16 +140,21 @@ public enum OrgParser {
                            children: [], raw: heading)
     }
 
-    private static func buildTree(_ flat: [OrgHeadline]) -> [OrgHeadline] {
+    /// Uses a capped structural level to bound recursive traversals while each
+    /// headline retains its exact source star count for lossless mutation and
+    /// serialization.
+    private static func buildTree(
+        _ flat: [(structuralLevel: Int, headline: OrgHeadline)]
+    ) -> [OrgHeadline] {
         var index = 0
         func build(minLevel: Int) -> [OrgHeadline] {
             var nodes: [OrgHeadline] = []
             while index < flat.count {
-                let headline = flat[index]
-                if headline.level < minLevel { break }
+                let entry = flat[index]
+                if entry.structuralLevel < minLevel { break }
                 index += 1
-                var node = headline
-                node.children = build(minLevel: headline.level + 1)
+                var node = entry.headline
+                node.children = build(minLevel: entry.structuralLevel + 1)
                 nodes.append(node)
             }
             return nodes
