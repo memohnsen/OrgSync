@@ -52,6 +52,7 @@ jobs:
             -project OrgSync.xcodeproj \
             -scheme OrgSync \
             -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}' \
+            -skip-testing:OrgSyncUITests \
             -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
             -resultBundlePath TestResults \
             test

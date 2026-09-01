@@ -13,7 +13,6 @@
 		AB0000000000000000000001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = AB0000000000000000000002 /* RevenueCat */; };
 		AB0000000000000000000005 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = AB0000000000000000000006 /* RevenueCatUI */; };
 		AC0000000000000000000004 /* OrgSyncIntents in Frameworks */ = {isa = PBXBuildFile; productRef = AC0000000000000000000002 /* OrgSyncIntents */; };
-		AC0000000000000000000005 /* OrgSyncIntents in Frameworks */ = {isa = PBXBuildFile; productRef = AC0000000000000000000003 /* OrgSyncIntents */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,7 +113,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC0000000000000000000005 /* OrgSyncIntents in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,7 +244,6 @@
 			);
 			name = OrgSyncWidgets;
 			packageProductDependencies = (
-				AC0000000000000000000003 /* OrgSyncIntents */,
 			);
 			productName = OrgSyncWidgets;
 			productReference = 99A000000000000000000001 /* OrgSyncWidgets.appex */;
@@ -807,11 +804,6 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		AC0000000000000000000002 /* OrgSyncIntents */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AC0000000000000000000001 /* XCLocalSwiftPackageReference "Packages/OrgSyncIntents" */;
-			productName = OrgSyncIntents;
-		};
-		AC0000000000000000000003 /* OrgSyncIntents */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AC0000000000000000000001 /* XCLocalSwiftPackageReference "Packages/OrgSyncIntents" */;
 			productName = OrgSyncIntents;
