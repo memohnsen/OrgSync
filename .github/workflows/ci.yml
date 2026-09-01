@@ -69,6 +69,9 @@ jobs:
 
   archive:
     name: Archive Validation
+    # Hosted macOS concurrency is limited to one job here. Run archive after
+    # tests so the waiting job is not cancelled before it acquires a runner.
+    needs: [test]
     runs-on: macos-26
     timeout-minutes: 20
     env:
