@@ -47,17 +47,6 @@ import Testing
         #expect(inbox.contains("SCHEDULED:"))
     }
 
-    @Test func captureDoesNotOverwriteUnreadableInbox() throws {
-        let (_, root) = makeRepo()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let inbox = root.appendingPathComponent("inbox.org")
-        let invalidUTF8 = Data([0xff, 0xfe, 0xfd])
-        try invalidUTF8.write(to: inbox)
-
-        #expect(!AppServices.capture("Preserve data", scheduled: nil))
-        #expect(try Data(contentsOf: inbox) == invalidUTF8)
-    }
-
     @Test func completeTaskMarksItDone() throws {
         let (repo, root) = makeRepo()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -86,14 +75,5 @@ import Testing
         #expect(AppServices.tasks(in: .today).map(\.title) == ["Today task"])
         #expect(AppServices.tasks(in: .week).map(\.title) == ["Today task", "Week task"])
         #expect(AppServices.tasks(in: .upcoming).map(\.title) == ["Today task", "Week task", "Far task"])
-    }
-
-    @Test func homeScreenPullRequestIsConsumedOnce() {
-        _ = AppServices.consumePendingPull()
-
-        AppServices.requestPull(postNotification: false)
-
-        #expect(AppServices.consumePendingPull())
-        #expect(!AppServices.consumePendingPull())
     }
 }

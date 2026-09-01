@@ -12,11 +12,6 @@
 import Foundation
 
 public enum OrgParser {
-    /// Bounds recursive headline, list, query, and serialization traversals for
-    /// externally supplied org files. Deeper source remains preserved as raw
-    /// text but is not represented as a deeper in-memory tree.
-    static let maxNestingDepth = 64
-
     public static func parse(_ text: String) -> OrgDocument {
         let lines = text.components(separatedBy: "\n")
         let config = scanTodoConfig(lines)
@@ -39,17 +34,7 @@ public enum OrgParser {
         if let c = current { flat.append(c) }
 
         let preamble = parseContent(preambleLines)
-        let parsed = flat.map {
-            (
-                structuralLevel: min($0.level, maxNestingDepth),
-                headline: parseHeadline(
-                    level: $0.level,
-                    heading: $0.heading,
-                    body: $0.body,
-                    config: config
-                )
-            )
-        }
+        let parsed = flat.map { parseHeadline(level: $0.level, heading: $0.heading, body: $0.body, config: config) }
         let tree = buildTree(parsed)
 
         return OrgDocument(preamble: preamble, headlines: tree, todoConfig: config)
@@ -140,21 +125,16 @@ public enum OrgParser {
                            children: [], raw: heading)
     }
 
-    /// Uses a capped structural level to bound recursive traversals while each
-    /// headline retains its exact source star count for lossless mutation and
-    /// serialization.
-    private static func buildTree(
-        _ flat: [(structuralLevel: Int, headline: OrgHeadline)]
-    ) -> [OrgHeadline] {
+    private static func buildTree(_ flat: [OrgHeadline]) -> [OrgHeadline] {
         var index = 0
         func build(minLevel: Int) -> [OrgHeadline] {
             var nodes: [OrgHeadline] = []
             while index < flat.count {
-                let entry = flat[index]
-                if entry.structuralLevel < minLevel { break }
+                let headline = flat[index]
+                if headline.level < minLevel { break }
                 index += 1
-                var node = entry.headline
-                node.children = build(minLevel: entry.structuralLevel + 1)
+                var node = headline
+                node.children = build(minLevel: headline.level + 1)
                 nodes.append(node)
             }
             return nodes
@@ -486,7 +466,7 @@ public enum OrgParser {
         return (OrgList(items: items), block.count)
     }
 
-    private static func buildListItems(_ block: [String], depth: Int = 1) -> [OrgListItem] {
+    private static func buildListItems(_ block: [String]) -> [OrgListItem] {
         var items: [OrgListItem] = []
         var idx = 0
         while idx < block.count {
@@ -515,11 +495,7 @@ public enum OrgParser {
                 item.trailing.append(childLines[t]); t += 1
             }
             if t < childLines.count {
-                if depth < maxNestingDepth {
-                    item.children = buildListItems(Array(childLines[t...]), depth: depth + 1)
-                } else {
-                    item.trailing.append(contentsOf: childLines[t...])
-                }
+                item.children = buildListItems(Array(childLines[t...]))
             }
             items.append(item)
         }

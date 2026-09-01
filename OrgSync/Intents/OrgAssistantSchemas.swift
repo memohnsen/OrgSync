@@ -15,9 +15,9 @@ import Foundation
 import UniformTypeIdentifiers
 
 @AppEntity(schema: .wordProcessor.document)
-struct NoteDocumentEntity {
-    static let defaultQuery = NoteDocumentQuery()
-    static let supportedContentTypes: [UTType] = [.plainText]
+nonisolated struct NoteDocumentEntity {
+    static var defaultQuery = NoteDocumentQuery()
+    static var supportedContentTypes: [UTType] = [.plainText]
 
     let id: FileEntityIdentifier
     var name: String
@@ -67,8 +67,8 @@ extension NoteDocumentQuery: EntityStringQuery {
 // OrgSync notes have no document templates, but the create schema requires a
 // template parameter, so we expose an empty template entity.
 @AppEntity(schema: .wordProcessor.template)
-struct NoteTemplateEntity {
-    static let defaultQuery = NoteTemplateQuery()
+nonisolated struct NoteTemplateEntity {
+    static var defaultQuery = NoteTemplateQuery()
 
     let id: String
     var name: String
@@ -83,7 +83,7 @@ struct NoteTemplateQuery: EntityStringQuery {
 }
 
 @AppIntent(schema: .wordProcessor.create)
-struct CreateNoteDocumentIntent {
+nonisolated struct CreateNoteDocumentIntent {
     var name: String?
     var template: NoteTemplateEntity?
 
@@ -99,8 +99,8 @@ struct CreateNoteDocumentIntent {
 }
 
 @AppIntent(schema: .wordProcessor.open)
-struct OpenNoteDocumentIntent {
-    static let openAppWhenRun = true
+nonisolated struct OpenNoteDocumentIntent {
+    static var openAppWhenRun = true
 
     var target: NoteDocumentEntity
 

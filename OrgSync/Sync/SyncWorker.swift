@@ -9,9 +9,6 @@
 import Foundation
 
 actor SyncWorker {
-    private static let maxWorkingFiles = 10_000
-    private static let maxWorkingEntries = 100_000
-
     struct Result: Sendable {
         let state: SyncRepoState
         let status: SyncStatus
@@ -23,7 +20,6 @@ actor SyncWorker {
     private let stateStore: SyncStateStore
 
     init(repoURL: URL, maxBlobDownloadBytes: Int = 5 * 1024 * 1024) {
-        precondition(maxBlobDownloadBytes > 0, "blob download limit must be positive")
         self.repoURL = repoURL
         self.maxBlobDownloadBytes = maxBlobDownloadBytes
         self.stateStore = SyncStateStore(repoRoot: repoURL)
@@ -37,18 +33,10 @@ actor SyncWorker {
             throw GitHubError.decoding("repository tree is too large for a safe initial clone")
         }
         let blobs = tree.tree.filter { $0.type == "blob" }
-        guard tree.tree.count <= Self.maxWorkingEntries,
-              blobs.count <= Self.maxWorkingFiles else {
-            throw SyncError.workingCopyTooLarge(
-                maxFiles: Self.maxWorkingFiles,
-                maxEntries: Self.maxWorkingEntries
-            )
-        }
 
-        let hasWorkingFiles = try !enumerateWorkingFiles().isEmpty
-        if !blobs.isEmpty && hasWorkingFiles {
-            try backupWorkingCopy()
-            try clearWorkingCopy()
+        if !blobs.isEmpty && !enumerateWorkingFiles().isEmpty {
+            backupWorkingCopyOnce()
+            clearWorkingCopy()
         }
 
         var files: [String: String] = [:]
@@ -59,12 +47,7 @@ actor SyncWorker {
                 skipped.append(entry.path)
                 continue
             }
-            let data = try await client.getBlobData(sha: entry.sha)
-            guard data.count <= maxBlobDownloadBytes else {
-                skipped.append(entry.path)
-                continue
-            }
-            try writeWorkingFile(path: entry.path, data: data)
+            try writeWorkingFile(path: entry.path, data: try await client.getBlobData(sha: entry.sha))
         }
 
         var state = SyncRepoState(owner: owner, repo: repo, branch: branch,
@@ -80,17 +63,17 @@ actor SyncWorker {
 
     /// Local-only status calculation, exposed internally for deterministic
     /// coverage of working-copy change classification.
-    func localStatus(state: SyncRepoState) throws -> SyncStatus {
-        try localChanges(against: state)
+    func localStatus(state: SyncRepoState) -> SyncStatus {
+        localChanges(against: state)
     }
 
     /// Marks every local change for the next commit. OrgSync has no separate
     /// on-device git index; this persisted list is its lightweight equivalent.
-    func stageAll(state initialState: SyncRepoState) throws -> Result {
+    func stageAll(state initialState: SyncRepoState) -> Result {
         var state = initialState
-        let status = try localChanges(against: state)
+        let status = localChanges(against: state)
         state.stagedPaths = status.changedPaths
-        try persist(state)
+        try? persist(state)
         return Result(state: state, status: status)
     }
 
@@ -99,7 +82,7 @@ actor SyncWorker {
         guard initialState.pendingCommit == nil else {
             throw SyncError.pendingCommitBlocksCommit
         }
-        let current = try localChanges(against: initialState)
+        let current = localChanges(against: initialState)
         let staged = Set(initialState.stagedPaths)
         let modified = current.modified.filter { staged.contains($0) }
         let added = current.added.filter { staged.contains($0) }
@@ -108,14 +91,11 @@ actor SyncWorker {
             throw SyncError.nothingStaged
         }
 
-        let working = try enumerateWorkingFiles()
+        let working = enumerateWorkingFiles()
         var entries: [TreeEntryInput] = []
         var pendingChanges: [PendingGitCommit.Change] = []
         for path in modified + added {
-            guard let url = working[path] else { throw SyncError.workingFileUnavailable(path: path) }
-            let data: Data
-            do { data = try Data(contentsOf: url) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
+            guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
             let blobSHA = try await client.createBlob(data: data)
             entries.append(TreeEntryInput(path: path, sha: blobSHA))
             pendingChanges.append(.init(path: path, blobSHA: blobSHA))
@@ -137,7 +117,7 @@ actor SyncWorker {
         state.stagedPaths = []
         state.pendingCommit = PendingGitCommit(sha: commitSHA, changes: pendingChanges)
         try persist(state)
-        return Result(state: state, status: try localChanges(against: state))
+        return Result(state: state, status: localChanges(against: state))
     }
 
     /// Publishes a previously created commit by advancing the branch ref.
@@ -155,18 +135,18 @@ actor SyncWorker {
         state.pendingCommit = nil
         state.lastSyncDate = Date()
         try persist(state)
-        return Result(state: state, status: try localChanges(against: state))
+        return Result(state: state, status: localChanges(against: state))
     }
 
     /// Abandons a locally created commit object without publishing it. The
     /// working copy is untouched, so its changes become plain local changes
     /// again. This is the escape hatch when the remote moved and the pending
     /// commit can no longer fast-forward.
-    func discardPendingCommit(state initialState: SyncRepoState) throws -> Result {
+    func discardPendingCommit(state initialState: SyncRepoState) -> Result {
         var state = initialState
         state.pendingCommit = nil
-        try persist(state)
-        return Result(state: state, status: try localChanges(against: state))
+        try? persist(state)
+        return Result(state: state, status: localChanges(against: state))
     }
 
     /// Restores the working copy to the last synced GitHub baseline. Unlike
@@ -175,41 +155,33 @@ actor SyncWorker {
         guard initialState.pendingCommit == nil else {
             throw SyncError.pendingCommitBlocksDiscard
         }
-        let changes = try localChanges(against: initialState)
+        let changes = localChanges(against: initialState)
         for path in changes.modified + changes.deleted {
             guard let sha = initialState.files[path] else { continue }
             try writeWorkingFile(path: path, data: await client.getBlobData(sha: sha))
         }
         for path in changes.added {
-            try fileManager.removeItem(at: repoURL.appendingPathComponent(path))
+            try? fileManager.removeItem(at: repoURL.appendingPathComponent(path))
         }
         var state = initialState
         state.stagedPaths.removeAll { changes.changedPaths.contains($0) }
         try persist(state)
-        return Result(state: state, status: try localChanges(against: state))
+        return Result(state: state, status: localChanges(against: state))
     }
 
     func localDiffs(state: SyncRepoState, client: GitHubClient) async throws -> [GitFileDiff] {
-        let changes = try localChanges(against: state)
-        let working = try enumerateWorkingFiles()
+        let changes = localChanges(against: state)
+        let working = enumerateWorkingFiles()
         func text(_ data: Data) -> String { String(decoding: data, as: UTF8.self) }
 
         var result: [GitFileDiff] = []
         for path in changes.modified {
-            guard let sha = state.files[path], let url = working[path] else {
-                throw SyncError.workingFileUnavailable(path: path)
-            }
-            let data: Data
-            do { data = try Data(contentsOf: url) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
+            guard let sha = state.files[path], let url = working[path], let data = try? Data(contentsOf: url) else { continue }
             result.append(GitFileDiff(path: path, kind: .modified,
                                       original: text(try await client.getBlobData(sha: sha)), current: text(data)))
         }
         for path in changes.added {
-            guard let url = working[path] else { throw SyncError.workingFileUnavailable(path: path) }
-            let data: Data
-            do { data = try Data(contentsOf: url) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
+            guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
             result.append(GitFileDiff(path: path, kind: .added, original: nil, current: text(data)))
         }
         for path in changes.deleted {
@@ -229,29 +201,14 @@ actor SyncWorker {
         if remoteHead == state.baseCommitSHA {
             state.lastSyncDate = Date()
             try persist(state)
-            return Result(state: state, status: try localChanges(against: state))
+            return Result(state: state, status: localChanges(against: state))
         }
 
         let remoteCommit = try await client.getCommit(sha: remoteHead)
         let remoteTree = try await client.getTree(sha: remoteCommit.tree.sha, recursive: true)
-        guard !remoteTree.truncated else {
-            throw GitHubError.decoding("repository tree is too large for a safe pull")
-        }
-        guard remoteTree.tree.count <= Self.maxWorkingEntries else {
-            throw SyncError.workingCopyTooLarge(
-                maxFiles: Self.maxWorkingFiles,
-                maxEntries: Self.maxWorkingEntries
-            )
-        }
         let remoteEntries = Dictionary(uniqueKeysWithValues:
             remoteTree.tree.filter { $0.type == "blob" }.map { ($0.path, $0) })
-        guard remoteEntries.count <= Self.maxWorkingFiles else {
-            throw SyncError.workingCopyTooLarge(
-                maxFiles: Self.maxWorkingFiles,
-                maxEntries: Self.maxWorkingEntries
-            )
-        }
-        let working = try enumerateWorkingFiles()
+        let working = enumerateWorkingFiles()
         var allPaths = Set(state.files.keys)
         allPaths.formUnion(remoteEntries.keys)
         allPaths.formUnion(working.keys)
@@ -263,13 +220,7 @@ actor SyncWorker {
             let remote = remoteEntries[path]
             let remoteSHA = remote?.sha
             let localURL = working[path]
-            let localData: Data?
-            if let localURL {
-                do { localData = try Data(contentsOf: localURL) }
-                catch { throw SyncError.workingFileUnavailable(path: path) }
-            } else {
-                localData = nil
-            }
+            let localData = localURL.flatMap { try? Data(contentsOf: $0) }
             let localSHA = localData.map(GitBlob.sha1(for:))
             let localChanged = localSHA != baseSHA
             let remoteChanged = remoteSHA != baseSHA
@@ -281,12 +232,9 @@ actor SyncWorker {
                     try await takeRemote(path: path, sha: remoteSHA, client: client, entry: remote, skipped: &skipped, newFiles: &newFiles)
                 } else if localSHA == remoteSHA { newFiles[path] = remoteSHA }
                 else if let baseSHA {
-                    try await mergeFile(path: path, base: baseSHA, remoteSHA: remoteSHA,
-                                        localData: localData!, remoteEntry: remote,
-                                        client: client, newFiles: &newFiles)
+                    try await mergeFile(path: path, base: baseSHA, remoteSHA: remoteSHA, localData: localData!, client: client, newFiles: &newFiles)
                 } else {
-                    try await conflictCopy(path: path, remoteSHA: remoteSHA, remoteEntry: remote,
-                                           client: client, newFiles: &newFiles)
+                    try await conflictCopy(path: path, remoteSHA: remoteSHA, client: client, newFiles: &newFiles)
                 }
             case let (remoteSHA?, nil):
                 if baseSHA == nil || remoteChanged {
@@ -299,9 +247,7 @@ actor SyncWorker {
                     newFiles[path] = baseSHA
                 }
             case let (nil, localSHA?):
-                if baseSHA != nil && localSHA == baseSHA, let localURL {
-                    try fileManager.removeItem(at: localURL)
-                }
+                if baseSHA != nil && localSHA == baseSHA, let localURL { try? fileManager.removeItem(at: localURL) }
             case (nil, nil):
                 break
             }
@@ -312,7 +258,7 @@ actor SyncWorker {
         state.baseCommitSHA = remoteHead
         state.lastSyncDate = Date()
         try persist(state)
-        return Result(state: state, status: try localChanges(against: state))
+        return Result(state: state, status: localChanges(against: state))
     }
 
     func sync(state: SyncRepoState, client: GitHubClient) async throws -> Result {
@@ -324,19 +270,16 @@ actor SyncWorker {
 
     func commitAndPush(state: SyncRepoState, client: GitHubClient, message: String?, allowRetry: Bool = true) async throws -> Result {
         if state.pendingCommit != nil { return try await pushPending(state: state, client: client) }
-        if try enumerateWorkingFiles().keys.contains(where: { ConflictSidecar.isSidecar($0) }) {
+        if enumerateWorkingFiles().keys.contains(where: { ConflictSidecar.isSidecar($0) }) {
             throw SyncError.unresolvedConflicts
         }
-        let changes = try localChanges(against: state)
+        let changes = localChanges(against: state)
         guard changes.hasLocalChanges else { return Result(state: state, status: changes) }
-        let working = try enumerateWorkingFiles()
+        let working = enumerateWorkingFiles()
         var entries: [TreeEntryInput] = []
         var applied: [PendingGitCommit.Change] = []
         for path in changes.modified + changes.added {
-            guard let url = working[path] else { throw SyncError.workingFileUnavailable(path: path) }
-            let data: Data
-            do { data = try Data(contentsOf: url) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
+            guard let url = working[path], let data = try? Data(contentsOf: url) else { continue }
             let blobSHA = try await client.createBlob(data: data)
             entries.append(TreeEntryInput(path: path, sha: blobSHA))
             applied.append(.init(path: path, blobSHA: blobSHA))
@@ -371,17 +314,17 @@ actor SyncWorker {
         rebased.lastSyncDate = Date()
         rebased.stagedPaths = []
         try persist(rebased)
-        return Result(state: rebased, status: try localChanges(against: rebased))
+        return Result(state: rebased, status: localChanges(against: rebased))
     }
 
-    func removeWorkingCopy() throws { try clearWorkingCopy() }
+    func removeWorkingCopy() { clearWorkingCopy() }
 
-    func removePersistedState() throws {
-        try stateStore.delete()
+    func removePersistedState() {
+        stateStore.delete()
     }
 
     private func computeStatus(using client: GitHubClient, state: SyncRepoState) async throws -> SyncStatus {
-        var summary = try localChanges(against: state)
+        var summary = localChanges(against: state)
         if let remoteHead = try? await client.getRef(branch: state.branch).object.sha {
             summary.behind = remoteHead == state.baseCommitSHA ? 0 : 1
         }
@@ -391,24 +334,13 @@ actor SyncWorker {
     private func takeRemote(path: String, sha: String, client: GitHubClient, entry: GitHubClient.TreeEntry?, skipped: inout Set<String>, newFiles: inout [String: String]) async throws {
         newFiles[path] = sha
         if let size = entry?.size, size > maxBlobDownloadBytes { skipped.insert(path); return }
-        let data = try await client.getBlobData(sha: sha)
-        guard data.count <= maxBlobDownloadBytes else { skipped.insert(path); return }
         skipped.remove(path)
-        try writeWorkingFile(path: path, data: data)
+        try writeWorkingFile(path: path, data: try await client.getBlobData(sha: sha))
     }
 
-    private func mergeFile(path: String, base: String, remoteSHA: String, localData: Data,
-                           remoteEntry: GitHubClient.TreeEntry?, client: GitHubClient,
-                           newFiles: inout [String: String]) async throws {
-        guard localData.count <= maxBlobDownloadBytes,
-              remoteEntry?.size.map({ $0 <= maxBlobDownloadBytes }) ?? true else {
-            throw SyncError.fileTooLargeToMerge(path: path, maxBytes: maxBlobDownloadBytes)
-        }
+    private func mergeFile(path: String, base: String, remoteSHA: String, localData: Data, client: GitHubClient, newFiles: inout [String: String]) async throws {
         let baseData = try await client.getBlobData(sha: base)
         let remoteData = try await client.getBlobData(sha: remoteSHA)
-        guard baseData.count <= maxBlobDownloadBytes, remoteData.count <= maxBlobDownloadBytes else {
-            throw SyncError.fileTooLargeToMerge(path: path, maxBytes: maxBlobDownloadBytes)
-        }
         guard let baseText = String(data: baseData, encoding: .utf8),
               let localText = String(data: localData, encoding: .utf8),
               let remoteText = String(data: remoteData, encoding: .utf8) else {
@@ -422,27 +354,17 @@ actor SyncWorker {
         newFiles[path] = remoteSHA
     }
 
-    private func conflictCopy(path: String, remoteSHA: String, remoteEntry: GitHubClient.TreeEntry?,
-                              client: GitHubClient, newFiles: inout [String: String]) async throws {
-        guard remoteEntry?.size.map({ $0 <= maxBlobDownloadBytes }) ?? true else {
-            throw SyncError.fileTooLargeToMerge(path: path, maxBytes: maxBlobDownloadBytes)
-        }
-        let data = try await client.getBlobData(sha: remoteSHA)
-        guard data.count <= maxBlobDownloadBytes else {
-            throw SyncError.fileTooLargeToMerge(path: path, maxBytes: maxBlobDownloadBytes)
-        }
-        try writeConflictSidecar(path: path, data: data, remoteSHA: remoteSHA)
+    private func conflictCopy(path: String, remoteSHA: String, client: GitHubClient, newFiles: inout [String: String]) async throws {
+        try writeConflictSidecar(path: path, data: try await client.getBlobData(sha: remoteSHA), remoteSHA: remoteSHA)
         newFiles[path] = remoteSHA
     }
 
-    private func localChanges(against state: SyncRepoState) throws -> SyncStatus {
+    private func localChanges(against state: SyncRepoState) -> SyncStatus {
         var result = SyncStatus()
-        let working = try enumerateWorkingFiles()
+        let working = enumerateWorkingFiles()
         for (path, url) in working {
             if state.skippedPaths.contains(path) { continue }
-            let data: Data
-            do { data = try Data(contentsOf: url) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
+            guard let data = try? Data(contentsOf: url) else { continue }
             let sha = GitBlob.sha1(for: data)
             if let base = state.files[path] { if base != sha { result.modified.append(path) } }
             else { result.added.append(path) }
@@ -452,30 +374,13 @@ actor SyncWorker {
         return result
     }
 
-    private func enumerateWorkingFiles() throws -> [String: URL] {
+    private func enumerateWorkingFiles() -> [String: URL] {
         guard let enumerator = fileManager.enumerator(at: repoURL, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [:] }
         var files: [String: URL] = [:]
-        var entryCount = 0
         for case let url as URL in enumerator {
-            entryCount += 1
-            guard entryCount <= Self.maxWorkingEntries else {
-                throw SyncError.workingCopyTooLarge(
-                    maxFiles: Self.maxWorkingFiles,
-                    maxEntries: Self.maxWorkingEntries
-                )
-            }
+            guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { continue }
             let path = relativePath(for: url)
-            let values: URLResourceValues
-            do { values = try url.resourceValues(forKeys: [.isRegularFileKey]) }
-            catch { throw SyncError.workingFileUnavailable(path: path) }
-            guard values.isRegularFile == true else { continue }
             if !path.hasPrefix(".orgsync/") && !path.hasPrefix("pre-sync-backup/") { files[path] = url }
-            guard files.count <= Self.maxWorkingFiles else {
-                throw SyncError.workingCopyTooLarge(
-                    maxFiles: Self.maxWorkingFiles,
-                    maxEntries: Self.maxWorkingEntries
-                )
-            }
         }
         return files
     }
@@ -501,54 +406,15 @@ actor SyncWorker {
         try data.write(to: sidecar, options: .atomic)
     }
 
-    private func clearWorkingCopy() throws {
-        let contents = try fileManager.contentsOfDirectory(
-            at: repoURL,
-            includingPropertiesForKeys: nil,
-            options: []
-        )
-        for url in contents where url.lastPathComponent != ".orgsync" {
-            try fileManager.removeItem(at: url)
-        }
+    private func clearWorkingCopy() {
+        guard let contents = try? fileManager.contentsOfDirectory(at: repoURL, includingPropertiesForKeys: nil, options: []) else { return }
+        for url in contents where url.lastPathComponent != ".orgsync" && url.lastPathComponent != "pre-sync-backup" { try? fileManager.removeItem(at: url) }
     }
 
-    /// Creates a verified recovery copy before the destructive initial clone.
-    /// Staging lives under `.orgsync`, which `clearWorkingCopy` deliberately
-    /// preserves. If replacing an older backup fails, the freshly copied staging
-    /// directory remains available and the clone aborts before deleting notes.
-    private func backupWorkingCopy() throws {
-        let metadata = repoURL.appendingPathComponent(".orgsync", isDirectory: true)
-        let backup = metadata.appendingPathComponent("pre-sync-backup", isDirectory: true)
-        let staging = metadata.appendingPathComponent(
-            "pre-sync-backup-\(UUID().uuidString)",
-            isDirectory: true
-        )
-        try fileManager.createDirectory(at: staging, withIntermediateDirectories: true)
-
-        do {
-            let contents = try fileManager.contentsOfDirectory(
-                at: repoURL,
-                includingPropertiesForKeys: nil,
-                options: []
-            )
-            for source in contents where source.lastPathComponent != ".orgsync" {
-                try fileManager.copyItem(
-                    at: source,
-                    to: staging.appendingPathComponent(source.lastPathComponent)
-                )
-            }
-            if fileManager.fileExists(atPath: backup.path) {
-                try fileManager.removeItem(at: backup)
-            }
-            try fileManager.moveItem(at: staging, to: backup)
-        } catch {
-            // Keep a successfully populated staging directory as a recovery copy.
-            // An empty staging directory is safe to remove before propagating.
-            if (try? fileManager.contentsOfDirectory(atPath: staging.path).isEmpty) == true {
-                try? fileManager.removeItem(at: staging)
-            }
-            throw error
-        }
+    private func backupWorkingCopyOnce() {
+        let backup = repoURL.deletingLastPathComponent().appendingPathComponent("pre-sync-backup", isDirectory: true)
+        guard !fileManager.fileExists(atPath: backup.path) else { return }
+        try? fileManager.copyItem(at: repoURL, to: backup)
     }
 
     private func persist(_ state: SyncRepoState) throws {

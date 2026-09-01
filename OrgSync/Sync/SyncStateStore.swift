@@ -33,9 +33,8 @@ struct SyncStateStore: Sendable {
         try Self.encoder.encode(state).write(to: fileURL, options: .atomic)
     }
 
-    func delete() throws {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
-        try FileManager.default.removeItem(at: fileURL)
+    func delete() {
+        try? FileManager.default.removeItem(at: fileURL)
     }
 
     private static let encoder: JSONEncoder = {

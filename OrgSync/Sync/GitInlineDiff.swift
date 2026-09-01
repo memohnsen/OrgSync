@@ -18,13 +18,12 @@ enum GitInlineDiff {
         let before = split(original)
         let after = split(current)
         // Avoid disproportionate memory use for unusually large text files.
-        let rows = before.count + 1
-        let columns = after.count + 1
-        guard rows <= 1_000_000 / columns else {
+        guard before.count * after.count <= 1_000_000 else {
             return before.map { Line(kind: .removed, text: $0) }
                 + after.map { Line(kind: .added, text: $0) }
         }
 
+        let columns = after.count + 1
         var lcs = Array(repeating: 0, count: (before.count + 1) * columns)
         for i in stride(from: before.count - 1, through: 0, by: -1) where !before.isEmpty {
             for j in stride(from: after.count - 1, through: 0, by: -1) where !after.isEmpty {
@@ -62,19 +61,11 @@ enum GitInlineDiff {
         let changedOffsets = source.indices.filter { source[$0].kind != .unchanged }
         guard !changedOffsets.isEmpty else { return source }
 
-        var keep = Array(repeating: false, count: source.count)
-        for changed in changedOffsets {
-            let radius = max(0, context)
-            let lower = max(source.startIndex, changed - radius)
-            let upper = min(source.endIndex, changed + radius + 1)
-            for index in lower..<upper { keep[index] = true }
-        }
-
         var result: [Line] = []
         var hiddenCount = 0
         for index in source.indices {
             let line = source[index]
-            let keepsContext = keep[index]
+            let keepsContext = line.kind != .unchanged || changedOffsets.contains { abs($0 - index) <= context }
             if keepsContext {
                 if hiddenCount > 0 {
                     let noun = hiddenCount == 1 ? "line" : "lines"

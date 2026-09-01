@@ -15,8 +15,6 @@ import Foundation
 extension Notification.Name {
     /// Posted by an intent that wants the running app to navigate somewhere.
     static let orgSyncOpenRequest = Notification.Name("orgsync.openRequest")
-    /// Posted when a Home Screen quick action asks the live app to pull.
-    static let orgSyncPullRequest = Notification.Name("orgsync.pullRequest")
 }
 
 @MainActor
@@ -30,7 +28,6 @@ enum AppServices {
     private static var registeredSync: SyncEngine?
     private static var registeredReminders: RemindersSyncEngine?
     private static var registeredCalendar: CalendarSyncEngine?
-    private static var pendingPull = false
 
     static func register(
         repo: RepoStore, settings: SettingsStore, sync: SyncEngine,
@@ -106,7 +103,7 @@ enum AppServices {
         guard !title.isEmpty else { return false }
         let file = repo.item(forRelativePath: "inbox.org") ?? repo.createNote(named: "inbox", in: repo.repoURL)
         guard let file else { return false }
-        guard var body = try? repo.text(of: file) else { return false }
+        var body = repo.text(of: file)
         if !body.isEmpty && !body.hasSuffix("\n") { body += "\n" }
         body += "\n* TODO \(title)\n"
         if let scheduled {
@@ -129,22 +126,5 @@ enum AppServices {
     static func consumePendingOpen() -> (tab: String?, note: String?) {
         defer { pendingOpenTab = nil; pendingOpenNote = nil }
         return (pendingOpenTab, pendingOpenNote)
-    }
-
-    // MARK: Home Screen quick action
-
-    /// Queues a pull until RootView has installed its live SyncEngine. The flag
-    /// also covers cold launch, where the scene delegate receives the shortcut
-    /// before SwiftUI has subscribed to the notification.
-    static func requestPull(postNotification: Bool = true) {
-        pendingPull = true
-        if postNotification {
-            NotificationCenter.default.post(name: .orgSyncPullRequest, object: nil)
-        }
-    }
-
-    static func consumePendingPull() -> Bool {
-        defer { pendingPull = false }
-        return pendingPull
     }
 }

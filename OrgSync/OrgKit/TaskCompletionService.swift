@@ -13,7 +13,7 @@ enum TaskCompletionService {
     @discardableResult
     static func complete(_ item: OrgTodoItem, repo: RepoStore, settings: SettingsStore) -> Bool {
         guard let sourceFile = repo.item(forRelativePath: item.outline.filePath) else { return false }
-        guard var source = try? repo.document(of: sourceFile) else { return false }
+        var source = repo.document(of: sourceFile)
         let original = source
 
         // Marks the task DONE where it lives (advancing a repeater's timestamp
@@ -40,7 +40,7 @@ enum TaskCompletionService {
         let doneFile = repo.item(forRelativePath: "done.org")
             ?? repo.createNote(named: "done", in: repo.repoURL)
         guard let doneFile else { return false }
-        guard var done = try? repo.document(of: doneFile) else { return false }
+        var done = repo.document(of: doneFile)
         done.headlines.append(completed)
 
         // Write the destination before removing the inbox source, preferring a

@@ -76,10 +76,6 @@ struct OrgSourceEditor: UIViewRepresentable {
         private func rehighlight(_ textView: UITextView) {
             // Skip while composing (e.g. CJK marked text) to avoid disrupting input.
             guard textView.markedTextRange == nil else { return }
-            guard textView.textStorage.length <= OrgSyntaxHighlighter.maxHighlightedUTF16Length else {
-                textView.typingAttributes = OrgSyntaxHighlighter.typingAttributes
-                return
-            }
             let selection = textView.selectedRange
             textView.attributedText = OrgSyntaxHighlighter.highlight(textView.text)
             textView.selectedRange = selection
@@ -190,7 +186,7 @@ private final class OrgEditorAccessoryView: UIToolbar {
          editAction: @escaping () -> Void) {
         self.commandAction = commandAction
         self.editAction = editAction
-        super.init(frame: CGRect(x: 0, y: 0, width: 0, height: 52))
+        super.init(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 52))
 
         autoresizingMask = [.flexibleWidth, .flexibleHeight]
         isAccessibilityElement = false
@@ -273,10 +269,6 @@ private final class OrgEditorAccessoryView: UIToolbar {
 // MARK: - Highlighter
 
 enum OrgSyntaxHighlighter {
-    /// Regex-based whole-document highlighting is deliberately bounded so a
-    /// very large note cannot stall the main thread while the user is typing.
-    static let maxHighlightedUTF16Length = 256 * 1024
-
     // UIFontMetrics-scaled fonts participate in adjustsFontForContentSizeCategory,
     // so the editor tracks Dynamic Type changes live. (A plain monospaced font
     // sized from preferredFont only captures the size at creation.)
@@ -298,7 +290,6 @@ enum OrgSyntaxHighlighter {
             string: text,
             attributes: [.font: baseFont, .foregroundColor: UIColor.label]
         )
-        guard result.length <= maxHighlightedUTF16Length else { return result }
         let full = text as NSString
         full.enumerateSubstrings(in: NSRange(location: 0, length: full.length),
                                  options: .byLines) { line, range, _, _ in

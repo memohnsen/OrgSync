@@ -1,405 +1,326 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Add a task to ${applicationName}" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Füge eine Aufgabe zu ${applicationName} hinzu"
+  "sourceLanguage": "en",
+  "strings": {
+    "Add a task to ${applicationName}": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Füge eine Aufgabe zu ${applicationName} hinzu"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Add a task to ${applicationName}",
-              "Capture a note in ${applicationName}",
-              "New ${applicationName} task"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una tarea a ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añade una tarea a ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute une tâche à ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajoute une tâche à ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}にタスクを追加"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}にタスクを追加"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar uma tarefa ao ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar uma tarefa ao ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在${applicationName}中添加任务"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在${applicationName}中添加任务"
           }
         }
       }
     },
-    "Complete a task in ${applicationName}" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erledige eine Aufgabe in ${applicationName}"
+    "Complete a task in ${applicationName}": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erledige eine Aufgabe in ${applicationName}"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Complete a task in ${applicationName}",
-              "Mark a ${applicationName} task done"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completa una tarea en ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completa una tarea en ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termine une tâche dans ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Termine une tâche dans ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}でタスクを完了"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}でタスクを完了"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concluir uma tarefa no ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concluir uma tarefa no ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在${applicationName}中完成任务"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在${applicationName}中完成任务"
           }
         }
       }
     },
-    "Create a note in ${applicationName}" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstelle eine Notiz in ${applicationName}"
+    "Create a note in ${applicationName}": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstelle eine Notiz in ${applicationName}"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Create a note in ${applicationName}",
-              "New ${applicationName} note"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea una nota en ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crea una nota en ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crée une note dans ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crée une note dans ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}でメモを作成"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}でメモを作成"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Criar uma nota no ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criar uma nota no ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在${applicationName}中创建笔记"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在${applicationName}中创建笔记"
           }
         }
       }
     },
-    "Open a note in ${applicationName}" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Öffne eine Notiz in ${applicationName}"
+    "Open a note in ${applicationName}": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffne eine Notiz in ${applicationName}"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Open a note in ${applicationName}"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre una nota en ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abre una nota en ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre une note dans ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ouvre une note dans ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}でメモを開く"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}でメモを開く"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir uma nota no ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abrir uma nota no ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在${applicationName}中打开笔记"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在${applicationName}中打开笔记"
           }
         }
       }
     },
-    "Open my ${applicationName} agenda" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Öffne meine ${applicationName}-Agenda"
+    "Open my ${applicationName} agenda": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffne meine ${applicationName}-Agenda"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Open my ${applicationName} agenda"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre mi agenda de ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abre mi agenda de ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre mon agenda ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ouvre mon agenda ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}のアジェンダを開く"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}のアジェンダを開く"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir minha agenda do ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abrir minha agenda do ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打开我的${applicationName}议程"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开我的${applicationName}议程"
           }
         }
       }
     },
-    "Show upcoming ${applicationName} tasks" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zeige anstehende ${applicationName}-Aufgaben"
+    "Show upcoming ${applicationName} tasks": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeige anstehende ${applicationName}-Aufgaben"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Show upcoming ${applicationName} tasks",
-              "What's coming up in ${applicationName}"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra las próximas tareas de ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Muestra las próximas tareas de ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les tâches ${applicationName} à venir"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Affiche les tâches ${applicationName} à venir"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}の今後のタスクを表示"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}の今後のタスクを表示"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar próximas tarefas do ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar próximas tarefas do ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "显示${applicationName}即将到来的任务"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示${applicationName}即将到来的任务"
           }
         }
       }
     },
-    "Sync ${applicationName}" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Synchronisiere ${applicationName}"
+    "Sync ${applicationName}": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisiere ${applicationName}"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "Sync ${applicationName}",
-              "Sync ${applicationName} with GitHub"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincroniza ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sincroniza ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronise ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Synchronise ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}を同期"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "${applicationName}を同期"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar ${applicationName}"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sincronizar ${applicationName}"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "同步${applicationName}"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步${applicationName}"
           }
         }
       }
     },
-    "What's on my ${applicationName} agenda today" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Was steht heute auf meiner ${applicationName}-Agenda"
+    "What's on my ${applicationName} agenda today": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was steht heute auf meiner ${applicationName}-Agenda"
           }
         },
-        "en" : {
-          "stringSet" : {
-            "state" : "new",
-            "values" : [
-              "What's on my ${applicationName} agenda today",
-              "Show today's ${applicationName} tasks"
-            ]
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué hay hoy en mi agenda de ${applicationName}"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Qué hay hoy en mi agenda de ${applicationName}"
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qu'y a-t-il aujourd'hui dans mon agenda ${applicationName}"
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Qu'y a-t-il aujourd'hui dans mon agenda ${applicationName}"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の${applicationName}のアジェンダは"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日の${applicationName}のアジェンダは"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O que há na minha agenda do ${applicationName} hoje"
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O que há na minha agenda do ${applicationName} hoje"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天我的${applicationName}议程有什么"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天我的${applicationName}议程有什么"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

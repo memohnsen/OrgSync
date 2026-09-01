@@ -1,11 +1,10 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
-import OrgSyncIntents
 
 // AgendaSnapshot / AgendaSnapshotItem and the app-group keys come from the
 // shared Shared/AgendaSnapshotShared.swift, compiled into this target too.
-extension AgendaSnapshot: TimelineEntry { public var date: Date { generatedAt } }
+extension AgendaSnapshot: @retroactive TimelineEntry { public var date: Date { generatedAt } }
 
 private extension AgendaSnapshotItem {
     /// Match the app Agenda: when both dates exist, use the earlier one.
@@ -43,11 +42,13 @@ enum AgendaTimeRange: String {
     case week
     case upcoming
 
-    init(_ range: AgendaWidgetRange) {
-        switch range {
-        case .today: self = .today
-        case .week: self = .week
-        case .upcoming: self = .upcoming
+    init(configValue: String) {
+        // Stored config values may be raw identifiers or the localized picker
+        // labels (in whatever language the widget was configured under).
+        switch configValue.lowercased() {
+        case "today", String(localized: "Today").lowercased(): self = .today
+        case "week", "this week", String(localized: "This Week").lowercased(): self = .week
+        default: self = .upcoming
         }
     }
 
@@ -87,6 +88,31 @@ enum AgendaTimeRange: String {
     }
 }
 
+/// Strings are used for the widget configuration because WidgetKit does not
+/// reliably deserialize this extension's AppEnum value on-device. A dynamic
+/// options provider still presents this as a fixed Edit Widget picker.
+struct ScheduledRangeOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        [String(localized: "Today"), String(localized: "This Week"), String(localized: "All Upcoming")]
+    }
+
+    func defaultResult() async -> String? { "upcoming" }
+}
+
+/// Configuration intent backing the Upcoming widget's Edit Widget options.
+struct UpcomingConfigIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Scheduled TODOs"
+    static var description = IntentDescription("Choose the scheduled-date range to show.")
+
+    @Parameter(title: "Date Range", default: "upcoming", optionsProvider: ScheduledRangeOptionsProvider())
+    var range: String
+
+    static var parameterSummary: some ParameterSummary {
+        Summary { \.$range }
+    }
+
+}
+
 struct UpcomingEntry: TimelineEntry {
     let date: Date
     let items: [AgendaSnapshotItem]
@@ -98,11 +124,11 @@ struct UpcomingProvider: AppIntentTimelineProvider {
         UpcomingEntry(date: .now, items: [], range: .upcoming)
     }
     func snapshot(for configuration: UpcomingConfigIntent, in context: Context) async -> UpcomingEntry {
-        let range = AgendaTimeRange(configuration.range)
+        let range = AgendaTimeRange(configValue: configuration.range)
         return UpcomingEntry(date: .now, items: range.filter(loadAgendaSnapshot().items), range: range)
     }
     func timeline(for configuration: UpcomingConfigIntent, in context: Context) async -> Timeline<UpcomingEntry> {
-        let range = AgendaTimeRange(configuration.range)
+        let range = AgendaTimeRange(configValue: configuration.range)
         let entry = UpcomingEntry(date: .now, items: range.filter(loadAgendaSnapshot().items), range: range)
         return Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
     }
@@ -113,7 +139,7 @@ struct UpcomingProvider: AppIntentTimelineProvider {
 /// for the app to write DONE into the real note, and (2) optimistically removes
 /// it from the shared snapshot so every widget updates immediately.
 struct CompleteTodoIntent: AppIntent {
-    static let title: LocalizedStringResource = "Complete TODO"
+    static var title: LocalizedStringResource = "Complete TODO"
 
     @Parameter(title: "Item ID") var itemID: String
 
