@@ -155,18 +155,26 @@ continue to increment the project version normally.
 
 * TestFlight deployment
 
-Pushes (including merged pull requests) to =main= run =mise run publish= in GitHub
-Actions. Before enabling the workflow, add these repository Action secrets:
+After unit tests pass, pushes (including merged pull requests) to =main= run
+=mise run publish= in GitHub Actions and distribute the processed build to the
+configured TestFlight group. Before enabling the workflow, add these repository
+Action secrets:
 
 - =ASC_KEY_ID=, =ASC_ISSUER_ID=, and =ASC_PRIVATE_KEY_B64=: the App Store
   Connect API key used by =asc=. Encode the =.p8= key with
   =base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy=.
 - =BUILD_CERTIFICATE_BASE64= and =P12_PASSWORD=: the distribution certificate
   exported as a password-protected =.p12= and base64-encoded.
-- =BUILD_PROVISION_PROFILE_BASE64=: the App Store provisioning profile,
-  base64-encoded.
+- =BUILD_PROVISION_PROFILE_BASE64= and =WIDGET_PROVISION_PROFILE_BASE64=: the
+  App Store provisioning profiles for the app and widget extension,
+  respectively, base64-encoded.
 - =KEYCHAIN_PASSWORD=: an arbitrary strong, repository-secret password used
   only for the temporary CI keychain.
+- =REVENUECAT_API_KEY_LIVE=: the public RevenueCat production SDK key injected
+  into release archives.
+
+Also set the =ASC_TESTFLIGHT_GROUP= repository Actions variable to the name or
+ID of the internal or external TestFlight group that should receive each build.
 
 * Privacy and Terms
 

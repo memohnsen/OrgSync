@@ -33,16 +33,7 @@ xcodebuild \
 
 [tasks.test-ci]
 description = "Run the deterministic unit suite used by CI"
-run = '''
-xcodebuild \
-  -project OrgSync.xcodeproj \
-  -scheme OrgSync-CI \
-  -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID:?IOS_SIMULATOR_ID is required}" \
-  -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
-  -resultBundlePath "${TEST_RESULT_BUNDLE_PATH:-TestResults}" \
-  -showBuildTimingSummary \
-  test
-'''
+run = "./Scripts/test_ci.sh"
 
 [tasks.test-live-git]
 description = "Run the opt-in read-only GitHub integration test"
@@ -60,20 +51,5 @@ xcodebuild \
 '''
 
 [tasks.publish]
-description = "Archive and upload OrgSync to App Store Connect"
-run = '''
-set -euo pipefail
-asc xcode archive \
-  --project OrgSync.xcodeproj \
-  --scheme OrgSync \
-  --archive-path .asc/artifacts/OrgSync.xcarchive \
-  --clean --overwrite
-asc xcode export \
-  --archive-path .asc/artifacts/OrgSync.xcarchive \
-  --ipa-path .asc/artifacts/OrgSync.ipa \
-  --overwrite
-asc publish appstore \
-  --app 6792388512 \
-  --ipa .asc/artifacts/OrgSync.ipa \
-  --wait
-'''
+description = "Archive and distribute OrgSync through TestFlight"
+run = "./Scripts/publish_testflight.sh"
