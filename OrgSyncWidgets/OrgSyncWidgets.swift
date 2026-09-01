@@ -187,7 +187,7 @@ struct FavoritesWidget: Widget {
 }
 
 struct UpcomingWidget: Widget {
-    let kind = "OrgSyncUpcoming.v3"
+    let kind = "OrgSyncUpcoming"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
             if isProUnlocked {
