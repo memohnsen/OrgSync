@@ -2,9 +2,8 @@
 
 set -euo pipefail
 
-: "${ASC_TESTFLIGHT_GROUP:?ASC_TESTFLIGHT_GROUP is required}"
-
 app_id="${ASC_APP_ID:-6792388512}"
+testflight_group="Internal"
 artifacts_directory=".asc/artifacts"
 archive_path="${artifacts_directory}/OrgSync.xcarchive"
 ipa_path="${artifacts_directory}/OrgSync.ipa"
@@ -24,5 +23,5 @@ asc xcode export \
 asc publish testflight \
   --app "$app_id" \
   --ipa "$ipa_path" \
-  --group "$ASC_TESTFLIGHT_GROUP" \
+  --group "$testflight_group" \
   --wait
