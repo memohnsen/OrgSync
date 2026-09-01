@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -93,9 +91,9 @@ jobs:
   publish:
     name: Archive and upload to TestFlight
     needs: [test, archive]
-    # Pull requests validate tests and an unsigned archive. Deployment is
-    # permitted only after both pass for a push to main.
-    if: needs.test.result == 'success' && needs.archive.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Disabled: CI no longer runs on push to main. Re-enable the push trigger
+    # in on: if this job should publish from GitHub Actions again.
+    if: false
     runs-on: macos-26
     timeout-minutes: 45
     env:
