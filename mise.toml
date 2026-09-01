@@ -1,6 +1,3 @@
-[tools]
-ruby = "3.3"
-
 [tasks.build]
 description = "Compile OrgSync for the configured iOS Simulator"
 run = '''
@@ -39,11 +36,11 @@ description = "Run the deterministic unit suite used by CI"
 run = '''
 xcodebuild \
   -project OrgSync.xcodeproj \
-  -scheme OrgSync \
+  -scheme OrgSync-CI \
   -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID:?IOS_SIMULATOR_ID is required}" \
-  -skip-testing:OrgSyncUITests \
   -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
   -resultBundlePath "${TEST_RESULT_BUNDLE_PATH:-TestResults}" \
+  -showBuildTimingSummary \
   test
 '''
 

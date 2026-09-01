@@ -17,6 +17,7 @@ jobs:
   test:
     name: Unit Tests
     runs-on: macos-26
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -24,18 +25,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Resolve dependencies
-        run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -resolvePackageDependencies
-
-      - name: Install Mise
-        run: brew install mise
-
       # The newest Xcode on the runner image can ship without a pre-installed
       # iOS simulator runtime (or any pre-created devices), in which case a
       # name-based destination like "iPhone 17" matches nothing. Install the
-      # runtime only if missing, then create a device the runtime itself
-      # declares support for, and test against its UDID.
-      - name: Prepare iOS simulator
+      # runtime only if missing. Start booting the device before dependency
+      # setup so those costs overlap, then wait for readiness before testing.
+      - name: Create and boot iOS simulator
         id: simulator
         run: |
           set -euo pipefail
@@ -46,8 +41,18 @@ jobs:
           RUNTIME=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.identifier')
           DEVICE_TYPE=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.supportedDeviceTypes | map(select(.productFamily=="iPhone")) | first.identifier')
           UDID=$(xcrun simctl create "CI iPhone" "$DEVICE_TYPE" "$RUNTIME")
+          xcrun simctl boot "$UDID"
           echo "Created $DEVICE_TYPE on $RUNTIME: $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve dependencies
+        run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync-CI -resolvePackageDependencies
+
+      - name: Install Mise
+        run: brew install mise
+
+      - name: Wait for iOS simulator
+        run: xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
 
       - name: Run tests
         env:
