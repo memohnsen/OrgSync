@@ -53,3 +53,7 @@ xcodebuild \
 [tasks.publish]
 description = "Archive and distribute OrgSync through TestFlight"
 run = "./Scripts/publish_testflight.sh"
+
+[tasks.archive-ci]
+description = "Build the unsigned Release archive validated by CI"
+run = "./Scripts/archive_ci.sh"

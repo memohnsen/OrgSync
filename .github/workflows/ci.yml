@@ -28,10 +28,10 @@ jobs:
       # The newest Xcode on the runner image can ship without a pre-installed
       # iOS simulator runtime (or any pre-created devices), in which case a
       # name-based destination like "iPhone 17" matches nothing. Install the
-      # runtime only if missing, then boot a supported device before invoking
-      # xcodebuild. Starting xcodebuild while CoreSimulator is still booting can
-      # stall package resolution for several minutes on hosted runners.
-      - name: Prepare iOS simulator
+      # runtime only if missing, then start a supported device. Dependency
+      # resolution intentionally overlaps the hosted runner's cold simulator
+      # boot, which otherwise adds several minutes to the critical path.
+      - name: Create and boot iOS simulator
         id: simulator
         run: |
           set -euo pipefail
@@ -43,9 +43,14 @@ jobs:
           DEVICE_TYPE=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.supportedDeviceTypes | map(select(.productFamily=="iPhone")) | first.identifier')
           UDID=$(xcrun simctl create "CI iPhone" "$DEVICE_TYPE" "$RUNTIME")
           xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID" -b
           echo "Created $DEVICE_TYPE on $RUNTIME: $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve dependencies while simulator boots
+        run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync-CI -resolvePackageDependencies
+
+      - name: Wait for iOS simulator
+        run: xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
 
       - name: Run tests
         env:
@@ -62,12 +67,30 @@ jobs:
           name: TestResults
           path: TestResults.xcresult
 
+  archive:
+    name: Archive Validation
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      # The public SDK key is required by the Release build phase. Production
+      # archives use the repository secret in the publish job below.
+      REVENUECAT_API_KEY_LIVE: ci_archive_validation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Build unsigned archive
+        run: ./Scripts/archive_ci.sh
+
   publish:
     name: Archive and upload to TestFlight
-    needs: test
-    # Pull requests run only the test job. A deployment is permitted only once
-    # CI has passed for a push to main (including a merged pull request).
-    if: needs.test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, archive]
+    # Pull requests validate tests and an unsigned archive. Deployment is
+    # permitted only after both pass for a push to main.
+    if: needs.test.result == 'success' && needs.archive.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 45
     env:

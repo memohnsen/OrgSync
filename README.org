@@ -155,6 +155,10 @@ continue to increment the project version normally.
 
 * TestFlight deployment
 
+Pull requests build an unsigned Release archive in parallel with unit tests, so
+the complete app and widget archive graph is verified without exposing signing
+credentials. The archive is rebuilt with distribution signing for deployment.
+
 After unit tests pass, pushes (including merged pull requests) to =main= run
 =mise run publish= in GitHub Actions and distribute the processed build to the
 configured TestFlight group. Before enabling the workflow, add these repository
