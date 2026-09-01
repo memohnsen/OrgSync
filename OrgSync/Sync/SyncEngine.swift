@@ -134,6 +134,7 @@ final class SyncEngine {
             do {
                 try await operation()
                 self.phase = .idle
+                self.lastError = nil
             } catch {
                 let text = self.message(for: error)
                 self.phase = .error(text)
