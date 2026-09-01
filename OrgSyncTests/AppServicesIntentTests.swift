@@ -76,4 +76,13 @@ import Testing
         #expect(AppServices.tasks(in: .week).map(\.title) == ["Today task", "Week task"])
         #expect(AppServices.tasks(in: .upcoming).map(\.title) == ["Today task", "Week task", "Far task"])
     }
+
+    @Test func homeScreenPullRequestIsConsumedOnce() {
+        _ = AppServices.consumePendingPull()
+
+        AppServices.requestPull()
+
+        #expect(AppServices.consumePendingPull())
+        #expect(!AppServices.consumePendingPull())
+    }
 }

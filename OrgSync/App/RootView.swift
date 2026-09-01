@@ -85,6 +85,9 @@ struct RootView: View {
             if let tab = target.tab { selectedTab = tab }
             if let note = target.note { openedNotePath = note }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .orgSyncPullRequest)) { _ in
+            performRequestedPull()
+        }
         .onOpenURL { url in
             // Widgets use orgsync://agenda (optionally with ?newTask=1) and
             // orgsync://note/<repo path>.
@@ -103,6 +106,9 @@ struct RootView: View {
             // Share the live stores with App Intents so Siri/Shortcuts mutations
             // flow straight into the running UI.
             AppServices.register(repo: repo, settings: settings, sync: sync, reminders: reminders, calendar: calendar)
+            if AppServices.consumePendingPull() {
+                await sync.pullNow()
+            }
             // An open intent that launched the app may have posted its request
             // before this view subscribed; apply any pending target now.
             let target = AppServices.consumePendingOpen()
@@ -141,6 +147,11 @@ struct RootView: View {
         .sensoryFeedback(.success, trigger: sync.lastSyncDate) { old, new in old != nil && new != nil }
         .sensoryFeedback(.error, trigger: sync.lastError) { _, new in new != nil }
         .preferredColorScheme(settings.appearance == "light" ? .light : settings.appearance == "dark" ? .dark : nil)
+    }
+
+    private func performRequestedPull() {
+        guard AppServices.consumePendingPull() else { return }
+        Task { await sync.pullNow() }
     }
 
     /// Store injection plus the cross-cutting behaviors (notification

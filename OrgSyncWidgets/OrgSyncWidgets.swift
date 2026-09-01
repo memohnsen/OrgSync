@@ -1,6 +1,7 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+import OrgSyncIntents
 
 // AgendaSnapshot / AgendaSnapshotItem and the app-group keys come from the
 // shared Shared/AgendaSnapshotShared.swift, compiled into this target too.
@@ -298,7 +299,10 @@ struct AgendaListView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                WidgetAddTaskButton()
+                HStack(spacing: 6) {
+                    WidgetPullButton()
+                    WidgetAddTaskButton()
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
@@ -415,6 +419,23 @@ private struct WidgetAddTaskButton: View {
                 .padding(2)
         }
         .accessibilityLabel("Add task")
+    }
+}
+
+/// Pulls remote changes in the app's background process without opening it.
+private struct WidgetPullButton: View {
+    var body: some View {
+        Button(intent: PullChangesIntent()) {
+            Image(systemName: "arrow.down")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(.white))
+                .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                .padding(2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Pull changes")
     }
 }
 
