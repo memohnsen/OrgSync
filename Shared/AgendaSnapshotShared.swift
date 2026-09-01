@@ -39,6 +39,35 @@ struct AgendaSnapshotItem: Codable, Identifiable {
     var tags: [String]
 }
 
+/// Stable Edit Widget values for the scheduled-TODO Home Screen widget.
+/// These identifiers are what WidgetKit persists; display labels are derived
+/// separately so localization cannot desynchronize the stored default from the
+/// DynamicOptionsProvider results (which leaves the widget on its placeholder).
+enum AgendaWidgetRangeID: String, CaseIterable, Sendable {
+    case today
+    case week
+    case upcoming
+
+    static let optionIDs: [String] = allCases.map(\.rawValue)
+    static let defaultOptionID = Self.upcoming.rawValue
+
+    /// Resolves a stored configuration value to a range id.
+    /// Accepts the stable raw ids plus legacy English picker labels that older
+    /// builds wrote when options used display strings instead of ids.
+    static func parse(_ raw: String) -> Self {
+        let normalized = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if let exact = Self(rawValue: normalized) { return exact }
+        switch normalized {
+        case "this week":
+            return .week
+        case "all upcoming":
+            return .upcoming
+        default:
+            return .upcoming
+        }
+    }
+}
+
 /// The single definition of agenda date windows, used by every surface — the
 /// Agenda tab, the Siri intents, and the widget — so "today" and "this week"
 /// can never drift apart between them. What varies per surface (which date a

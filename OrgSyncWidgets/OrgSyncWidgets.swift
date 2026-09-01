@@ -43,13 +43,23 @@ enum AgendaTimeRange: String {
     case upcoming
 
     init(configValue: String) {
-        // Stored config values may be raw identifiers or the localized picker
-        // labels (in whatever language the widget was configured under).
-        switch configValue.lowercased() {
-        case "today", String(localized: "Today").lowercased(): self = .today
-        case "week", "this week", String(localized: "This Week").lowercased(): self = .week
-        default: self = .upcoming
+        if Self.matchesLocalizedLabel(configValue, key: "Today") {
+            self = .today
+            return
         }
+        if Self.matchesLocalizedLabel(configValue, key: "This Week") {
+            self = .week
+            return
+        }
+        switch AgendaWidgetRangeID.parse(configValue) {
+        case .today: self = .today
+        case .week: self = .week
+        case .upcoming: self = .upcoming
+        }
+    }
+
+    private static func matchesLocalizedLabel(_ value: String, key: String.LocalizationValue) -> Bool {
+        value.lowercased() == String(localized: key).lowercased()
     }
 
     var title: String {
@@ -88,15 +98,13 @@ enum AgendaTimeRange: String {
     }
 }
 
-/// Strings are used for the widget configuration because WidgetKit does not
-/// reliably deserialize this extension's AppEnum value on-device. A dynamic
-/// options provider still presents this as a fixed Edit Widget picker.
+/// Fixed Edit Widget picker. Results MUST be the same stable ids used as the
+/// parameter default; returning localized display strings left the default
+/// ("upcoming") outside the option set and WidgetKit never left the placeholder.
 struct ScheduledRangeOptionsProvider: DynamicOptionsProvider {
-    func results() async throws -> [String] {
-        [String(localized: "Today"), String(localized: "This Week"), String(localized: "All Upcoming")]
-    }
+    func results() async throws -> [String] { AgendaWidgetRangeID.optionIDs }
 
-    func defaultResult() async -> String? { "upcoming" }
+    func defaultResult() async -> String? { AgendaWidgetRangeID.defaultOptionID }
 }
 
 /// Configuration intent backing the Upcoming widget's Edit Widget options.
@@ -104,6 +112,7 @@ struct UpcomingConfigIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Scheduled TODOs"
     static let description = IntentDescription("Choose the scheduled-date range to show.")
 
+    // Default must be a member of ScheduledRangeOptionsProvider.results().
     @Parameter(title: "Date Range", default: "upcoming", optionsProvider: ScheduledRangeOptionsProvider())
     var range: String
 
@@ -111,6 +120,13 @@ struct UpcomingConfigIntent: WidgetConfigurationIntent {
         Summary { \.$range }
     }
 
+    init() {
+        self.range = AgendaWidgetRangeID.defaultOptionID
+    }
+
+    init(range: String) {
+        self.range = range
+    }
 }
 
 struct UpcomingEntry: TimelineEntry {
@@ -213,7 +229,9 @@ struct FavoritesWidget: Widget {
 }
 
 struct UpcomingWidget: Widget {
-    let kind = "OrgSyncUpcoming"
+    // Kind bumped so Home Screen instances stuck on the broken configuration
+    // schema are dropped and must be re-added with a resolvable default.
+    let kind = "OrgSyncUpcoming.v2"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UpcomingConfigIntent.self, provider: UpcomingProvider()) { entry in
             if isProUnlocked {
