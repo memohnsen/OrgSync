@@ -405,6 +405,28 @@ import Foundation
         // An unterminated drawer-looking line stays verbatim.
         #expect(doc.serialize() == ":not-a-drawer no end")
     }
+
+    @Test func boundsAdversarialHeadlineAndListNesting() {
+        let headlines = (1...500).map {
+            String(repeating: "*", count: $0) + " Level \($0)"
+        }.joined(separator: "\n")
+        let headlineDocument = OrgParser.parse(headlines)
+        #expect(headlineDocument.allOutlines(filePath: "deep.org").count == 500)
+        #expect(headlineDocument.allOutlines(filePath: "deep.org").map(\.headingPath.count).max()
+                == OrgParser.maxNestingDepth)
+
+        let list = (0..<200).map {
+            String(repeating: " ", count: $0 * 2) + "- Item \($0)"
+        }.joined(separator: "\n")
+        #expect(OrgParser.parse(list).serialize() == list)
+    }
+
+    @Test func todoQueryHonorsItsExplicitResultLimit() {
+        let source = (0..<20).map { "* TODO Item \($0)" }.joined(separator: "\n")
+        let items = OrgParser.parse(source).todoItems(filePath: "bounded.org", maxItems: 3)
+
+        #expect(items.map(\.title) == ["Item 0", "Item 1", "Item 2"])
+    }
 }
 
 // MARK: - Round trip

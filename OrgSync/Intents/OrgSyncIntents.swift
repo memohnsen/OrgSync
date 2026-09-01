@@ -28,8 +28,8 @@ enum OrgIntentError: Error, CustomLocalizedStringResourceConvertible {
 // MARK: - Capture
 
 struct AddTaskIntent: AppIntent {
-    static var title: LocalizedStringResource = "Add Task"
-    static var description = IntentDescription("Add a TODO to your OrgSync inbox.")
+    static let title: LocalizedStringResource = "Add Task"
+    static let description = IntentDescription("Add a TODO to your OrgSync inbox.")
 
     @Parameter(title: "Task") var text: String
     @Parameter(title: "Schedule Date") var date: Date?
@@ -51,8 +51,8 @@ struct AddTaskIntent: AppIntent {
 // MARK: - Complete
 
 struct CompleteTaskIntent: AppIntent {
-    static var title: LocalizedStringResource = "Complete Task"
-    static var description = IntentDescription("Mark an OrgSync task as done.")
+    static let title: LocalizedStringResource = "Complete Task"
+    static let description = IntentDescription("Mark an OrgSync task as done.")
 
     @Parameter(title: "Task") var task: OrgTaskEntity
 
@@ -70,8 +70,8 @@ struct CompleteTaskIntent: AppIntent {
 // MARK: - Read
 
 struct TodaysTasksIntent: AppIntent {
-    static var title: LocalizedStringResource = "Show Today's Tasks"
-    static var description = IntentDescription("List the OrgSync tasks scheduled or due today.")
+    static let title: LocalizedStringResource = "Show Today's Tasks"
+    static let description = IntentDescription("List the OrgSync tasks scheduled or due today.")
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[OrgTaskEntity]> & ProvidesDialog {
@@ -89,8 +89,8 @@ struct TodaysTasksIntent: AppIntent {
 }
 
 struct UpcomingTasksIntent: AppIntent {
-    static var title: LocalizedStringResource = "Show Upcoming Tasks"
-    static var description = IntentDescription("List OrgSync tasks scheduled or due in the next week.")
+    static let title: LocalizedStringResource = "Show Upcoming Tasks"
+    static let description = IntentDescription("List OrgSync tasks scheduled or due in the next week.")
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[OrgTaskEntity]> & ProvidesDialog {
@@ -102,8 +102,8 @@ struct UpcomingTasksIntent: AppIntent {
 // MARK: - Sync
 
 struct SyncNowIntent: AppIntent {
-    static var title: LocalizedStringResource = "Sync with GitHub"
-    static var description = IntentDescription("Pull remote changes and push local edits.")
+    static let title: LocalizedStringResource = "Sync with GitHub"
+    static let description = IntentDescription("Pull remote changes and push local edits.")
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -119,9 +119,9 @@ struct SyncNowIntent: AppIntent {
 // MARK: - Open
 
 struct OpenAgendaIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Agenda"
-    static var description = IntentDescription("Open the OrgSync agenda.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Open Agenda"
+    static let description = IntentDescription("Open the OrgSync agenda.")
+    static let openAppWhenRun = true
 
     @MainActor
     func perform() async throws -> some IntentResult {

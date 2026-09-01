@@ -106,7 +106,7 @@ enum AppServices {
         guard !title.isEmpty else { return false }
         let file = repo.item(forRelativePath: "inbox.org") ?? repo.createNote(named: "inbox", in: repo.repoURL)
         guard let file else { return false }
-        var body = repo.text(of: file)
+        guard var body = try? repo.text(of: file) else { return false }
         if !body.isEmpty && !body.hasSuffix("\n") { body += "\n" }
         body += "\n* TODO \(title)\n"
         if let scheduled {
@@ -136,9 +136,11 @@ enum AppServices {
     /// Queues a pull until RootView has installed its live SyncEngine. The flag
     /// also covers cold launch, where the scene delegate receives the shortcut
     /// before SwiftUI has subscribed to the notification.
-    static func requestPull() {
+    static func requestPull(postNotification: Bool = true) {
         pendingPull = true
-        NotificationCenter.default.post(name: .orgSyncPullRequest, object: nil)
+        if postNotification {
+            NotificationCenter.default.post(name: .orgSyncPullRequest, object: nil)
+        }
     }
 
     static func consumePendingPull() -> Bool {

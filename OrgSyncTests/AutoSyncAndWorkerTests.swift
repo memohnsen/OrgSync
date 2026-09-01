@@ -70,7 +70,7 @@ import Testing
             skippedPaths: ["large.pdf"]
         )
 
-        let status = await SyncWorker(repoURL: root).localStatus(state: state)
+        let status = try await SyncWorker(repoURL: root).localStatus(state: state)
         #expect(status.modified == ["modified.org"])
         #expect(status.added == ["added.org"])
         #expect(status.deleted == ["deleted.org"])
@@ -90,7 +90,7 @@ import Testing
             files: ["changed.org": GitBlob.sha1(for: original), "deleted.org": GitBlob.sha1(for: Data("gone".utf8))]
         )
 
-        let result = await SyncWorker(repoURL: root).stageAll(state: state)
+        let result = try await SyncWorker(repoURL: root).stageAll(state: state)
         #expect(result.state.stagedPaths == ["changed.org", "deleted.org", "new.org"])
         #expect(result.status.localChangeCount == 3)
     }

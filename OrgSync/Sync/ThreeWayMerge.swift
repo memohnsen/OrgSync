@@ -16,6 +16,11 @@
 import Foundation
 
 nonisolated enum ThreeWayMerge {
+    /// Two LCS tables are built for a merge. Capping each at one million cells
+    /// keeps both CPU and memory bounded; oversized edits become an explicit
+    /// conflict so the caller preserves local and remote copies for the user.
+    static let maxMatrixCells = 1_000_000
+
     struct Result {
         var lines: [String]
         var hasConflict: Bool
@@ -23,6 +28,10 @@ nonisolated enum ThreeWayMerge {
 
     /// Merge three versions of a file split into lines.
     static func merge(base: [String], local: [String], remote: [String]) -> Result {
+        guard isWithinMatrixLimit(base.count, local.count),
+              isWithinMatrixLimit(base.count, remote.count) else {
+            return Result(lines: local, hasConflict: true)
+        }
         let aHunks = hunks(base: base, other: local)
         let bHunks = hunks(base: base, other: remote)
 
@@ -196,6 +205,12 @@ nonisolated enum ThreeWayMerge {
             }
         }
         return pairs
+    }
+
+    private static func isWithinMatrixLimit(_ firstCount: Int, _ secondCount: Int) -> Bool {
+        let rows = firstCount + 1
+        let columns = secondCount + 1
+        return rows <= maxMatrixCells / columns
     }
 
     private static func splitLines(_ text: String) -> [String] {

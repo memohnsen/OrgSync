@@ -14,8 +14,8 @@ enum HomeScreenQuickAction {
     static let pullChangesType = "com.memohnsen.OrgSync.pullChanges"
 
     @MainActor
-    static func handle(_ shortcutItem: UIApplicationShortcutItem) -> Bool {
-        guard shortcutItem.type == pullChangesType else { return false }
+    static func handle(type: String) -> Bool {
+        guard type == pullChangesType else { return false }
         AppServices.requestPull()
         return true
     }
@@ -28,7 +28,7 @@ final class OrgSyncSceneDelegate: NSObject, UIWindowSceneDelegate {
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         if let shortcutItem = connectionOptions.shortcutItem {
-            _ = HomeScreenQuickAction.handle(shortcutItem)
+            _ = HomeScreenQuickAction.handle(type: shortcutItem.type)
         }
     }
 
@@ -36,7 +36,7 @@ final class OrgSyncSceneDelegate: NSObject, UIWindowSceneDelegate {
         _ windowScene: UIWindowScene,
         performActionFor shortcutItem: UIApplicationShortcutItem
     ) async -> Bool {
-        HomeScreenQuickAction.handle(shortcutItem)
+        HomeScreenQuickAction.handle(type: shortcutItem.type)
     }
 }
 

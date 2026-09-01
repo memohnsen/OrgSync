@@ -4,7 +4,7 @@ import AppIntents
 
 // AgendaSnapshot / AgendaSnapshotItem and the app-group keys come from the
 // shared Shared/AgendaSnapshotShared.swift, compiled into this target too.
-extension AgendaSnapshot: @retroactive TimelineEntry { public var date: Date { generatedAt } }
+extension AgendaSnapshot: TimelineEntry { public var date: Date { generatedAt } }
 
 private extension AgendaSnapshotItem {
     /// Match the app Agenda: when both dates exist, use the earlier one.
@@ -101,8 +101,8 @@ struct ScheduledRangeOptionsProvider: DynamicOptionsProvider {
 
 /// Configuration intent backing the Upcoming widget's Edit Widget options.
 struct UpcomingConfigIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Scheduled TODOs"
-    static var description = IntentDescription("Choose the scheduled-date range to show.")
+    static let title: LocalizedStringResource = "Scheduled TODOs"
+    static let description = IntentDescription("Choose the scheduled-date range to show.")
 
     @Parameter(title: "Date Range", default: "upcoming", optionsProvider: ScheduledRangeOptionsProvider())
     var range: String
@@ -139,7 +139,7 @@ struct UpcomingProvider: AppIntentTimelineProvider {
 /// for the app to write DONE into the real note, and (2) optimistically removes
 /// it from the shared snapshot so every widget updates immediately.
 struct CompleteTodoIntent: AppIntent {
-    static var title: LocalizedStringResource = "Complete TODO"
+    static let title: LocalizedStringResource = "Complete TODO"
 
     @Parameter(title: "Item ID") var itemID: String
 

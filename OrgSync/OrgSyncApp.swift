@@ -10,6 +10,7 @@ import AppIntents
 import OrgSyncIntents
 
 @main
+@MainActor
 struct OrgSyncApp: App {
     @UIApplicationDelegateAdaptor(OrgSyncAppDelegate.self) private var appDelegate
 

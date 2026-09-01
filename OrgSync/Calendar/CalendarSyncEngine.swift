@@ -64,7 +64,11 @@ final class CalendarSyncEngine {
         guard let file else { lastError = "Couldn't create calendar.org."; return }
         // Skip the write (and the repo-wide refresh it triggers) when the
         // mirror is already current.
-        if repo.text(of: file) != rendered {
+        guard let current = try? repo.text(of: file) else {
+            lastError = "Couldn't read calendar.org; it was left unchanged."
+            return
+        }
+        if current != rendered {
             guard repo.write(rendered, to: file) else {
                 lastError = "Couldn't update calendar.org."
                 return

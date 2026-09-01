@@ -17,6 +17,9 @@ enum SyncError: LocalizedError, Equatable, Sendable {
     case pendingCommitBlocksDiscard
     case pendingCommitBlocksPull
     case unresolvedConflicts
+    case workingFileUnavailable(path: String)
+    case workingCopyTooLarge(maxFiles: Int, maxEntries: Int)
+    case fileTooLargeToMerge(path: String, maxBytes: Int)
 
     var errorDescription: String? {
         switch self {
@@ -26,6 +29,12 @@ enum SyncError: LocalizedError, Equatable, Sendable {
         case .pendingCommitBlocksDiscard: "Push or discard the pending commit before discarding local changes."
         case .pendingCommitBlocksPull: "Push the pending commit before pulling remote changes."
         case .unresolvedConflicts: "Resolve conflict copies before committing and pushing."
+        case .workingFileUnavailable(let path):
+            "The local file \(path) could not be read. No remote changes were applied."
+        case .workingCopyTooLarge(let maxFiles, let maxEntries):
+            "The working copy exceeds the safe limit of \(maxFiles) files or \(maxEntries) entries. Reduce its size before syncing."
+        case .fileTooLargeToMerge(let path, let maxBytes):
+            "\(path) changed locally and remotely but exceeds the \(maxBytes / 1_048_576) MB merge limit. Resolve it on GitHub or reduce the file size before pulling."
         }
     }
 }

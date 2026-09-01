@@ -81,7 +81,7 @@ Optional integrations follow your choices:
 
 - macOS with Xcode and an iOS 26 SDK.
 - iOS 26.0 or later for the app, widgets, and tests.
-- [[https://just.systems/][just]] is optional but recommended for the development
+- [[https://mise.jdx.dev/][Mise]] is optional but recommended for the development
   commands below.
 
 * Getting started
@@ -99,15 +99,15 @@ you choose to connect and sync a repository.
 * Development
 
 #+begin_src sh
-just build
-just run
-just test
+mise run build
+mise run run
+mise run test
 #+end_src
 
-=just run= uses the configured simulator ID. Override it when needed:
+=mise run run= uses the configured simulator ID. Override it when needed:
 
 #+begin_src sh
-IOS_SIMULATOR_ID="YOUR-SIMULATOR-UUID" just run
+IOS_SIMULATOR_ID="YOUR-SIMULATOR-UUID" mise run run
 #+end_src
 
 The full test suite can also be run from Xcode.
@@ -138,7 +138,7 @@ writing to the remote branch.
 4. Run the opt-in test:
 
    #+begin_src sh
-   just test-live-git
+   mise run test-live-git
    #+end_src
 
 The live test creates a temporary local working copy and never pushes or
@@ -155,7 +155,7 @@ continue to increment the project version normally.
 
 * TestFlight deployment
 
-Pushes (including merged pull requests) to =main= run =just publish= in GitHub
+Pushes (including merged pull requests) to =main= run =mise run publish= in GitHub
 Actions. Before enabling the workflow, add these repository Action secrets:
 
 - =ASC_KEY_ID=, =ASC_ISSUER_ID=, and =ASC_PRIVATE_KEY_B64=: the App Store

@@ -27,6 +27,9 @@ jobs:
       - name: Resolve dependencies
         run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -resolvePackageDependencies
 
+      - name: Install Mise
+        run: brew install mise
+
       # The newest Xcode on the runner image can ship without a pre-installed
       # iOS simulator runtime (or any pre-created devices), in which case a
       # name-based destination like "iPhone 17" matches nothing. Install the
@@ -47,15 +50,11 @@ jobs:
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Run tests
+        env:
+          IOS_SIMULATOR_ID: ${{ steps.simulator.outputs.udid }}
+          TEST_RESULT_BUNDLE_PATH: TestResults
         run: |
-          xcodebuild \
-            -project OrgSync.xcodeproj \
-            -scheme OrgSync \
-            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}' \
-            -skip-testing:OrgSyncUITests \
-            -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
-            -resultBundlePath TestResults \
-            test
+          mise run test-ci
 
       - name: Upload test results
         if: failure()
@@ -112,7 +111,7 @@ jobs:
           fi
 
       - name: Install release tools
-        run: brew install just
+        run: brew install mise
 
       - name: Setup App Store Connect CLI
         uses: rudrankriyam/setup-asc@5358c70a27a3f0d1517604b0f1fdc43e70c1cc4d # v1.0.1
@@ -145,4 +144,4 @@ jobs:
           # GitHub run numbers are unique but begin at 1. The offset avoids
           # collisions with builds created before this workflow existed.
           export CI_BUILD_NUMBER="$((1000000 + GITHUB_RUN_NUMBER))"
-          just publish
+          mise run publish

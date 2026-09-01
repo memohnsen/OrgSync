@@ -13,7 +13,7 @@ public final class PullChangesPerformer {
 
     private let operation: @MainActor @Sendable () async -> Outcome
 
-    public init(operation: @escaping @MainActor @Sendable () async -> Outcome) {
+    nonisolated public init(operation: @escaping @MainActor @Sendable () async -> Outcome) {
         self.operation = operation
     }
 
