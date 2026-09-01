@@ -23,11 +23,13 @@ public final class PullChangesPerformer {
 }
 
 /// Pulls remote repository changes without bringing OrgSync to the foreground.
-public struct PullChangesIntent: AppIntent {
+public struct PullChangesIntent: ForegroundContinuableIntent {
     public static let title: LocalizedStringResource = "Pull Changes"
     public static let description = IntentDescription("Fetch and apply remote Git changes without pushing local edits.")
-    public static let supportedModes: IntentModes = .background
-    public static var allowedExecutionTargets: ExecutionTargets { .main }
+    // ForegroundContinuableIntent makes WidgetKit dispatch this to the app
+    // process. Background remains preferred, and perform() never requests a
+    // foreground continuation.
+    public static let supportedModes: IntentModes = [.background, .foreground(.dynamic)]
 
     @Dependency private var performer: PullChangesPerformer
 
