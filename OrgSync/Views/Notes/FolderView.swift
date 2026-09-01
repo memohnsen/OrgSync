@@ -311,7 +311,7 @@ struct FolderView: View {
     /// note deletes immediately.
     private func delete(_ item: FileItem) {
         let isEmptyNote = !item.isDirectory
-            && repo.text(of: item).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && (try? repo.text(of: item).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) == true
         if isEmptyNote {
             performDelete(item)
         } else {

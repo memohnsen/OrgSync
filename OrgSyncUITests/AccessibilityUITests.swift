@@ -13,8 +13,15 @@ final class AccessibilityUITests: XCTestCase {
     @MainActor
     private func launch(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing-reset-repo", "-ui-testing-skip-onboarding"] + extraArguments
+        app.launchArguments = [
+            "-ui-testing-reset-repo",
+            "-ui-testing-skip-onboarding",
+            "-ui-testing-unlock-pro",
+        ] + extraArguments
         app.launch()
+        if !extraArguments.contains("-ui-testing-hold-splash") {
+            XCTAssertTrue(app.otherElements["splash.screen"].waitForNonExistence(timeout: 5))
+        }
         return app
     }
 
@@ -57,9 +64,10 @@ final class AccessibilityUITests: XCTestCase {
     func testAgendaScopeIsAccessible() throws {
         let app = launch()
         app.tabBars.buttons["Agenda"].tap()
+        XCTAssertTrue(app.navigationBars["Agenda"].waitForExistence(timeout: 5))
 
         let scope = app.segmentedControls["agenda.scope"]
-        XCTAssertTrue(scope.waitForExistence(timeout: 2))
+        XCTAssertTrue(scope.waitForExistence(timeout: 5))
         XCTAssertEqual(scope.label, "Agenda View")
         XCTAssertTrue(scope.buttons["Today"].exists)
         XCTAssertTrue(scope.buttons["Upcoming"].exists)
@@ -71,11 +79,12 @@ final class AccessibilityUITests: XCTestCase {
     func testSettingsInputsAndSyncControlsHaveAccessibleNames() throws {
         let app = launch()
         app.tabBars.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
 
         let repositoryURL = app.textFields["settings.repositoryURL"]
         let branch = app.textFields["settings.branch"]
         let token = app.secureTextFields["settings.personalAccessToken"]
-        XCTAssertTrue(repositoryURL.waitForExistence(timeout: 2))
+        XCTAssertTrue(repositoryURL.waitForExistence(timeout: 5))
         XCTAssertEqual(repositoryURL.label, "Repository URL")
         XCTAssertEqual(branch.label, "Branch")
         XCTAssertEqual(token.label, "Personal Access Token")

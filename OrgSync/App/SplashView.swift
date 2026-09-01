@@ -39,6 +39,7 @@ struct SplashView: View {
                 .foregroundStyle(.white)
             }
         }
+        .accessibilityIdentifier("splash.screen")
     }
 }
 

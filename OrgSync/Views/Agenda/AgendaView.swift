@@ -189,6 +189,7 @@ struct AgendaView: View {
 
         func makeCoordinator() -> Coordinator { Coordinator(self) }
 
+        @MainActor
         final class Coordinator: NSObject {
             private var parent: AgendaScopeSegmentedControl
 
@@ -378,7 +379,7 @@ struct AgendaView: View {
             : nil
 
         guard let inbox = repo.item(forRelativePath: "inbox.org") ?? repo.createNote(named: "inbox", in: repo.repoURL) else { return }
-        var text = repo.text(of: inbox)
+        guard var text = try? repo.text(of: inbox) else { return }
         if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
         if !text.isEmpty { text += "\n" }
         text += "* \(status) \(priorityPrefix)\(title)\(tagSuffix)\n"
@@ -455,7 +456,7 @@ struct AgendaView: View {
     private func mutate(_ item: OrgTodoItem,
                         _ transform: (inout OrgHeadline, OrgDocument) -> Void) {
         guard let file = repo.item(forRelativePath: item.outline.filePath) else { return }
-        var document = repo.document(of: file)
+        guard var document = try? repo.document(of: file) else { return }
         let original = document
         guard document.mutateHeadline(at: item.outline, { transform(&$0, original) }) else { return }
         _ = repo.write(document.serialize(), to: file)
@@ -493,7 +494,7 @@ struct AgendaView: View {
         guard let file = repo.item(forRelativePath: item.outline.filePath) else {
             return .todoStatus(item.keyword, configuration: .default, overrides: settings.todoStatusColors)
         }
-        return .todoStatus(item.keyword, configuration: repo.document(of: file).todoConfig,
+        return .todoStatus(item.keyword, configuration: (try? repo.document(of: file))?.todoConfig ?? .default,
                            overrides: settings.todoStatusColors)
     }
 

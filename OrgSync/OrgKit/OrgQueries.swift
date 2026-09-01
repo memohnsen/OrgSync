@@ -65,11 +65,16 @@ public enum OrgQueries {
 extension OrgDocument {
     /// A flat list of every TODO headline (any keyword in the config), each with
     /// a stable outline address.
-    public func todoItems(filePath: String) -> [OrgTodoItem] {
+    public func todoItems(filePath: String, maxItems: Int = 50_000) -> [OrgTodoItem] {
+        precondition(maxItems >= 0, "TODO item limit must not be negative")
         var items: [OrgTodoItem] = []
         var seenPaths: [[String]: Int] = [:]
+        var visitedHeadlines = 0
+        let maxVisitedHeadlines = 100_000
 
-        func visit(_ headline: OrgHeadline, path: [String]) {
+        func visit(_ headline: OrgHeadline, path: [String]) -> Bool {
+            guard items.count < maxItems, visitedHeadlines < maxVisitedHeadlines else { return false }
+            visitedHeadlines += 1
             let here = path + [headline.title]
             // Keep this occurrence count aligned with `allOutlines` and the
             // outline mutation helper. Non-TODO headings must still consume an
@@ -89,10 +94,15 @@ extension OrgDocument {
                     deadline: headline.planning.deadline,
                     persistentID: headline.persistentID))
             }
-            for child in headline.children { visit(child, path: here) }
+            for child in headline.children {
+                guard visit(child, path: here) else { return false }
+            }
+            return items.count < maxItems && visitedHeadlines < maxVisitedHeadlines
         }
 
-        for headline in headlines { visit(headline, path: []) }
+        for headline in headlines {
+            guard visit(headline, path: []) else { break }
+        }
         return items
     }
 

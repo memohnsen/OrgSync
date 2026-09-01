@@ -12,8 +12,8 @@ import AppIntents
 // MARK: - Task
 
 struct OrgTaskEntity: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Task"
-    static var defaultQuery = OrgTaskQuery()
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Task"
+    static let defaultQuery = OrgTaskQuery()
 
     var id: String
     var title: String

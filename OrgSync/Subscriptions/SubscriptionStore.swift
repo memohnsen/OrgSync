@@ -33,6 +33,9 @@ final class SubscriptionStore {
     }
 
     init() {
+        // UI tests must not depend on a developer machine's injected API key
+        // or live RevenueCat customer state.
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-unlock-pro") { return }
         guard let key = Bundle.main.object(forInfoDictionaryKey: "RevenueCatAPIKey") as? String,
               !key.isEmpty else { return }
         // No appUserID: RevenueCat generates and persists an anonymous ID.

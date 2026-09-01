@@ -23,6 +23,7 @@ final class FakeGitHubRepo: @unchecked Sendable {
     private var trees: [String: [String: String]] = [:]
     private var blobs: [String: Data] = [:]
     private var objectCounter = 0
+    private var recursiveTreeEntryLimit: Int?
 
     /// Test hook fired when the client uploads a blob, before it is stored.
     /// Lets a test mutate the local working copy mid-push to simulate edits
@@ -93,6 +94,13 @@ final class FakeGitHubRepo: @unchecked Sendable {
         return commits[sha]?.message
     }
 
+    /// Makes recursive tree responses behave like GitHub's truncated response
+    /// for repositories that exceed the API's response limit.
+    func limitRecursiveTreeResponses(to entryCount: Int?) {
+        lock.lock(); defer { lock.unlock() }
+        recursiveTreeEntryLimit = entryCount
+    }
+
     // MARK: Request handling (called by the protocol)
 
     fileprivate func handle(method: String, gitPath: [String], body: Data?) -> (status: Int, json: Any) {
@@ -109,11 +117,13 @@ final class FakeGitHubRepo: @unchecked Sendable {
             return (200, ["sha": gitPath[1], "tree": ["sha": commit.tree], "message": commit.message])
         case ("GET", "trees"):
             guard gitPath.count == 2, let tree = trees[gitPath[1]] else { return notFound() }
-            let entries: [[String: Any]] = tree.map { path, blobSHA in
+            let allEntries: [[String: Any]] = tree.sorted(by: { $0.key < $1.key }).map { path, blobSHA in
                 ["path": path, "mode": "100644", "type": "blob", "sha": blobSHA,
                  "size": blobs[blobSHA]?.count ?? 0]
             }
-            return (200, ["sha": gitPath[1], "tree": entries, "truncated": false])
+            let entries = recursiveTreeEntryLimit.map { Array(allEntries.prefix(max(0, $0))) } ?? allEntries
+            return (200, ["sha": gitPath[1], "tree": entries,
+                          "truncated": entries.count < allEntries.count])
         case ("GET", "blobs"):
             guard gitPath.count == 2, let data = blobs[gitPath[1]] else { return notFound() }
             return (200, ["sha": gitPath[1], "content": data.base64EncodedString(), "encoding": "base64"])
@@ -186,7 +196,9 @@ final class FakeGitHubRepo: @unchecked Sendable {
 /// Routes api.github.com requests to the registered FakeGitHubRepo.
 final class FakeGitHubProtocol: URLProtocol {
     private static let lock = NSLock()
-    private static var registry: [String: FakeGitHubRepo] = [:]
+    /// Every access is serialized by `lock`; the unsafe annotation records the
+    /// synchronization invariant for Swift's strict concurrency checker.
+    nonisolated(unsafe) private static var registry: [String: FakeGitHubRepo] = [:]
 
     static func register(_ repo: FakeGitHubRepo, key: String) {
         lock.lock(); defer { lock.unlock() }
