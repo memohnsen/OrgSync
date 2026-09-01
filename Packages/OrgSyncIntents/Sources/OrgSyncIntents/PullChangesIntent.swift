@@ -27,7 +27,7 @@ public struct PullChangesIntent: AppIntent {
     public static let title: LocalizedStringResource = "Pull Changes"
     public static let description = IntentDescription("Fetch and apply remote Git changes without pushing local edits.")
     public static let supportedModes: IntentModes = .background
-    public static var allowedExecutionTargets: IntentExecutionTargets { .main }
+    public static var allowedExecutionTargets: ExecutionTargets { .main }
 
     @Dependency private var performer: PullChangesPerformer
 
