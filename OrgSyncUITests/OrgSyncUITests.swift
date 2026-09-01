@@ -6,40 +6,29 @@
 import XCTest
 
 final class OrgSyncUITests: XCTestCase {
+    private let app = XCUIApplication()
+
     override func setUpWithError() throws {
         continueAfterFailure = false
-    }
-
-    @MainActor
-    private func launchApp() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = [
-            "-ui-testing-reset-repo",
-            "-ui-testing-skip-onboarding",
-            "-ui-testing-unlock-pro",
-        ]
+        app.launchArguments = ["-ui-testing-reset-repo", "-ui-testing-skip-onboarding"]
         app.launch()
-        XCTAssertTrue(app.otherElements["splash.screen"].waitForNonExistence(timeout: 5))
-        return app
     }
 
     @MainActor
     func testPrimaryTabsNavigateToTheirContent() throws {
-        let app = launchApp()
         app.tabBars.buttons["Agenda"].tap()
-        XCTAssertTrue(app.navigationBars["Agenda"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Agenda"].waitForExistence(timeout: 2))
 
         app.tabBars.buttons["Settings"].tap()
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["GitHub"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["GitHub"].exists)
 
         app.tabBars.buttons["Notes"].tap()
-        XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 2))
     }
 
     @MainActor
     func testCreatingNoteAddsItToTheNotesList() throws {
-        let app = launchApp()
         app.buttons["Add"].tap()
         app.buttons["New Note"].tap()
 
@@ -54,9 +43,8 @@ final class OrgSyncUITests: XCTestCase {
 
     @MainActor
     func testGitSettingsAreAvailable() throws {
-        let app = launchApp()
         app.tabBars.buttons["Settings"].tap()
-        XCTAssertTrue(app.textFields["settings.repositoryURL"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["settings.repositoryURL"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.secureTextFields["settings.personalAccessToken"].exists)
     }
 

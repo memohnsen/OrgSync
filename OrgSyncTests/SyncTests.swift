@@ -121,18 +121,6 @@ import Foundation
         #expect(merged.hasConflict == false)
         #expect(merged.text == "one\ntwo!\nthree!")
     }
-
-    @Test func oversizedMergeFallsBackToConflictWithoutQuadraticAllocation() {
-        let count = 1_000
-        let base = (0..<count).map { "base \($0)" }
-        let local = (0..<count).map { "local \($0)" }
-        let remote = (0..<count).map { "remote \($0)" }
-
-        let result = ThreeWayMerge.merge(base: base, local: local, remote: remote)
-
-        #expect(result.hasConflict)
-        #expect(result.lines == local)
-    }
 }
 
 // MARK: - Sync state Codable

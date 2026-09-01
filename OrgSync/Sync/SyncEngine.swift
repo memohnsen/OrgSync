@@ -74,7 +74,7 @@ final class SyncEngine {
     func stageAllNow() async {
         await run("Staging…") {
             guard let state = self.state else { throw GitHubError.notConfigured }
-            self.apply(try await self.worker.stageAll(state: state))
+            self.apply(await self.worker.stageAll(state: state))
         }
     }
     func commitStagedNow(message: String? = nil) async {
@@ -93,7 +93,7 @@ final class SyncEngine {
     func discardPendingCommitNow() async {
         await run("Discarding…") {
             guard let state = self.state else { throw GitHubError.notConfigured }
-            self.apply(try await self.worker.discardPendingCommit(state: state))
+            self.apply(await self.worker.discardPendingCommit(state: state))
         }
     }
 
@@ -134,7 +134,6 @@ final class SyncEngine {
             do {
                 try await operation()
                 self.phase = .idle
-                self.lastError = nil
             } catch {
                 let text = self.message(for: error)
                 self.phase = .error(text)
@@ -179,21 +178,14 @@ final class SyncEngine {
         // for it and then clears state; if disconnect is queued first, a later
         // sync sees `state == nil` and no-ops instead of resurrecting it.
         await chain {
-            do {
-                if deleteLocalFiles {
-                    try await self.worker.removeWorkingCopy()
-                    self.repo.refresh()
-                }
-                try await self.worker.removePersistedState()
-                self.state = nil
-                self.status = SyncStatus()
-                self.phase = .idle
-                self.lastError = nil
-            } catch {
-                let text = self.message(for: error)
-                self.phase = .error(text)
-                self.lastError = text
+            if deleteLocalFiles {
+                await self.worker.removeWorkingCopy()
+                self.repo.refresh()
             }
+            await self.worker.removePersistedState()
+            self.state = nil
+            self.status = SyncStatus()
+            self.phase = .idle
         }
     }
 
@@ -209,29 +201,14 @@ final class SyncEngine {
     }
 
     func resolveConflictKeepingLocal(_ conflict: ConflictCopy) {
-        do {
-            try fileManager.removeItem(at: conflict.sidecarURL)
-            lastError = nil
-        } catch {
-            let text = message(for: error)
-            lastError = text
-            phase = .error(text)
-        }
+        try? fileManager.removeItem(at: conflict.sidecarURL)
         repo.refresh()
     }
 
     func resolveConflictUsingRemote(_ conflict: ConflictCopy) {
         guard fileManager.fileExists(atPath: conflict.sidecarURL.path) else { return }
-        do {
-            let remote = try Data(contentsOf: conflict.sidecarURL)
-            try remote.write(to: conflict.originalURL, options: .atomic)
-            try fileManager.removeItem(at: conflict.sidecarURL)
-            lastError = nil
-        } catch {
-            let text = message(for: error)
-            lastError = text
-            phase = .error(text)
-        }
+        try? fileManager.removeItem(at: conflict.originalURL)
+        try? fileManager.moveItem(at: conflict.sidecarURL, to: conflict.originalURL)
         repo.refresh()
     }
 

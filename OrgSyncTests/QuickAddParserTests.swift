@@ -34,12 +34,12 @@ import Testing
         #expect(parsed == ParsedQuickAdd(title: "just a plain task", tags: [], priority: nil, scheduledDate: nil, includesTime: false))
     }
 
-    @Test func relativeDayIsExtractedWithoutTime() throws {
+    @Test func relativeDayIsExtractedWithoutTime() {
         let parsed = QuickAddParser.parse("buy milk tomorrow")
         #expect(parsed.title == "buy milk")
         let expected = Calendar.current.date(byAdding: .day, value: 1, to: Date())!
-        let date = try #require(parsed.scheduledDate)
-        #expect(Calendar.current.isDate(date, inSameDayAs: expected))
+        let date = try? #require(parsed.scheduledDate)
+        #expect(date.map { Calendar.current.isDate($0, inSameDayAs: expected) } == true)
         #expect(parsed.includesTime == false)
     }
 

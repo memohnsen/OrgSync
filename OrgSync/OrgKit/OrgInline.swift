@@ -51,7 +51,12 @@ public enum OrgInlineParser {
     // Org's default `org-emphasis-regexp-components`.
     private static let preAllowed = Set(" \t('\"{")
     private static let postAllowed = Set(" \t-.,:!?;'\")}[")
-    private static let emphasisMarkers: Set<Character> = ["*", "/", "_", "+"]
+    private static let markers: [Character: (String) -> OrgInline] = [
+        "*": { .bold(OrgInlineParser.parse($0)) },
+        "/": { .italic(OrgInlineParser.parse($0)) },
+        "_": { .underline(OrgInlineParser.parse($0)) },
+        "+": { .strikethrough(OrgInlineParser.parse($0)) },
+    ]
     private static let verbatimMarkers: Set<Character> = ["=", "~"]
 
     public static func parse(_ text: String) -> [OrgInline] {
@@ -91,7 +96,7 @@ public enum OrgInlineParser {
             }
 
             // Emphasis / verbatim / code
-            if (emphasisMarkers.contains(c) || verbatimMarkers.contains(c)),
+            if (markers[c] != nil || verbatimMarkers.contains(c)),
                let (node, next) = parseEmphasis(chars, i) {
                 flush()
                 result.append(node)
@@ -145,7 +150,7 @@ public enum OrgInlineParser {
                     if isVerbatim {
                         node = marker == "=" ? .verbatim(body) : .code(body)
                     } else {
-                        node = emphasisNode(marker: marker, body: body)
+                        node = markers[marker]!(body)
                     }
                     return (node, j + 1)
                 }
@@ -155,17 +160,6 @@ public enum OrgInlineParser {
             j += 1
         }
         return nil
-    }
-
-    private static func emphasisNode(marker: Character, body: String) -> OrgInline {
-        switch marker {
-        case "*": .bold(parse(body))
-        case "/": .italic(parse(body))
-        case "_": .underline(parse(body))
-        case "+": .strikethrough(parse(body))
-        default:
-            preconditionFailure("emphasisNode called with a non-emphasis marker")
-        }
     }
 
     // MARK: - Links

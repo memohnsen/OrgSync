@@ -19,11 +19,6 @@
 <key>NSCalendarsFullAccessUsageDescription</key><string>OrgSync needs access to mirror your upcoming calendar events into a read-only calendar note.</string>
 <key>CFBundleURLTypes</key><array><dict><key>CFBundleURLSchemes</key><array><string>orgsync</string></array></dict></array>
 <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><true/><key>UISceneConfigurations</key><dict/></dict>
-<key>UIApplicationShortcutItems</key><array><dict>
-<key>UIApplicationShortcutItemType</key><string>com.memohnsen.OrgSync.pullChanges</string>
-<key>UIApplicationShortcutItemTitle</key><string>Pull Changes</string>
-<key>UIApplicationShortcutItemIconSymbolName</key><string>arrow.down.circle</string>
-</dict></array>
 <key>UILaunchScreen</key><dict><key>UIColorName</key><string>LaunchBackground</string></dict>
 <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationPortraitUpsideDown</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
 </dict></plist>

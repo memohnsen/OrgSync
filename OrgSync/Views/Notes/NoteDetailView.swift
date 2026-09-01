@@ -24,7 +24,6 @@ struct NoteDetailView: View {
     @State private var collapsed: Set<[Int]> = []
     @State private var autosaveTask: Task<Void, Never>?
     @State private var loaded = false
-    @State private var loadError: String?
     @State private var originalEditText = ""
     /// The file text this view last loaded from or wrote to disk. Lets a repo
     /// revision bump (background pull, Reminders sync) be recognized as an
@@ -38,15 +37,7 @@ struct NoteDetailView: View {
 
     var body: some View {
         Group {
-            if let loadError {
-                ContentUnavailableView(
-                    "Couldn't Open Note",
-                    systemImage: "doc.badge.exclamationmark",
-                    description: Text(loadError)
-                )
-            } else if !loaded {
-                ProgressView()
-            } else if isEditing {
+            if isEditing {
                 OrgSourceEditor(
                     text: $editText,
                     commands: toolbarCommands,
@@ -86,7 +77,6 @@ struct NoteDetailView: View {
                     Button("Edit") { enterEditMode() }
                         .accessibilityHint("Edit this note as org source text.")
                         .accessibilityIdentifier("note.edit")
-                        .disabled(!loaded)
                 }
             }
         }
@@ -105,15 +95,10 @@ struct NoteDetailView: View {
 
     private func loadFromDisk() {
         guard !loaded else { return }
-        do {
-            diskText = try repo.text(of: item)
-            document = try repo.document(of: item)
-            loadError = nil
-            refreshBacklinks()
-            loaded = true
-        } catch {
-            loadError = error.localizedDescription
-        }
+        diskText = repo.text(of: item)
+        document = repo.document(of: item)
+        refreshBacklinks()
+        loaded = true
     }
 
     /// Backlink discovery reads and scans every other note's text, so it runs
@@ -148,11 +133,7 @@ struct NoteDetailView: View {
     /// those keystrokes win as an ordinary local change.
     private func reloadIfDiskChanged() {
         guard loaded else { return }
-        guard let current = try? repo.text(of: item),
-              let refreshedDocument = try? repo.document(of: item) else {
-            loadError = "The note became unavailable and was left unchanged."
-            return
-        }
+        let current = repo.text(of: item)
         guard current != diskText else { return }
         if isEditing {
             guard editText == originalEditText else { return }
@@ -160,8 +141,7 @@ struct NoteDetailView: View {
             originalEditText = current
         }
         diskText = current
-        document = refreshedDocument
-        loadError = nil
+        document = repo.document(of: item)
         refreshBacklinks()
     }
 
@@ -249,10 +229,9 @@ struct NoteDetailView: View {
         guard let todo = todoItem(at: path) else { return }
         if OrgTodoStatusPalette.isCompleted(keyword), !todo.isDone {
             guard TaskCompletionService.complete(todo, repo: repo, settings: settings) else { return }
-            guard let current = try? repo.text(of: item),
-                  let refreshedDocument = try? repo.document(of: item) else { return }
+            let current = repo.text(of: item)
             diskText = current
-            document = refreshedDocument
+            document = repo.document(of: item)
             return
         }
         mutateHeadline(at: path) { $0.setTodoKeyword(keyword, config: document.todoConfig) }

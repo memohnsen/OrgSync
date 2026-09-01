@@ -12,14 +12,6 @@ import Observation
 
 @Observable
 final class RepoStore {
-    /// Keeps parsing, highlighting, snapshots, and other whole-file operations
-    /// within a defensible memory budget. GitHub sync uses the same limit.
-    static let maxOrgFileBytes = 5 * 1024 * 1024
-    static let maxOrgFiles = 10_000
-    static let maxRepositoryEntries = 100_000
-    static let maxIndexedTodoItems = 50_000
-    static let maxSearchResults = 500
-
     /// Root of the local repo mirror.
     let repoURL: URL
 
@@ -128,31 +120,23 @@ final class RepoStore {
         }
 
         var results: [SearchResult] = []
-        var scannedFiles = 0
-        var scannedEntries = 0
         for case let url as URL in enumerator {
-            scannedEntries += 1
-            guard scannedEntries <= Self.maxRepositoryEntries else { break }
             let values = try? url.resourceValues(forKeys: Set(keys))
             let isDirectory = values?.isDirectory ?? false
             guard !isDirectory, url.pathExtension.lowercased() == "org" else { continue }
-            scannedFiles += 1
-            guard scannedFiles <= Self.maxOrgFiles else { break }
-            let item = FileItem(
-                url: url,
-                relativePath: relativePath(for: url),
-                isDirectory: false,
-                modifiedDate: values?.contentModificationDate ?? .distantPast
-            )
             let matchesName = url.lastPathComponent.localizedCaseInsensitiveContains(trimmed)
-            let snippet = (try? text(of: item))
+            let snippet = (try? String(contentsOf: url, encoding: .utf8))
                 .flatMap { Self.snippet(for: trimmed, in: $0) }
             guard matchesName || snippet != nil else { continue }
             results.append(SearchResult(
-                item: item,
+                item: FileItem(
+                    url: url,
+                    relativePath: relativePath(for: url),
+                    isDirectory: false,
+                    modifiedDate: values?.contentModificationDate ?? .distantPast
+                ),
                 snippet: snippet
             ))
-            if results.count == Self.maxSearchResults { break }
         }
         return results.sorted {
             $0.item.name.localizedCaseInsensitiveCompare($1.item.name) == .orderedAscending
@@ -185,38 +169,16 @@ final class RepoStore {
             includingPropertiesForKeys: [.isRegularFileKey, .contentModificationDateKey],
             options: [.skipsHiddenFiles]
         ) else { return [] }
-        var items: [FileItem] = []
-        var scannedEntries = 0
-        for case let url as URL in enumerator {
-            scannedEntries += 1
-            guard scannedEntries <= Self.maxRepositoryEntries else { break }
+        return enumerator.compactMap { $0 as? URL }.compactMap { url in
             guard url.pathExtension.lowercased() == "org",
-                  (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
-                  let item = item(forRelativePath: relativePath(for: url)) else { continue }
-            items.append(item)
-            if items.count == Self.maxOrgFiles { break }
-        }
-        return items.sorted {
-            $0.relativePath.localizedCaseInsensitiveCompare($1.relativePath) == .orderedAscending
-        }
+                  (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { return nil }
+            return item(forRelativePath: relativePath(for: url))
+        }.sorted { $0.relativePath.localizedCaseInsensitiveCompare($1.relativePath) == .orderedAscending }
     }
 
     /// Open and completed TODOs across the full local mirror.
     func allTodoItems() -> [OrgTodoItem] {
-        var result: [OrgTodoItem] = []
-        for item in allOrgFiles() {
-            // Derived agenda/search surfaces may omit an unavailable iCloud file;
-            // they never write that fallback back to disk. Mutation paths call
-            // `document(of:)` directly and require a successful read.
-            guard let document = try? document(of: item) else { continue }
-            let remaining = Self.maxIndexedTodoItems - result.count
-            guard remaining > 0 else { break }
-            result.append(contentsOf: document.todoItems(
-                filePath: item.relativePath,
-                maxItems: remaining
-            ))
-        }
-        return result
+        allOrgFiles().flatMap { document(of: $0).todoItems(filePath: $0.relativePath) }
     }
 
     /// Notes that reference `item` through an org `[[wiki-link]]`, name-sorted.
@@ -227,8 +189,7 @@ final class RepoStore {
         return allOrgFiles()
             .filter { $0.relativePath != relativePath }
             .filter { file in
-                guard let text = try? text(of: file) else { return false }
-                return WikiLink.targets(in: text).contains {
+                WikiLink.targets(in: text(of: file)).contains {
                     WikiLink.resolves($0, toNoteNamed: displayName, relativePath: relativePath)
                 }
             }
@@ -248,33 +209,15 @@ final class RepoStore {
         )
     }
 
-    /// Raw UTF-8 text contents of a file. Read failures are never converted to
-    /// an empty document because mutation callers could then overwrite data.
-    func text(of item: FileItem) throws -> String {
-        let values = try item.url.resourceValues(forKeys: [.fileSizeKey])
-        if let size = values.fileSize, size > Self.maxOrgFileBytes {
-            throw CocoaError(.fileReadTooLarge, userInfo: [
-                NSFilePathErrorKey: item.url.path,
-                NSLocalizedDescriptionKey: "\(item.relativePath) exceeds the 5 MB note limit.",
-            ])
-        }
-        let data = try Data(contentsOf: item.url, options: .mappedIfSafe)
-        guard data.count <= Self.maxOrgFileBytes else {
-            throw CocoaError(.fileReadTooLarge, userInfo: [
-                NSFilePathErrorKey: item.url.path,
-                NSLocalizedDescriptionKey: "\(item.relativePath) exceeds the 5 MB note limit.",
-            ])
-        }
-        guard let text = String(data: data, encoding: .utf8) else {
-            throw CocoaError(.fileReadInapplicableStringEncoding, userInfo: [NSFilePathErrorKey: item.url.path])
-        }
-        return text
+    /// Raw text contents of a file.
+    func text(of item: FileItem) -> String {
+        (try? String(contentsOf: item.url, encoding: .utf8)) ?? ""
     }
 
     /// Parse a file into an `OrgDocument`. Cached by path; the cache is reused
     /// only when the file's modification date and the global TODO-config
     /// signature both match the parsed entry.
-    func document(of item: FileItem) throws -> OrgDocument {
+    func document(of item: FileItem) -> OrgDocument {
         let signature = Self.configSignature()
         if let cached = documentCache[item.relativePath],
            cached.modificationDate == item.modifiedDate,
@@ -282,9 +225,8 @@ final class RepoStore {
             return cached.document
         }
 
-        let source = try text(of: item)
         parseCount += 1
-        var document = OrgParser.parse(source)
+        var document = OrgParser.parse(text(of: item))
         // A document-local #+TODO remains authoritative; otherwise apply the
         // user's global preference as the default TODO vocabulary.
         let hasLocalConfig = document.keywords.contains { OrgTodoConfig.keywordNames.contains($0.key.uppercased()) }

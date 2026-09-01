@@ -61,16 +61,4 @@ import Testing
 
         #expect(engine.isConnected == false)
     }
-
-    @Test func successfulPullClearsAnEarlierError() async throws {
-        let remote = FakeGitHubRepo()
-        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
-        let (engine, _, root) = try await connectedEngine(remote: remote)
-        defer { try? FileManager.default.removeItem(at: root) }
-        engine.lastError = "Earlier failure"
-
-        await engine.pullNow()
-
-        #expect(engine.lastError == nil)
-    }
 }

@@ -12,9 +12,6 @@ import WidgetKit
 // Shared/AgendaSnapshotShared.swift, compiled into both the app and the widget.
 
 enum AgendaSnapshotWriter {
-    /// Widgets need a compact derived view, not an unbounded repository dump.
-    static let maxSnapshotItems = 5_000
-
     /// Regenerates the widget payload from the authoritative local mirror.
     /// Keeping this here ensures widgets refresh after any note edit, pull,
     /// merge, Agenda action, or Reminders reconciliation—not only after the
@@ -42,7 +39,7 @@ enum AgendaSnapshotWriter {
     }
 
     static func write(_ items: [OrgTodoItem]) {
-        let snapshot = AgendaSnapshot(generatedAt: .now, items: items.prefix(maxSnapshotItems).map { item in
+        let snapshot = AgendaSnapshot(generatedAt: .now, items: items.map { item in
             AgendaSnapshotItem(
                 id: snapshotID(for: item),
                 title: item.title,

@@ -1,59 +1,7 @@
+[tools]
+ruby = "3.3"
+
 [tasks.build]
-description = "Compile OrgSync for the configured iOS Simulator"
-run = '''
-xcodebuild \
-  -project OrgSync.xcodeproj \
-  -scheme OrgSync \
-  -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}" \
-  build
-'''
-
-[tasks.run]
-description = "Build, install, and launch OrgSync in the configured iOS Simulator"
-depends = ["build"]
-run = '''
-set -euo pipefail
-simulator="${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}"
-xcrun simctl boot "$simulator" 2>/dev/null || true
-xcrun simctl bootstatus "$simulator" -b
-app_path="$(xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -destination "platform=iOS Simulator,id=$simulator" -showBuildSettings | awk -F ' = ' '/TARGET_BUILD_DIR/ {dir=$2} /WRAPPER_NAME/ {name=$2} END {print dir "/" name}')"
-xcrun simctl install "$simulator" "$app_path"
-xcrun simctl launch "$simulator" com.memohnsen.OrgSync
-'''
-
+run = "xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -destination 'platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}' build"
 [tasks.test]
-description = "Run the complete unit and UI test suite"
-run = '''
-xcodebuild \
-  -project OrgSync.xcodeproj \
-  -scheme OrgSync \
-  -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}" \
-  test
-'''
-
-[tasks.test-ci]
-description = "Run the deterministic unit suite used by CI"
-run = "./Scripts/test_ci.sh"
-
-[tasks.test-live-git]
-description = "Run the opt-in read-only GitHub integration test"
-run = '''
-set -euo pipefail
-marker=.orgsync-live-git-enabled
-trap 'rm -f "$marker"' EXIT
-touch "$marker"
-xcodebuild \
-  -project OrgSync.xcodeproj \
-  -scheme OrgSync \
-  -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}" \
-  -only-testing:OrgSyncTests/LiveGitHubIntegrationTests \
-  test
-'''
-
-[tasks.publish]
-description = "Archive and distribute OrgSync through TestFlight"
-run = "./Scripts/publish_testflight.sh"
-
-[tasks.archive-ci]
-description = "Build the unsigned Release archive validated by CI"
-run = "./Scripts/archive_ci.sh"
+run = "xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -destination 'platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}' test"

@@ -24,9 +24,9 @@ import Testing
         try "* TODO Alpha\n".write(to: root.appendingPathComponent("a.org"), atomically: true, encoding: .utf8)
         let item = try #require(repo.item(forRelativePath: "a.org"))
 
-        _ = try repo.document(of: item)
-        _ = try repo.document(of: item)
-        _ = try repo.document(of: item)
+        _ = repo.document(of: item)
+        _ = repo.document(of: item)
+        _ = repo.document(of: item)
         #expect(repo.parseCount == 1)
     }
 
@@ -59,7 +59,7 @@ import Testing
         #expect(repo.parseCount == 3)
 
         // Reading the changed file afterwards is a cache hit with fresh content.
-        let updated = try repo.document(of: try #require(repo.item(forRelativePath: "a.org")))
+        let updated = repo.document(of: try #require(repo.item(forRelativePath: "a.org")))
         #expect(repo.parseCount == 3)
         #expect(updated.todoItems(filePath: "a.org").first?.title == "After")
     }
@@ -84,25 +84,14 @@ import Testing
         defer { try? FileManager.default.removeItem(at: root) }
         let url = root.appendingPathComponent("a.org")
         try "* TODO One\n".write(to: url, atomically: true, encoding: .utf8)
-        _ = try repo.document(of: try #require(repo.item(forRelativePath: "a.org")))
+        _ = repo.document(of: try #require(repo.item(forRelativePath: "a.org")))
         #expect(repo.parseCount == 1)
 
         // Simulate an out-of-band change with a distinctly newer modification date.
         try "* TODO Two\n".write(to: url, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(5)], ofItemAtPath: url.path)
         let refreshed = try #require(repo.item(forRelativePath: "a.org"))
-        _ = try repo.document(of: refreshed)
+        _ = repo.document(of: refreshed)
         #expect(repo.parseCount == 2)
-    }
-
-    @Test func rejectsOversizedNotesBeforeParsing() throws {
-        let (repo, root) = makeRepo()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let url = root.appendingPathComponent("large.org")
-        try Data(repeating: 0x61, count: RepoStore.maxOrgFileBytes + 1).write(to: url)
-        let item = try #require(repo.item(forRelativePath: "large.org"))
-
-        #expect(throws: CocoaError.self) { _ = try repo.document(of: item) }
-        #expect(repo.parseCount == 0)
     }
 }

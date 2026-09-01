@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -14,9 +16,7 @@ permissions:
 jobs:
   test:
     name: Unit Tests
-    if: ${{ !(github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[skip ci]')) }}
     runs-on: macos-26
-    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -24,13 +24,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Resolve dependencies
+        run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -resolvePackageDependencies
+
       # The newest Xcode on the runner image can ship without a pre-installed
       # iOS simulator runtime (or any pre-created devices), in which case a
       # name-based destination like "iPhone 17" matches nothing. Install the
-      # runtime only if missing, then start a supported device. Dependency
-      # resolution intentionally overlaps the hosted runner's cold simulator
-      # boot, which otherwise adds several minutes to the critical path.
-      - name: Create and boot iOS simulator
+      # runtime only if missing, then create a device the runtime itself
+      # declares support for, and test against its UDID.
+      - name: Prepare iOS simulator
         id: simulator
         run: |
           set -euo pipefail
@@ -41,23 +43,18 @@ jobs:
           RUNTIME=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.identifier')
           DEVICE_TYPE=$(echo "$RUNTIMES" | jq -r '[.runtimes[] | select(.isAvailable)] | sort_by(.version) | last.supportedDeviceTypes | map(select(.productFamily=="iPhone")) | first.identifier')
           UDID=$(xcrun simctl create "CI iPhone" "$DEVICE_TYPE" "$RUNTIME")
-          xcrun simctl boot "$UDID"
           echo "Created $DEVICE_TYPE on $RUNTIME: $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve dependencies while simulator boots
-        run: xcodebuild -project OrgSync.xcodeproj -scheme OrgSync-CI -resolvePackageDependencies
-
-      - name: Wait for iOS simulator
-        run: xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
-
       - name: Run tests
-        env:
-          IOS_SIMULATOR_ID: ${{ steps.simulator.outputs.udid }}
-          TEST_RESULT_BUNDLE_PATH: TestResults
-        # OrgSync-CI contains only OrgSyncTests. The UI target is deliberately
-        # absent, and the opt-in live GitHub test remains explicitly skipped.
-        run: ./Scripts/test_ci.sh
+        run: |
+          xcodebuild \
+            -project OrgSync.xcodeproj \
+            -scheme OrgSync \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}' \
+            -skip-testing:OrgSyncTests/LiveGitHubIntegrationTests \
+            -resultBundlePath TestResults \
+            test
 
       - name: Upload test results
         if: failure()
@@ -66,48 +63,23 @@ jobs:
           name: TestResults
           path: TestResults.xcresult
 
-  archive:
-    name: Archive Validation
-    # Hosted macOS concurrency is limited to one job here. Run archive after
-    # tests so the waiting job is not cancelled before it acquires a runner.
-    if: ${{ !(github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[skip ci]')) }}
-    needs: [test]
-    runs-on: macos-26
-    timeout-minutes: 20
-    env:
-      # The public SDK key is required by the Release build phase. Production
-      # archives use the repository secret in the publish job below.
-      REVENUECAT_API_KEY_LIVE: ci_archive_validation
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
-
-      - name: Build unsigned archive
-        run: ./Scripts/archive_ci.sh
-
   publish:
     name: Archive and upload to TestFlight
-    needs: [test, archive]
-    # Disabled: CI no longer runs on push to main. Re-enable the push trigger
-    # in on: if this job should publish from GitHub Actions again.
-    if: false
+    needs: test
+    # Pull requests run only the test job. A deployment is permitted only once
+    # CI has passed for a push to main (including a merged pull request).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 45
     env:
       ASC_BYPASS_KEYCHAIN: "1"
-      ASC_NO_UPDATE: "1"
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
       BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
       P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
       BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
-      WIDGET_PROVISION_PROFILE_BASE64: ${{ secrets.WIDGET_PROVISION_PROFILE_BASE64 }}
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      REVENUECAT_API_KEY_LIVE: ${{ secrets.REVENUECAT_API_KEY_LIVE }}
 
     steps:
       - name: Checkout
@@ -115,40 +87,43 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check release configuration
+      - name: Check release secrets
         run: |
           set -euo pipefail
-          required_values=(
+          required_secrets=(
             ASC_KEY_ID
             ASC_ISSUER_ID
             ASC_PRIVATE_KEY_B64
             BUILD_CERTIFICATE_BASE64
             P12_PASSWORD
             BUILD_PROVISION_PROFILE_BASE64
-            WIDGET_PROVISION_PROFILE_BASE64
             KEYCHAIN_PASSWORD
-            REVENUECAT_API_KEY_LIVE
           )
-          missing_values=()
-          for value_name in "${required_values[@]}"; do
-            if [[ -z "${!value_name}" ]]; then
-              missing_values+=("$value_name")
+          missing_secrets=()
+          for secret_name in "${required_secrets[@]}"; do
+            if [[ -z "${!secret_name}" ]]; then
+              missing_secrets+=("$secret_name")
             fi
           done
-          if (( ${#missing_values[@]} > 0 )); then
-            echo "::error::Missing required release configuration: ${missing_values[*]}"
+          if (( ${#missing_secrets[@]} > 0 )); then
+            echo "::error::Missing required repository Action secrets: ${missing_secrets[*]}"
             exit 1
           fi
+
+      - name: Install release tools
+        run: brew install just
 
       - name: Setup App Store Connect CLI
         uses: rudrankriyam/setup-asc@5358c70a27a3f0d1517604b0f1fdc43e70c1cc4d # v1.0.1
 
-      - name: Install signing certificate and provisioning profiles
+      - name: Install signing certificate and provisioning profile
         run: |
           set -euo pipefail
           CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
           echo "$BUILD_CERTIFICATE_BASE64" | base64 -D > "$CERTIFICATE_PATH"
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 -D > "$PROFILE_PATH"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -156,19 +131,10 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN_PATH"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          install_profile() {
-            local encoded_profile="$1"
-            local profile_name="$2"
-            local profile_path="$RUNNER_TEMP/$profile_name.mobileprovision"
-            local profile_plist="$RUNNER_TEMP/$profile_name.plist"
-            echo "$encoded_profile" | base64 -D > "$profile_path"
-            security cms -D -i "$profile_path" > "$profile_plist"
-            local profile_uuid
-            profile_uuid=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$profile_plist")
-            cp "$profile_path" "$HOME/Library/MobileDevice/Provisioning Profiles/$profile_uuid.mobileprovision"
-          }
-          install_profile "$BUILD_PROVISION_PROFILE_BASE64" app
-          install_profile "$WIDGET_PROVISION_PROFILE_BASE64" widget
+          PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
+          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$PROFILE_PLIST")
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
 
       - name: Validate App Store Connect credentials
         run: asc auth status --validate
@@ -178,4 +144,4 @@ jobs:
           # GitHub run numbers are unique but begin at 1. The offset avoids
           # collisions with builds created before this workflow existed.
           export CI_BUILD_NUMBER="$((1000000 + GITHUB_RUN_NUMBER))"
-          ./Scripts/publish_testflight.sh
+          just publish

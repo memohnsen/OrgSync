@@ -28,26 +28,6 @@ private func makeWorkingCopy() throws -> URL {
 }
 
 @Suite struct SyncWorkerPullTests {
-    @Test func connectBacksUpAndRefreshesAnExistingWorkingCopy() async throws {
-        let remote = FakeGitHubRepo()
-        remote.seedCommit(branch: "main", changes: ["remote.org": Data("remote\n".utf8)])
-        let root = try makeWorkingCopy()
-        defer { try? FileManager.default.removeItem(at: root) }
-        try Data("local first\n".utf8).write(to: root.appendingPathComponent("local.org"))
-        let worker = SyncWorker(repoURL: root)
-        let client = remote.makeClient()
-
-        _ = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
-        let backup = root.appendingPathComponent(".orgsync/pre-sync-backup", isDirectory: true)
-        #expect(try Data(contentsOf: backup.appendingPathComponent("local.org")) == Data("local first\n".utf8))
-
-        try Data("local second\n".utf8).write(to: root.appendingPathComponent("current.org"))
-        _ = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
-        #expect(try Data(contentsOf: backup.appendingPathComponent("current.org")) == Data("local second\n".utf8))
-        #expect(!FileManager.default.fileExists(atPath: backup.appendingPathComponent("local.org").path),
-                "each connection backup should describe the working copy it is about to replace")
-    }
-
     @Test func localDeletionSurvivesUnrelatedRemoteCommitAndIsPushed() async throws {
         let remote = FakeGitHubRepo()
         remote.seedCommit(branch: "main", changes: [
@@ -104,72 +84,9 @@ private func makeWorkingCopy() throws -> URL {
         #expect(result.status.hasLocalChanges == false,
                 "a skipped path must not be misreported as a local deletion")
     }
-
-    @Test func truncatedRemoteTreeAbortsBeforeChangingWorkingCopy() async throws {
-        let remote = FakeGitHubRepo()
-        remote.seedCommit(branch: "main", changes: [
-            "a.org": Data("alpha\n".utf8),
-            "b.org": Data("beta\n".utf8),
-        ])
-        let root = try makeWorkingCopy()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let worker = SyncWorker(repoURL: root)
-        let client = remote.makeClient()
-        let connected = try await worker.connect(
-            branch: "main", owner: remote.owner, repo: remote.repo, client: client)
-
-        remote.seedCommit(branch: "main", changes: ["b.org": Data("beta v2\n".utf8)])
-        remote.limitRecursiveTreeResponses(to: 1)
-
-        await #expect(throws: GitHubError.self) {
-            _ = try await worker.pull(state: connected.state, client: client)
-        }
-        #expect(try Data(contentsOf: root.appendingPathComponent("a.org")) == Data("alpha\n".utf8))
-        #expect(try Data(contentsOf: root.appendingPathComponent("b.org")) == Data("beta\n".utf8))
-    }
-
-    @Test func oversizedTwoSidedEditAbortsBeforeChangingWorkingCopy() async throws {
-        let remote = FakeGitHubRepo()
-        remote.seedCommit(branch: "main", changes: ["a.org": Data("baseline\n".utf8)])
-        let root = try makeWorkingCopy()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let worker = SyncWorker(repoURL: root, maxBlobDownloadBytes: 16)
-        let client = remote.makeClient()
-        let connected = try await worker.connect(
-            branch: "main", owner: remote.owner, repo: remote.repo, client: client)
-
-        let local = Data(repeating: 0x4c, count: 32)
-        try local.write(to: root.appendingPathComponent("a.org"))
-        remote.seedCommit(branch: "main", changes: ["a.org": Data("remote\n".utf8)])
-
-        await #expect(throws: SyncError.self) {
-            _ = try await worker.pull(state: connected.state, client: client)
-        }
-        #expect(try Data(contentsOf: root.appendingPathComponent("a.org")) == local)
-    }
 }
 
 @Suite struct SyncWorkerPendingCommitTests {
-    @Test func stagingReportsStatePersistenceFailure() async throws {
-        let remote = FakeGitHubRepo()
-        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
-        let root = try makeWorkingCopy()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let worker = SyncWorker(repoURL: root)
-        let client = remote.makeClient()
-        let connected = try await worker.connect(
-            branch: "main", owner: remote.owner, repo: remote.repo, client: client)
-        try Data("v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
-
-        let stateDirectory = root.appendingPathComponent(".orgsync", isDirectory: true)
-        try FileManager.default.removeItem(at: stateDirectory)
-        try Data("not a directory".utf8).write(to: stateDirectory)
-
-        await #expect(throws: Error.self) {
-            _ = try await worker.stageAll(state: connected.state)
-        }
-    }
-
     @Test func discardingPendingCommitRecoversFromNonFastForward() async throws {
         let remote = FakeGitHubRepo()
         remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
@@ -181,7 +98,7 @@ private func makeWorkingCopy() throws -> URL {
 
         // Stage and commit a local edit, then let the remote move on.
         try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
-        result = try await worker.stageAll(state: result.state)
+        result = await worker.stageAll(state: result.state)
         result = try await worker.commitStaged(state: result.state, client: client, message: "local edit")
         #expect(result.state.pendingCommit != nil)
         remote.seedCommit(branch: "main", changes: ["b.org": Data("remote\n".utf8)])
@@ -195,7 +112,7 @@ private func makeWorkingCopy() throws -> URL {
         }
 
         // Discarding the commit keeps the edit as a local change and unblocks sync.
-        result = try await worker.discardPendingCommit(state: result.state)
+        result = await worker.discardPendingCommit(state: result.state)
         #expect(result.state.pendingCommit == nil)
         #expect(result.status.modified == ["a.org"])
 
@@ -230,8 +147,8 @@ private func makeWorkingCopy() throws -> URL {
 
         result = try await worker.discardLocalChanges(state: result.state, client: client)
         #expect(!result.status.hasLocalChanges)
-        #expect(try String(contentsOf: root.appendingPathComponent("modified.org"), encoding: .utf8) == "before\n")
-        #expect(try String(contentsOf: root.appendingPathComponent("deleted.org"), encoding: .utf8) == "keep me\n")
+        #expect(try String(contentsOf: root.appendingPathComponent("modified.org")) == "before\n")
+        #expect(try String(contentsOf: root.appendingPathComponent("deleted.org")) == "keep me\n")
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("added.org").path))
     }
 }

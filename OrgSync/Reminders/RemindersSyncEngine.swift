@@ -19,13 +19,6 @@ final class RemindersSyncEngine {
     private let defaults: UserDefaults
     private let mappingKey = "reminders.orgOutlineToIdentifier"
 
-    /// EventKit delivers these reference objects through a callback without
-    /// Sendable annotations. They are resumed directly into this main-actor
-    /// engine and never escape it, so the unchecked boundary stays local.
-    private struct FetchedReminders: @unchecked Sendable {
-        let values: [EKReminder]
-    }
-
     private(set) var access: Access = .unknown
     private(set) var lists: [EKCalendar] = []
     private(set) var lastError: String?
@@ -168,19 +161,16 @@ final class RemindersSyncEngine {
     }
 
     private func fetchReminders(_ predicate: NSPredicate) async -> [EKReminder] {
-        let fetched = await withCheckedContinuation { continuation in
-            store.fetchReminders(matching: predicate) {
-                continuation.resume(returning: FetchedReminders(values: $0 ?? []))
-            }
+        await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { continuation.resume(returning: $0 ?? []) }
         }
-        return fetched.values
     }
 
     private func ensurePersistentIDs(repo: RepoStore) {
         repo.performMutationBatch {
             // Never write :ID: drawers into the regenerated calendar mirror.
             for file in repo.allOrgFiles() where file.relativePath != CalendarSyncRules.fileName {
-                guard var document = try? repo.document(of: file) else { continue }
+                var document = repo.document(of: file)
                 if document.ensurePersistentIDsForTodoHeadlines() {
                     _ = repo.write(document.serialize(), to: file)
                 }
@@ -190,8 +180,7 @@ final class RemindersSyncEngine {
 
     private func mutate(_ item: OrgTodoItem, repo: RepoStore, _ transform: (inout OrgHeadline, OrgDocument) -> Void) {
         guard let file = repo.item(forRelativePath: item.outline.filePath) else { return }
-        guard var document = try? repo.document(of: file) else { return }
-        let original = document
+        var document = repo.document(of: file); let original = document
         guard document.mutateHeadline(at: item.outline, { transform(&$0, original) }) else { return }
         _ = repo.write(document.serialize(), to: file)
     }
@@ -202,7 +191,7 @@ final class RemindersSyncEngine {
         guard let file else { return nil }
         let title = reminder.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return nil }
-        guard var text = try? repo.text(of: file) else { return nil }
+        var text = repo.text(of: file)
         if !text.hasSuffix("\n") { text += "\n" }
         text += "\n* TODO \(title)\n"
         if let components = reminder.dueDateComponents, let date = Calendar.current.date(from: components) {
@@ -212,7 +201,7 @@ final class RemindersSyncEngine {
             text = ReminderSyncRules.appending(repeater: repeater, toLastScheduledTimestampIn: text)
         }
         guard repo.write(text, to: file) else { return nil }
-        return (try? repo.document(of: file))?.todoItems(filePath: file.relativePath)
+        return repo.document(of: file).todoItems(filePath: file.relativePath)
             .last(where: { $0.title == title })?.outline
     }
     private func key(_ item: OrgTodoItem) -> String {
