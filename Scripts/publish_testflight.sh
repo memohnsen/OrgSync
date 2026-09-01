@@ -3,7 +3,7 @@
 set -euo pipefail
 
 app_id="${ASC_APP_ID:-6792388512}"
-testflight_group="Internal"
+testflight_group="internal"
 artifacts_directory=".asc/artifacts"
 archive_path="${artifacts_directory}/OrgSync.xcarchive"
 ipa_path="${artifacts_directory}/OrgSync.ipa"
