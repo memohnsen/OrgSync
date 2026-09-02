@@ -271,16 +271,14 @@ struct AgendaListView: View {
     var accent: Color
     var empty: String
 
-    // These are fitting estimates only; they do not change the row fonts or
-    // spacing. The previous estimates left enough unused space for one task.
-    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = 21
-    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = 21
+    @ScaledMetric(relativeTo: .caption2) private var dayHeight: CGFloat = AgendaListLayout.dayHeight
+    @ScaledMetric(relativeTo: .footnote) private var taskHeight: CGFloat = AgendaListLayout.taskHeight
 
     var body: some View {
         GeometryReader { proxy in
             let rows = fitted(from: range.filter(items), in: proxy.size.height)
             ZStack(alignment: .topTrailing) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AgendaListLayout.rowSpacing) {
                     if rows.isEmpty {
                         Text(empty).font(.caption).foregroundStyle(.secondary)
                     } else {
@@ -290,13 +288,14 @@ struct AgendaListView: View {
                                 Text(label.uppercased())
                                     .font(.caption2.weight(.bold))
                                     .foregroundStyle(accent)
-                                    .padding(.top, 1)
+                                    .padding(.top, AgendaListLayout.dayHeaderTopPadding)
+                                    .padding(.bottom, AgendaListLayout.dayHeaderBottomPadding)
                             case .task(let item):
                                 WidgetAgendaTaskRow(item: item, accent: accent)
                             }
                         }
                     }
-                    Spacer(minLength: 0)
+                    Spacer(minLength: AgendaListLayout.listBottomPadding)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 WidgetAddTaskButton()
@@ -316,19 +315,16 @@ struct AgendaListView: View {
         }
     }
 
-    /// Keeps as many rows as fit the available height, never leaving a trailing
-    /// day divider with no tasks under it.
     private func fitted(from items: [AgendaSnapshotItem], in height: CGFloat) -> [AgendaRow] {
-        var used: CGFloat = 0
-        var result: [AgendaRow] = []
-        for row in AgendaRow.build(from: items) {
-            let rowHeight = row.isDay ? dayHeight : taskHeight
-            if used + rowHeight > height { break }
-            used += rowHeight
-            result.append(row)
-        }
-        if let last = result.last, last.isDay { result.removeLast() }
-        return result
+        let built = AgendaRow.build(from: items)
+        let slots = built.map { $0.isDay ? AgendaListLayout.Slot.day : .task }
+        let kept = AgendaListLayout.fitted(
+            slots,
+            in: height,
+            dayHeight: dayHeight,
+            taskHeight: taskHeight
+        )
+        return Array(built.prefix(kept.count))
     }
 }
 

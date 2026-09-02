@@ -105,3 +105,45 @@ enum AgendaDateWindow: Sendable {
         }
     }
 }
+
+enum AgendaListLayout {
+    enum Slot: Equatable {
+        case day
+        case task
+    }
+
+    static let rowSpacing: CGFloat = 4
+    static let dayHeaderTopPadding: CGFloat = 1
+    static let dayHeaderBottomPadding: CGFloat = 6
+    static let listBottomPadding: CGFloat = 8
+    static let dayHeight: CGFloat = 21
+    static let taskHeight: CGFloat = 21
+    static let mediumWidgetHeight: CGFloat = 158
+    static let widgetContentMargin: CGFloat = 16
+
+    static var mediumContentHeight: CGFloat {
+        mediumWidgetHeight - widgetContentMargin * 2
+    }
+
+    static func packedHeight(dayCount: Int, taskCount: Int) -> CGFloat {
+        CGFloat(dayCount) * dayHeight + CGFloat(taskCount) * taskHeight
+    }
+
+    static func fitted(
+        _ slots: [Slot],
+        in height: CGFloat,
+        dayHeight: CGFloat,
+        taskHeight: CGFloat
+    ) -> [Slot] {
+        var used: CGFloat = 0
+        var result: [Slot] = []
+        for slot in slots {
+            let rowHeight = slot == .day ? dayHeight : taskHeight
+            if used + rowHeight > height { break }
+            used += rowHeight
+            result.append(slot)
+        }
+        if result.last == .day { result.removeLast() }
+        return result
+    }
+}
