@@ -90,7 +90,7 @@ import Testing
         )
     }
 
-    @Test func calendarOrgHeadlinesDriveEventRows() {
+    @Test func calendarOrgHeadlinesDriveEventRows() throws {
         let timed = Calendar.current.date(from: DateComponents(year: 2026, month: 7, day: 22, hour: 14, minute: 30))!
         let allDay = Calendar.current.date(from: DateComponents(year: 2026, month: 7, day: 21))!
         let items = OrgParser.parse(CalendarSyncRules.render(events: [
