@@ -5,3 +5,7 @@ ruby = "3.3"
 run = "xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -destination 'platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}' build"
 [tasks.test]
 run = "xcodebuild -project OrgSync.xcodeproj -scheme OrgSync -destination 'platform=iOS Simulator,id=${IOS_SIMULATOR_ID:-E4A6738D-A7CA-4CF9-A37F-2BB9839A4AF5}' test"
+
+[tasks.publish]
+description = "Archive and distribute OrgSync through TestFlight"
+run = "./Scripts/publish_testflight.sh"
