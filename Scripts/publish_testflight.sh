@@ -8,6 +8,16 @@ artifacts_directory=".asc/artifacts"
 archive_path="${artifacts_directory}/OrgSync.xcarchive"
 ipa_path="${artifacts_directory}/OrgSync.ipa"
 
+if [[ -n "${CI_BUILD_NUMBER:-}" ]]; then
+  ./Scripts/increment_build_number.sh
+else
+  asc xcode version edit \
+    --project OrgSync.xcodeproj \
+    --next-build-number \
+    --app "$app_id" \
+    --platform IOS
+fi
+
 asc xcode archive \
   --project OrgSync.xcodeproj \
   --scheme OrgSync \

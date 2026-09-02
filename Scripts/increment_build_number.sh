@@ -1,9 +1,7 @@
 #!/bin/zsh
-# Increment every CURRENT_PROJECT_VERSION in the Xcode project. This script is
-# invoked by the OrgSync scheme immediately before an Archive build, not during
-# ordinary builds, runs, or tests. CI may set CI_BUILD_NUMBER to use a specific
-# build number; this prevents a fresh CI checkout from repeatedly uploading the
-# same incremented build number.
+# Increment every CURRENT_PROJECT_VERSION in the Xcode project. The publish
+# script invokes this when CI_BUILD_NUMBER is set so a fresh CI checkout can
+# upload a unique build number.
 
 set -euo pipefail
 
