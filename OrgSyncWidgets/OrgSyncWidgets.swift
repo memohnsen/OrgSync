@@ -298,9 +298,10 @@ struct AgendaListView: View {
                     }
                     Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 WidgetAddTaskButton()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .containerBackground(for: .widget) { Color.clear }
     }
