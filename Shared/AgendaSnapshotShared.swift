@@ -39,6 +39,43 @@ struct AgendaSnapshotItem: Codable, Identifiable {
     var tags: [String]
 }
 
+extension AgendaSnapshotItem {
+    var isCalendarEvent: Bool { filePath == "calendar.org" }
+
+    var showsWidgetCompleteControl: Bool { !isCalendarEvent }
+
+    func widgetTrailingMeta(
+        allDayText: String,
+        calendar: Calendar = .current,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String? {
+        if isCalendarEvent {
+            return widgetEventTimeText(allDayText: allDayText, calendar: calendar, locale: locale)
+        }
+        guard !tags.isEmpty else { return nil }
+        return tags.map { "#\($0)" }.joined(separator: " ")
+    }
+
+    private func widgetEventTimeText(
+        allDayText: String,
+        calendar: Calendar,
+        locale: Locale
+    ) -> String? {
+        guard let scheduled else { return nil }
+        let comps = calendar.dateComponents([.hour, .minute], from: scheduled)
+        if (comps.hour ?? 0) == 0 && (comps.minute ?? 0) == 0 {
+            return allDayText
+        }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = locale
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: scheduled)
+    }
+}
+
 /// The single definition of agenda date windows, used by every surface — the
 /// Agenda tab, the Siri intents, and the widget — so "today" and "this week"
 /// can never drift apart between them. What varies per surface (which date a

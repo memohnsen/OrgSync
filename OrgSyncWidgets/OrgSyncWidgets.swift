@@ -263,8 +263,8 @@ enum AgendaRow {
     }
 }
 
-/// Fantastical-style agenda: tasks grouped under day dividers, each task a
-/// completion circle plus its title (no file path, no per-row date).
+/// Fantastical-style agenda: tasks grouped under day dividers. TODOs show a
+/// completion circle and tags; calendar.org events show the start time instead.
 struct AgendaListView: View {
     var items: [AgendaSnapshotItem]
     var range: AgendaTimeRange
@@ -292,7 +292,7 @@ struct AgendaListView: View {
                                     .foregroundStyle(accent)
                                     .padding(.top, 1)
                             case .task(let item):
-                                taskRow(item)
+                                WidgetAgendaTaskRow(item: item, accent: accent)
                             }
                         }
                     }
@@ -303,36 +303,6 @@ struct AgendaListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .containerBackground(for: .widget) { Color.clear }
-    }
-
-    private func taskRow(_ item: AgendaSnapshotItem) -> some View {
-        HStack(spacing: 8) {
-            Button(intent: CompleteTodoIntent(itemID: item.id)) {
-                Image(systemName: "circle").font(.footnote).foregroundStyle(accent)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Complete \(item.title)")
-            if let marks = Self.priorityMarks(item.priority) {
-                Text(marks)
-                    .font(.footnote.weight(.bold))
-                    .foregroundStyle(.orange)
-                    .accessibilityLabel("Priority \(item.priority ?? "")")
-            }
-            Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
-                HStack(spacing: 6) {
-                    Text(item.title).lineLimit(1).font(.footnote.weight(.medium))
-                        .layoutPriority(1)
-                    Spacer(minLength: 0)
-                    if !item.tags.isEmpty {
-                        Text(item.tags.map { "#\($0)" }.joined(separator: " "))
-                            .lineLimit(1)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
     }
 
     /// Org priority rendered as exclamation marks: A = !!!, B = !!, C = !.
@@ -358,6 +328,47 @@ struct AgendaListView: View {
         }
         if let last = result.last, last.isDay { result.removeLast() }
         return result
+    }
+}
+
+struct WidgetAgendaTaskRow: View {
+    var item: AgendaSnapshotItem
+    var accent: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if item.showsWidgetCompleteControl {
+                Button(intent: CompleteTodoIntent(itemID: item.id)) {
+                    Image(systemName: "circle").font(.footnote).foregroundStyle(accent)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Complete \(item.title)")
+            }
+            if let marks = AgendaListView.priorityMarks(item.priority) {
+                Text(marks)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel("Priority \(item.priority ?? "")")
+            }
+            Link(destination: URL(string: "orgsync://note/" + item.filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!)!) {
+                HStack(spacing: 6) {
+                    Text(item.title)
+                        .font(.footnote.weight(.medium))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                    if let meta = item.widgetTrailingMeta(allDayText: String(localized: "All day")) {
+                        Text(meta)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .layoutPriority(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 }
 
