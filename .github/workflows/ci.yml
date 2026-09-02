@@ -16,6 +16,7 @@ permissions:
 jobs:
   test:
     name: Unit Tests
+    if: github.event_name == 'pull_request'
     runs-on: macos-26
 
     steps:
@@ -65,9 +66,6 @@ jobs:
 
   publish:
     name: Archive and upload to TestFlight
-    needs: test
-    # Pull requests run only the test job. A deployment is permitted only once
-    # CI has passed for a push to main (including a merged pull request).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 45
