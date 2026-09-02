@@ -279,7 +279,7 @@ struct AgendaListView: View {
     var body: some View {
         GeometryReader { proxy in
             let rows = fitted(from: range.filter(items), in: proxy.size.height)
-            ZStack(alignment: .bottomTrailing) {
+            ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 4) {
                     if rows.isEmpty {
                         Text(empty).font(.caption).foregroundStyle(.secondary)
