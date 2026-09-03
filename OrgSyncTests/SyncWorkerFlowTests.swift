@@ -121,6 +121,47 @@ private func makeWorkingCopy() throws -> URL {
         #expect(remote.filesAtHead(branch: "main")["b.org"] == Data("remote\n".utf8))
         #expect(result.status.hasLocalChanges == false)
     }
+
+    @Test func unstagedEditsCommitOnlyAfterStageAll() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        var result = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+
+        try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        await #expect(throws: SyncError.nothingStaged) {
+            _ = try await worker.commitStaged(state: result.state, client: client, message: "unstaged")
+        }
+
+        result = await worker.stageAll(state: result.state)
+        result = try await worker.commitStaged(state: result.state, client: client, message: "staged then committed")
+        #expect(result.state.pendingCommit != nil)
+        #expect(result.state.stagedPaths.isEmpty)
+        #expect(remote.filesAtHead(branch: "main")["a.org"] == Data("v1\n".utf8),
+                "commit must not publish; push is a separate step")
+    }
+
+    @Test func alreadyStagedEditsCommitAfterAnotherStageAll() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
+        let root = try makeWorkingCopy()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let worker = SyncWorker(repoURL: root)
+        let client = remote.makeClient()
+        var result = try await worker.connect(branch: "main", owner: remote.owner, repo: remote.repo, client: client)
+
+        try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        result = await worker.stageAll(state: result.state)
+        #expect(result.state.stagedPaths == ["a.org"])
+
+        result = await worker.stageAll(state: result.state)
+        result = try await worker.commitStaged(state: result.state, client: client, message: "already staged")
+        #expect(result.state.pendingCommit != nil)
+        #expect(result.state.stagedPaths.isEmpty)
+    }
 }
 
 @Suite struct SyncWorkerLocalChangesTests {

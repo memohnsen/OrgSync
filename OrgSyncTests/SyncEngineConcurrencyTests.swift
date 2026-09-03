@@ -62,3 +62,54 @@ import Testing
         #expect(engine.isConnected == false)
     }
 }
+
+@MainActor
+@Suite(.serialized) struct SyncEngineStageAndCommitTests {
+    private func connectedEngine(remote: FakeGitHubRepo) async throws -> (SyncEngine, URL) {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let repo = RepoStore(repoURL: root, seedsSampleContent: false)
+        let settings = SettingsStore(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
+        settings.repoURL = "\(remote.owner)/\(remote.repo)"
+        settings.branch = "main"
+        settings.token = "test-token"
+        let engine = SyncEngine(repo: repo, settings: settings, session: remote.makeSession())
+        try await engine.connect(branch: "main")
+        return (engine, root)
+    }
+
+    @Test func stageAndCommitNowStagesUnstagedEditsThenCreatesAPendingCommit() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
+        let (engine, root) = try await connectedEngine(remote: remote)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        _ = try await engine.refreshStatus()
+        #expect(engine.status.hasLocalChanges)
+        #expect(engine.stagedChangeCount == 0)
+
+        await engine.stageAndCommitNow(message: "stage and commit")
+        #expect(engine.lastError == nil)
+        #expect(engine.hasPendingCommit)
+        #expect(engine.stagedChangeCount == 0)
+        #expect(remote.filesAtHead(branch: "main")["a.org"] == Data("v1\n".utf8))
+    }
+
+    @Test func stageAndCommitNowCommitsAlreadyStagedEdits() async throws {
+        let remote = FakeGitHubRepo()
+        remote.seedCommit(branch: "main", changes: ["a.org": Data("v1\n".utf8)])
+        let (engine, root) = try await connectedEngine(remote: remote)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try Data("local v2\n".utf8).write(to: root.appendingPathComponent("a.org"))
+        await engine.stageAllNow()
+        #expect(engine.stagedChangeCount == 1)
+
+        await engine.stageAndCommitNow(message: "already staged")
+        #expect(engine.lastError == nil)
+        #expect(engine.hasPendingCommit)
+        #expect(engine.stagedChangeCount == 0)
+        #expect(remote.filesAtHead(branch: "main")["a.org"] == Data("v1\n".utf8))
+    }
+}

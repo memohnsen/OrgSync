@@ -67,13 +67,15 @@ struct GitCommandPaletteView: View {
                         .accessibilityHint(sync.hasPendingCommit ? "Push the pending commit before pulling." : "Downloads and merges remote changes.")
 
                         Button {
-                            Task { await sync.stageAllNow() }
+                            commitMessage = OrgSyncCommitMessage.automatic()
+                            showCommitPrompt = true
                         } label: {
-                            commandLabel("Stage All Changes", systemImage: "tray.and.arrow.down", enabled: canStage, isLoading: isRunning("Staging…"))
+                            commandLabel("Stage & Commit Changes", systemImage: "checkmark.seal", enabled: canStageAndCommit, isLoading: isRunning("Committing…"))
                         }
                         .buttonStyle(.plain)
-                        .disabled(!canStage)
-                        .accessibilityHint("Selects every current local change for the next commit.")
+                        .disabled(!canStageAndCommit)
+                        .accessibilityIdentifier("git.stageAndCommit")
+                        .accessibilityHint("Stages every local change and creates a local pending Git commit without publishing it.")
 
                         Button(role: .destructive) {
                             showDiscardChangesPrompt = true
@@ -83,16 +85,6 @@ struct GitCommandPaletteView: View {
                         .buttonStyle(.plain)
                         .disabled(!canDiscardChanges)
                         .accessibilityHint("Restores the working copy to the last synced version. This cannot be undone.")
-
-                        Button {
-                            commitMessage = OrgSyncCommitMessage.automatic()
-                            showCommitPrompt = true
-                        } label: {
-                            commandLabel("Commit Staged Changes", systemImage: "checkmark.seal", enabled: canCommit, isLoading: isRunning("Committing…"))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canCommit)
-                        .accessibilityHint("Creates a local pending Git commit without publishing it.")
 
                         Button {
                             Task { await sync.pushPendingNow(); await reminders.sync(repo: repo); repo.refresh() }
@@ -111,7 +103,6 @@ struct GitCommandPaletteView: View {
                         .buttonStyle(.plain)
                         .disabled(!canDiscard)
                         .accessibilityHint("Abandons the pending commit. Your file changes are kept as local changes.")
-
                     }
 
                     if !conflicts.isEmpty {
@@ -156,7 +147,7 @@ struct GitCommandPaletteView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Commit") {
                     let message = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-                    Task { await sync.commitStagedNow(message: message.isEmpty ? nil : message) }
+                    Task { await sync.stageAndCommitNow(message: message.isEmpty ? nil : message) }
                 }
             } message: {
                 Text("This creates a local pending commit. Use Push when you are ready to publish it to GitHub.")
@@ -194,9 +185,10 @@ struct GitCommandPaletteView: View {
 
     private var canPull: Bool { !sync.phase.isBusy && !sync.hasPendingCommit }
     private var canViewChanges: Bool { !sync.phase.isBusy && sync.status.hasLocalChanges }
-    private var canStage: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.status.hasLocalChanges }
+    private var canStageAndCommit: Bool {
+        !sync.phase.isBusy && !sync.hasPendingCommit && (sync.status.hasLocalChanges || sync.stagedChangeCount > 0)
+    }
     private var canDiscardChanges: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.status.hasLocalChanges }
-    private var canCommit: Bool { !sync.phase.isBusy && !sync.hasPendingCommit && sync.stagedChangeCount > 0 }
     private var canPush: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
     private var canDiscard: Bool { !sync.phase.isBusy && sync.hasPendingCommit }
     private func isRunning(_ message: String) -> Bool {
@@ -219,15 +211,14 @@ struct GitCommandPaletteView: View {
                 }
             }
             .frame(width: 24)
-            Text(isLoading ? loadingTitle(for: title) : title)
+            Text(LocalizedStringKey(isLoading ? loadingTitle(for: title) : title))
                 .foregroundStyle(isLoading || enabled ? Color.primary : Color.secondary)
         }
     }
 
     private func loadingTitle(for title: String) -> String {
         switch title {
-        case "Stage All Changes": "Staging…"
-        case "Commit Staged Changes": "Committing…"
+        case "Stage & Commit Changes": "Committing…"
         case "Discard Local Changes": "Discarding changes…"
         case "Discard Pending Commit": "Discarding…"
         default: "\(title)ing…"
