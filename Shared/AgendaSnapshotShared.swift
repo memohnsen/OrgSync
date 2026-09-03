@@ -44,6 +44,15 @@ extension AgendaSnapshotItem {
 
     var showsWidgetCompleteControl: Bool { !isCalendarEvent }
 
+    func isVisibleOnAgenda(now: Date = .now, calendar: Calendar = .current) -> Bool {
+        CalendarEventAgendaVisibility.isVisible(
+            isCalendarEvent: isCalendarEvent,
+            scheduled: scheduled,
+            now: now,
+            calendar: calendar
+        )
+    }
+
     func widgetTrailingMeta(
         allDayText: String,
         calendar: Calendar = .current,
@@ -62,8 +71,7 @@ extension AgendaSnapshotItem {
         locale: Locale
     ) -> String? {
         guard let scheduled else { return nil }
-        let comps = calendar.dateComponents([.hour, .minute], from: scheduled)
-        if (comps.hour ?? 0) == 0 && (comps.minute ?? 0) == 0 {
+        if !CalendarEventAgendaVisibility.hasTime(from: scheduled, calendar: calendar) {
             return allDayText
         }
         let formatter = DateFormatter()
@@ -73,6 +81,47 @@ extension AgendaSnapshotItem {
         formatter.dateStyle = .none
         formatter.timeStyle = .short
         return formatter.string(from: scheduled)
+    }
+}
+
+/// Timed `calendar.org` events leave the Agenda tab and Upcoming widget 30
+/// minutes after they start. All-day events stay for the day; ordinary TODOs
+/// are unchanged. Both surfaces call this so they cannot drift.
+enum CalendarEventAgendaVisibility {
+    static let hideAfterStart: TimeInterval = 30 * 60
+
+    static func isVisible(
+        isCalendarEvent: Bool,
+        scheduled: Date?,
+        now: Date,
+        calendar: Calendar = .current
+    ) -> Bool {
+        guard isCalendarEvent, let start = scheduled else { return true }
+        guard hasTime(from: start, calendar: calendar) else { return true }
+        return now < start.addingTimeInterval(hideAfterStart)
+    }
+
+    static func hasTime(from scheduled: Date?, calendar: Calendar = .current) -> Bool {
+        guard let scheduled else { return false }
+        let comps = calendar.dateComponents([.hour, .minute], from: scheduled)
+        return (comps.hour ?? 0) != 0 || (comps.minute ?? 0) != 0
+    }
+
+    static func nextReloadDate(
+        from items: [AgendaSnapshotItem],
+        now: Date,
+        fallback: Date,
+        calendar: Calendar = .current
+    ) -> Date {
+        let hideDates = items.compactMap { item -> Date? in
+            guard item.isCalendarEvent,
+                  hasTime(from: item.scheduled, calendar: calendar),
+                  let start = item.scheduled else { return nil }
+            let hideAt = start.addingTimeInterval(hideAfterStart)
+            return hideAt > now ? hideAt : nil
+        }
+        guard let soonest = hideDates.min() else { return fallback }
+        return min(soonest, fallback)
     }
 }
 

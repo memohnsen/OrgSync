@@ -22,12 +22,20 @@ enum AgendaSnapshotWriter {
 
     /// Open TODOs visible on agenda surfaces (the Agenda tab and widgets):
     /// completed items are dropped, and mirrored calendar events are dropped
-    /// when the user has hidden them in Settings.
-    static func agendaItems(repo: RepoStore) -> [OrgTodoItem] {
+    /// when the user has hidden them in Settings or 30 minutes after they start.
+    static func agendaItems(repo: RepoStore, now: Date = .now, calendar: Calendar = .current) -> [OrgTodoItem] {
         var items = repo.allTodoItems().filter { !OrgTodoStatusPalette.isCompleted($0.keyword) }
         let showsCalendar = UserDefaults.standard.object(forKey: SettingsStore.calendarShowInAgendaKey) as? Bool ?? true
         if !showsCalendar {
             items.removeAll { $0.outline.filePath == CalendarSyncRules.fileName }
+        }
+        items.removeAll {
+            !CalendarEventAgendaVisibility.isVisible(
+                isCalendarEvent: $0.outline.filePath == CalendarSyncRules.fileName,
+                scheduled: $0.scheduled?.date(),
+                now: now,
+                calendar: calendar
+            )
         }
         return items
     }
