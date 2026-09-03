@@ -11,6 +11,18 @@ import EventKit
 import Foundation
 
 enum ReminderSyncRules {
+    enum SyncPhase: Equatable {
+        case importFromReminders
+        case exportToReminders
+    }
+
+    static func syncPhases(for master: IOSSyncMasterSource) -> [SyncPhase] {
+        switch master {
+        case .iosApps: [.importFromReminders, .exportToReminders]
+        case .orgFiles: [.exportToReminders]
+        }
+    }
+
     static func relevantDate(for item: OrgTodoItem) -> Date? {
         [item.deadline?.date(), item.scheduled?.date()].compactMap { $0 }.min()
     }

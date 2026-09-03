@@ -2,9 +2,9 @@
 //  IOSSyncSettingsView.swift
 //  OrgSync
 //
-//  Dedicated "iOS Sync" page, pushed from Settings: two-way Reminders sync and
-//  the read-only Calendar mirror, including their access prompts, manual sync
-//  buttons, and error sections.
+//  Dedicated "iOS Sync" page, pushed from Settings: Reminders and Calendar sync
+//  with independent master-source pickers, access prompts, manual sync buttons,
+//  and error sections.
 //
 
 import SwiftUI
@@ -32,8 +32,6 @@ struct IOSSyncSettingsView: View {
         }
         .navigationTitle("iOS Sync")
         .navigationBarTitleDisplayMode(.inline)
-        // iOS 27 draws a solid bar with a hard cutoff on scroll; keep the
-        // pre-27 translucent look.
         .toolbarBackground(.hidden, for: .navigationBar)
         .alert("Reminders Synced", isPresented: $showRemindersSyncSuccess) {
             Button("Done", role: .cancel) {}
@@ -58,6 +56,13 @@ struct IOSSyncSettingsView: View {
                     .accessibilityIdentifier("settings.remindersSync")
                     .accessibilityHint("Synchronizes scheduled and deadline TODOs with the selected Reminders list.")
                 if reminders.access == .granted {
+                    Picker("Reminders source", selection: $settings.remindersMasterSource) {
+                        ForEach(IOSSyncMasterSource.allCases) { source in
+                            Text(source.remindersPickerLabel).tag(source)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("settings.remindersMasterSource")
                     Picker("Reminders List", selection: $settings.remindersListID) {
                         Text("OrgSync (managed)").tag("")
                         ForEach(reminders.lists, id: \.calendarIdentifier) { list in
@@ -80,7 +85,7 @@ struct IOSSyncSettingsView: View {
             } header: {
                 Text("Reminders")
             } footer: {
-                Text(reminders.access == .granted ? "Scheduled and deadline TODOs sync two ways with only the selected Reminders list." : "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+                Text(remindersFooter)
             }
             if let error = reminders.lastError {
                 Section("Reminders Sync Error") {
@@ -93,8 +98,15 @@ struct IOSSyncSettingsView: View {
                 Toggle("Sync Calendar", isOn: $settings.calendarSync)
                     .disabled(calendar.access != .granted)
                     .accessibilityIdentifier("settings.calendarSync")
-                    .accessibilityHint("Mirrors upcoming calendar events into a read-only calendar.org note.")
+                    .accessibilityHint("Synchronizes calendar events with calendar.org.")
                 if calendar.access == .granted {
+                    Picker("Calendar source", selection: $settings.calendarMasterSource) {
+                        ForEach(IOSSyncMasterSource.allCases) { source in
+                            Text(source.calendarPickerLabel).tag(source)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("settings.calendarMasterSource")
                     Toggle("Show in Agenda & Widgets", isOn: $settings.calendarShowInAgenda)
                         .disabled(!settings.calendarSync)
                         .accessibilityIdentifier("settings.calendarShowInAgenda")
@@ -118,7 +130,7 @@ struct IOSSyncSettingsView: View {
             } header: {
                 Text("Calendar")
             } footer: {
-                Text("The next \(CalendarSyncRules.windowDays) days of events are mirrored into calendar.org on every app open. The file is read-only: edits to it are overwritten.")
+                Text(calendarFooter)
             }
             if let error = calendar.lastError {
                 Section("Calendar Sync Error") {
@@ -126,6 +138,30 @@ struct IOSSyncSettingsView: View {
                     Button("Dismiss") { calendar.clearError() }
                 }
             }
+        }
+    }
+
+    private var remindersFooter: String {
+        guard reminders.access == .granted else {
+            return String(localized: "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
+        }
+        switch settings.remindersMasterSource {
+        case .iosApps:
+            return String(localized: "When iOS Reminders is the source, Reminders changes import into your org files first, then org TODOs mirror back to the selected list.")
+        case .orgFiles:
+            return String(localized: "When Org files is the source, scheduled and deadline TODOs in your org files update the selected Reminders list. Reminders-side edits are not imported.")
+        }
+    }
+
+    private var calendarFooter: String {
+        guard calendar.access == .granted else {
+            return String(localized: "Allow access to sync calendar events with calendar.org.")
+        }
+        switch settings.calendarMasterSource {
+        case .iosApps:
+            return String(localized: "When iOS Calendar is the source, the next 30 days of events are mirrored into calendar.org on every sync. Edits to calendar.org are overwritten.")
+        case .orgFiles:
+            return String(localized: "When calendar.org is the source, events in that file within the next 30 days update the OrgSync calendar. Calendar-side edits are not imported.")
         }
     }
 
