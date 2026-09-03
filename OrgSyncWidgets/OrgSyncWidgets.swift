@@ -70,7 +70,7 @@ enum AgendaTimeRange: String {
 
     /// Keeps only items with a SCHEDULED date inside this window, earliest
     /// first. Deadlines deliberately do not affect this widget's range.
-    func filter(_ items: [AgendaSnapshotItem]) -> [AgendaSnapshotItem] {
+    func filter(_ items: [AgendaSnapshotItem], now: Date = .now, calendar: Calendar = .current) -> [AgendaSnapshotItem] {
         let window: AgendaDateWindow = switch self {
         case .today: .todayAndOverdue
         case .week: .upcoming(days: 7, includesOverdue: true)
@@ -83,7 +83,7 @@ enum AgendaTimeRange: String {
             guard let date = item.scheduled else { return nil }
             return (item, date)
         }
-        .filter { window.contains($0.date) }
+        .filter { window.contains($0.date, now: now, calendar: calendar) && $0.item.isVisibleOnAgenda(now: now, calendar: calendar) }
         .sorted { $0.date < $1.date }.map(\.item)
     }
 }
@@ -129,8 +129,12 @@ struct UpcomingProvider: AppIntentTimelineProvider {
     }
     func timeline(for configuration: UpcomingConfigIntent, in context: Context) async -> Timeline<UpcomingEntry> {
         let range = AgendaTimeRange(configValue: configuration.range)
-        let entry = UpcomingEntry(date: .now, items: range.filter(loadAgendaSnapshot().items), range: range)
-        return Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
+        let now = Date()
+        let items = range.filter(loadAgendaSnapshot().items, now: now)
+        let entry = UpcomingEntry(date: now, items: items, range: range)
+        let fallback = now.addingTimeInterval(15 * 60)
+        let reload = CalendarEventAgendaVisibility.nextReloadDate(from: items, now: now, fallback: fallback)
+        return Timeline(entries: [entry], policy: .after(reload))
     }
 }
 
