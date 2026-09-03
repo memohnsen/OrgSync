@@ -1,6 +1,6 @@
 #+TITLE: OrgSync Privacy Policy
 
-/Last updated: July 20, 2026/
+/Last updated: September 3, 2026/
 
 OrgSync is built to be private by default. This policy describes what the app
 does — and deliberately does not do — with your information.
@@ -51,6 +51,9 @@ the service you choose:
 - *Local notifications* — reminders for scheduled and deadline TODOs are
   generated and delivered entirely on your device. Note content used in a
   notification never leaves the device.
+- *App lock* — an optional Face ID / Touch ID / device passcode lock. iOS
+  performs authentication on the device; OrgSync never receives biometric
+  data.
 
 * Subscriptions and RevenueCat
 

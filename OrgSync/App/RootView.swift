@@ -25,6 +25,7 @@ struct RootView: View {
     @State private var isShowingAgendaQuickAdd = false
     @State private var isShowingSplash = true
     @State private var isShowingSyncError = false
+    @State private var appLock: AppLockController
 
     private let holdsSplashForUITesting = ProcessInfo.processInfo.arguments.contains("-ui-testing-hold-splash")
 
@@ -39,6 +40,7 @@ struct RootView: View {
         _reminders = State(initialValue: RemindersSyncEngine(settings: settings))
         _calendar = State(initialValue: CalendarSyncEngine(settings: settings))
         _onboarding = State(initialValue: OnboardingState())
+        _appLock = State(initialValue: AppLockController(isEnabled: settings.requireAppLock))
     }
 
     var body: some View {
@@ -56,11 +58,22 @@ struct RootView: View {
                     SettingsView()
                 }
             }
+            .accessibilityHidden(appLock.coversContent)
 
             if isShowingSplash {
                 SplashView()
                     .transition(.opacity)
                     .zIndex(1)
+                    .accessibilityHidden(appLock.coversContent)
+            }
+
+            if appLock.coversContent {
+                AppLockOverlay(
+                    biometryType: AppLockAuthentication.biometryType(),
+                    isAuthenticating: appLock.phase == .authenticating,
+                    retry: { appLock.retry() }
+                )
+                .zIndex(2)
             }
         }
         .modifier(appEnvironment)
@@ -78,7 +91,16 @@ struct RootView: View {
             )
         }
         .onChange(of: scenePhase) { _, newPhase in
+            appLock.handle(newPhase)
             handleScenePhase(newPhase)
+        }
+        .onChange(of: settings.requireAppLock) { _, enabled in
+            Task {
+                let applied = await appLock.setEnabled(enabled)
+                if enabled && !applied {
+                    settings.requireAppLock = false
+                }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .orgSyncOpenRequest)) { _ in
             let target = AppServices.consumePendingOpen()
@@ -102,6 +124,7 @@ struct RootView: View {
         .task {
             // Share the live stores with App Intents so Siri/Shortcuts mutations
             // flow straight into the running UI.
+            appLock.handle(scenePhase)
             AppServices.register(repo: repo, settings: settings, sync: sync, reminders: reminders, calendar: calendar)
             // An open intent that launched the app may have posted its request
             // before this view subscribed; apply any pending target now.

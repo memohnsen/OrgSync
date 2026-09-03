@@ -97,6 +97,11 @@ struct SettingsView: View {
                         Text("Dark").tag("dark")
                     }
                     .accessibilityIdentifier("settings.appearance")
+                    Toggle(isOn: $settings.requireAppLock) {
+                        Text(LocalizedStringKey(AppLockCopy.requireLockTitleKey(biometryType: AppLockAuthentication.biometryType())))
+                    }
+                    .accessibilityIdentifier("settings.requireAppLock")
+                    .accessibilityHint(Text(LocalizedStringKey(AppLockCopy.requireLockHintKey(biometryType: AppLockAuthentication.biometryType()))))
                 } header: {
                     Text("Preferences")
                 }
