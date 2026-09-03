@@ -87,4 +87,26 @@ enum CalendarSyncRules {
         case .orgFiles: [.exportToIOS]
         }
     }
+
+    struct ExportUpsertPlan: Equatable {
+        var orgID: String
+        var usesManagedCalendar: Bool
+    }
+
+    static func exportUpsertPlans(
+        orgEvents: [Event],
+        mappings: [String: String],
+        existingMappedEventIDs: Set<String>
+    ) -> [ExportUpsertPlan] {
+        orgEvents.compactMap { event in
+            guard let orgID = event.persistentID else { return nil }
+            let mappedID = mappings[orgID]
+            let isExisting = mappedID.map { existingMappedEventIDs.contains($0) } ?? false
+            return ExportUpsertPlan(orgID: orgID, usesManagedCalendar: !isExisting)
+        }
+    }
+
+    static func staleMappedOrgIDs(seenOrgIDs: Set<String>, mappings: [String: String]) -> [String] {
+        Array(mappings.keys.filter { !seenOrgIDs.contains($0) }).sorted()
+    }
 }

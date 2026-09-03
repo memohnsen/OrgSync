@@ -23,6 +23,18 @@ enum ReminderSyncRules {
         }
     }
 
+    static func staleMappingKeys(liveKeys: Set<String>, mappings: [String: String]) -> [String] {
+        Array(mappings.keys.filter { !liveKeys.contains($0) }).sorted()
+    }
+
+    static func mappedDeletionReminderIDs(mappings: [String: String], staleKeys: [String]) -> [String] {
+        staleKeys.compactMap { mappings[$0] }
+    }
+
+    static func unmappedReminderIDs(inList listIDs: Set<String>, mappings: [String: String]) -> Set<String> {
+        listIDs.subtracting(Set(mappings.values))
+    }
+
     static func relevantDate(for item: OrgTodoItem) -> Date? {
         [item.deadline?.date(), item.scheduled?.date()].compactMap { $0 }.min()
     }

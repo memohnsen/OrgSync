@@ -43,4 +43,28 @@ import Testing
         #expect(ReminderSyncRules.syncPhases(for: .iosApps) == [.importFromReminders, .exportToReminders])
         #expect(ReminderSyncRules.syncPhases(for: .orgFiles) == [.exportToReminders])
     }
+
+    @Test func staleMappingKeysSnapshotBeforeDeletion() {
+        let mappings = ["id|live": "R-1", "id|gone": "R-2"]
+        #expect(ReminderSyncRules.staleMappingKeys(liveKeys: ["id|live"], mappings: mappings) == ["id|gone"])
+    }
+
+    @Test func mappedDeletionCandidatesExcludeUnmappedPersonalReminders() {
+        let mappings = ["id|org-task": "R-MANAGED"]
+        let listIDs: Set<String> = ["R-MANAGED", "R-PERSONAL"]
+        let stale = ReminderSyncRules.staleMappingKeys(liveKeys: ["id|org-task"], mappings: mappings)
+        let deletions = ReminderSyncRules.mappedDeletionReminderIDs(mappings: mappings, staleKeys: stale)
+        let unmapped = ReminderSyncRules.unmappedReminderIDs(inList: listIDs, mappings: mappings)
+        #expect(deletions.isEmpty)
+        #expect(unmapped == ["R-PERSONAL"])
+        #expect(deletions.contains("R-PERSONAL") == false)
+    }
+
+    @Test func mappedDeletionCandidatesIncludeRemovedOrgEntries() {
+        let mappings = ["id|deleted": "R-OLD", "id|kept": "R-KEEP"]
+        let stale = ReminderSyncRules.staleMappingKeys(liveKeys: ["id|kept"], mappings: mappings)
+        let deletions = ReminderSyncRules.mappedDeletionReminderIDs(mappings: mappings, staleKeys: stale)
+        #expect(deletions == ["R-OLD"])
+        #expect(deletions.contains("R-KEEP") == false)
+    }
 }

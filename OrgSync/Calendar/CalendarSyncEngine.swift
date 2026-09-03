@@ -4,7 +4,7 @@
 //
 //  EventKit bridge for calendar.org. Direction follows settings.calendarMasterSource:
 //  iOS Calendar master mirrors events into calendar.org; calendar.org master
-//  reconciles a managed OrgSync calendar from the file.
+//  reconciles events from the file without moving existing mapped events.
 //
 
 import EventKit
@@ -74,7 +74,7 @@ final class CalendarSyncEngine {
         for ekEvent in fetched {
             let eventID = ekEvent.calendarItemIdentifier
             seenEventIDs.insert(eventID)
-            let orgID = mappings.first(where: { $0.value == eventID })?.key
+            let orgID = Array(mappings).first(where: { $0.value == eventID })?.key
                 ?? UUID().uuidString.uppercased()
             mappings[orgID] = eventID
             events.append(CalendarSyncRules.Event(
@@ -85,7 +85,7 @@ final class CalendarSyncEngine {
             ))
         }
 
-        mappings = mappings.filter { _, eventID in seenEventIDs.contains(eventID) }
+        mappings = Dictionary(uniqueKeysWithValues: Array(mappings).filter { seenEventIDs.contains($0.value) })
         let rendered = CalendarSyncRules.render(events: events, orgIsMaster: false)
         try writeCalendarOrg(rendered, repo: repo)
         saveMappings(mappings)
@@ -97,25 +97,29 @@ final class CalendarSyncEngine {
         guard let file else { throw syncError("Couldn't open calendar.org.") }
         var mappings = loadMappings()
         let orgEvents = CalendarSyncRules.events(inWindowFrom: repo.document(of: file))
-        let list = try orgSyncCalendar()
+        let managedCalendar = try orgSyncCalendar()
         var seenOrgIDs = Set<String>()
 
         for event in orgEvents {
             guard let orgID = event.persistentID else { continue }
             seenOrgIDs.insert(orgID)
-            let ekEvent = mappings[orgID].flatMap { store.event(withIdentifier: $0) }
-                ?? EKEvent(eventStore: store)
-            ekEvent.calendar = list
+            let existing = mappings[orgID].flatMap { store.event(withIdentifier: $0) }
+            let ekEvent = existing ?? EKEvent(eventStore: store)
+            if existing == nil {
+                ekEvent.calendar = managedCalendar
+            }
             ekEvent.title = event.title
             ekEvent.startDate = event.start
             ekEvent.isAllDay = event.isAllDay
             ekEvent.endDate = endDate(for: event)
             try store.save(ekEvent, span: .thisEvent, commit: false)
-            mappings[orgID] = ekEvent.eventIdentifier
+            if let eventID = ekEvent.eventIdentifier {
+                mappings[orgID] = eventID
+            }
         }
 
-        for (orgID, eventID) in mappings where !seenOrgIDs.contains(orgID) {
-            if let ekEvent = store.event(withIdentifier: eventID) {
+        for orgID in CalendarSyncRules.staleMappedOrgIDs(seenOrgIDs: seenOrgIDs, mappings: mappings) {
+            if let eventID = mappings[orgID], let ekEvent = store.event(withIdentifier: eventID) {
                 try store.remove(ekEvent, span: .thisEvent, commit: false)
             }
             mappings.removeValue(forKey: orgID)
@@ -160,8 +164,8 @@ final class CalendarSyncEngine {
         }
         let list = EKCalendar(for: .event, eventStore: store)
         list.title = CalendarSyncRules.managedCalendarTitle
-        guard let source = store.defaultCalendarForNewEvents?.source ?? store.sources.first else {
-            throw syncError("No Calendar account is available.")
+        guard let source = EventKitWritableSource.eventSource(from: store) else {
+            throw syncError("No writable Calendar account is available.")
         }
         list.source = source
         try store.saveCalendar(list, commit: true)

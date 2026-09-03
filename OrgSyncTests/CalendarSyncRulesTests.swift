@@ -94,6 +94,31 @@ import Testing
         #expect(CalendarSyncRules.windowDays == 30)
     }
 
+    @Test func exportUpsertPlansKeepExistingEventsOnTheirCalendar() {
+        let events = [
+            CalendarSyncRules.Event(persistentID: "ORG-1", title: "Existing", start: date(2026, 7, 22), isAllDay: true),
+            CalendarSyncRules.Event(persistentID: "ORG-2", title: "New", start: date(2026, 7, 23), isAllDay: true),
+        ]
+        let mappings = ["ORG-1": "EVT-1", "ORG-2": "EVT-MISSING"]
+        let plans = CalendarSyncRules.exportUpsertPlans(
+            orgEvents: events,
+            mappings: mappings,
+            existingMappedEventIDs: ["EVT-1"]
+        )
+        #expect(plans == [
+            .init(orgID: "ORG-1", usesManagedCalendar: false),
+            .init(orgID: "ORG-2", usesManagedCalendar: true),
+        ])
+    }
+
+    @Test func staleMappedOrgIDsOnlyIncludeMissingLiveEntries() {
+        let stale = CalendarSyncRules.staleMappedOrgIDs(
+            seenOrgIDs: ["KEEP"],
+            mappings: ["KEEP": "EVT-1", "GONE": "EVT-2"]
+        )
+        #expect(stale == ["GONE"])
+    }
+
     @Test func windowSpansThirtyDaysFromMidnight() {
         let now = date(2026, 7, 20, 15, 45)
         let window = CalendarSyncRules.window(now: now)

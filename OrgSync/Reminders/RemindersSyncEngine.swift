@@ -66,10 +66,7 @@ final class RemindersSyncEngine {
             }
 
             if phases.contains(.exportToReminders) {
-                try await exportToReminders(
-                    list: list, mappings: &mappings, repo: repo,
-                    pruneUnmappedReminders: settings.remindersMasterSource == .orgFiles
-                )
+                try exportToReminders(list: list, mappings: &mappings, repo: repo)
             }
 
             try store.commit()
@@ -145,9 +142,8 @@ final class RemindersSyncEngine {
     private func exportToReminders(
         list: EKCalendar,
         mappings: inout [String: String],
-        repo: RepoStore,
-        pruneUnmappedReminders: Bool
-    ) async throws {
+        repo: RepoStore
+    ) throws {
         let items = repo.allTodoItems().filter { $0.outline.filePath != CalendarSyncRules.fileName }
         var liveKeys = Set<String>()
         for item in items where item.scheduled != nil || item.deadline != nil || mappings[key(item)] != nil {
@@ -166,20 +162,13 @@ final class RemindersSyncEngine {
             mappings[mapKey] = reminder.calendarItemIdentifier
         }
 
-        for mapKey in mappings.keys where !liveKeys.contains(mapKey) {
+        let staleKeys = ReminderSyncRules.staleMappingKeys(liveKeys: liveKeys, mappings: mappings)
+        for mapKey in staleKeys {
             if let reminderID = mappings[mapKey],
                let reminder = store.calendarItem(withIdentifier: reminderID) as? EKReminder {
                 try store.remove(reminder, commit: false)
             }
             mappings.removeValue(forKey: mapKey)
-        }
-
-        if pruneUnmappedReminders {
-            let mappedIDs = Set(mappings.values)
-            let predicate = store.predicateForReminders(in: [list])
-            for reminder in await fetchReminders(predicate) where !mappedIDs.contains(reminder.calendarItemIdentifier) {
-                try store.remove(reminder, commit: false)
-            }
         }
     }
 
@@ -191,7 +180,9 @@ final class RemindersSyncEngine {
         }
         let list = EKCalendar(for: .reminder, eventStore: store)
         list.title = "OrgSync"
-        guard let source = store.defaultCalendarForNewReminders()?.source ?? store.sources.first else { throw NSError(domain: "OrgSync", code: 1, userInfo: [NSLocalizedDescriptionKey: "No Reminders account is available."]) }
+        guard let source = EventKitWritableSource.reminderSource(from: store) else {
+            throw NSError(domain: "OrgSync", code: 1, userInfo: [NSLocalizedDescriptionKey: "No writable Reminders account is available."])
+        }
         list.source = source
         try store.saveCalendar(list, commit: true)
         settings.remindersListID = list.calendarIdentifier
