@@ -146,22 +146,29 @@ otherwise changes the remote repository.
 
 * Archives and build numbers
 
-=Scripts/increment_build_number.sh= increments every =CURRENT_PROJECT_VERSION=
-in the Xcode project together. Builds, runs, and tests do not change the build
-number. Xcode Cloud assigns TestFlight build numbers on =main= independently of
-the project file; local archives continue to increment the project version
-normally.
+The shared =OrgSync= scheme runs =Scripts/increment_build_number.sh= as an
+Archive pre-action. Every archive increments all =CURRENT_PROJECT_VERSION=
+values in the Xcode project together. Builds, runs, and tests do not change the
+build number. When =CI_BUILD_NUMBER= is set, the increment script and local
+=just publish= / =mise run publish= use that value so a unique build number can
+be supplied without relying on the checked-in project version. Local archives
+without =CI_BUILD_NUMBER= continue to increment the project version normally.
+Xcode Cloud assigns TestFlight build numbers on =main= independently of the
+project file.
 
 * TestFlight deployment
 
 Pushes to =main= archive and distribute to TestFlight through *Xcode Cloud*,
 not GitHub Actions. GitHub Actions only runs unit tests on pull requests.
 
-The workflow lives in App Store Connect (Xcode → Product → Xcode Cloud, or App
-Store Connect → Xcode Cloud), not as YAML in this repository. Set
+The Xcode Cloud workflow lives in App Store Connect (Xcode → Product → Xcode
+Cloud, or App Store Connect → Xcode Cloud), not as YAML in this repository. Set
 =REVENUECAT_API_KEY_LIVE= as a secret environment variable on that workflow so
 =ci_scripts/ci_post_clone.sh= can stamp the live RevenueCat key into Release
 archives.
+
+Locally, =just publish= or =mise run publish= runs
+=Scripts/publish_testflight.sh= to archive and upload to TestFlight with =asc=.
 
 * Privacy and Terms
 
