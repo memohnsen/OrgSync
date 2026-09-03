@@ -86,6 +86,46 @@
           }
         }
       }
+    },
+    "NSFaceIDUsageDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync verwendet Face ID, um die App zu entsperren, wenn du die Sperre in den Einstellungen aktivierst."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync usa Face ID para desbloquear la app cuando activas el bloqueo en Ajustes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OrgSync utilise Face ID pour déverrouiller l’app lorsque vous activez le verrouillage dans Réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定でロックを有効にすると、OrgSyncはFace IDを使ってアプリのロックを解除します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O OrgSync usa o Face ID para desbloquear o app quando você ativa o bloqueio em Ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在设置中启用锁定后，OrgSync会使用面容ID解锁应用。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

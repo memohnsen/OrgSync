@@ -35,6 +35,7 @@ final class SettingsStore {
         static let todoNotifications = "settings.notifications.enabled"
         static let allDayNotificationMinutes = "settings.notifications.allDayMinutes"
         static let timedNotificationOffsets = "settings.notifications.timedOffsets"
+        static let requireAppLock = "settings.security.requireAppLock"
     }
 
     private let defaults: UserDefaults
@@ -134,6 +135,10 @@ final class SettingsStore {
         didSet { defaults.set(timedNotificationOffsets, forKey: Key.timedNotificationOffsets) }
     }
 
+    var requireAppLock: Bool {
+        didSet { defaults.set(requireAppLock, forKey: Key.requireAppLock) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         repoURL = defaults.string(forKey: Key.repoURL) ?? ""
@@ -165,6 +170,7 @@ final class SettingsStore {
         let storedAllDay = defaults.object(forKey: Key.allDayNotificationMinutes) as? Int ?? 9 * 60
         allDayNotificationMinutes = storedAllDay >= 0 ? storedAllDay : nil
         timedNotificationOffsets = defaults.object(forKey: Key.timedNotificationOffsets) as? [Int] ?? [0]
+        requireAppLock = defaults.bool(forKey: Key.requireAppLock)
         token = KeychainHelper.get(account: Self.tokenAccount) ?? ""
     }
 }
