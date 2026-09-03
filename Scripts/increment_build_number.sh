@@ -1,7 +1,4 @@
 #!/bin/zsh
-# Increment every CURRENT_PROJECT_VERSION in the Xcode project. The publish
-# script invokes this when CI_BUILD_NUMBER is set so a fresh CI checkout can
-# upload a unique build number.
 
 set -euo pipefail
 
@@ -20,20 +17,7 @@ if (( ${#current_versions[@]} == 0 )); then
 fi
 
 current="${current_versions[-1]}"
-
-if [[ -n "${CI_BUILD_NUMBER:-}" ]]; then
-    if [[ ! "$CI_BUILD_NUMBER" =~ '^[1-9][0-9]*$' ]]; then
-        print -u2 "CI_BUILD_NUMBER must be a positive integer; got: $CI_BUILD_NUMBER"
-        exit 1
-    fi
-    if (( CI_BUILD_NUMBER <= current )); then
-        print -u2 "CI_BUILD_NUMBER ($CI_BUILD_NUMBER) must be greater than the current build number ($current)"
-        exit 1
-    fi
-    next="$CI_BUILD_NUMBER"
-else
-    next=$((current + 1))
-fi
+next=$((current + 1))
 
 NEXT_BUILD_NUMBER="$next" /usr/bin/perl -pi -e \
     's/(CURRENT_PROJECT_VERSION = )\d+;/$1 . $ENV{NEXT_BUILD_NUMBER} . q{;}/ge' \
