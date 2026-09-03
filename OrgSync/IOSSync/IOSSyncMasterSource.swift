@@ -14,17 +14,8 @@ enum IOSSyncMasterSource: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var calendarPickerLabel: String {
-        switch self {
-        case .iosApps: String(localized: "iOS Calendar")
-        case .orgFiles: String(localized: "calendar.org")
-        }
-    }
-
-    var remindersPickerLabel: String {
-        switch self {
-        case .iosApps: String(localized: "iOS Reminders")
-        case .orgFiles: String(localized: "Org files")
-        }
+    var isIOSAppsMaster: Bool {
+        get { self == .iosApps }
+        set { self = newValue ? .iosApps : .orgFiles }
     }
 }

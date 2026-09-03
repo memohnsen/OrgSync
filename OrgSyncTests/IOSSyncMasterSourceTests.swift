@@ -31,6 +31,15 @@ import Testing
         #expect(restored.calendarMasterSource == .orgFiles)
         #expect(restored.remindersMasterSource == .orgFiles)
     }
+
+    @Test func switchBindingMapsOnToIOSAppsAndOffToOrgFiles() {
+        var source = IOSSyncMasterSource.iosApps
+        #expect(source.isIOSAppsMaster)
+        source.isIOSAppsMaster = false
+        #expect(source == .orgFiles)
+        source.isIOSAppsMaster = true
+        #expect(source == .iosApps)
+    }
 }
 
 @Suite struct IOSSyncDirectionPlanningTests {

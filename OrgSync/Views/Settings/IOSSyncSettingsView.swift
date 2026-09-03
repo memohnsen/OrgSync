@@ -3,7 +3,7 @@
 //  OrgSync
 //
 //  Dedicated "iOS Sync" page, pushed from Settings: Reminders and Calendar sync
-//  with independent master-source pickers, access prompts, manual sync buttons,
+//  with independent master-source switches, access prompts, manual sync buttons,
 //  and error sections.
 //
 
@@ -56,13 +56,9 @@ struct IOSSyncSettingsView: View {
                     .accessibilityIdentifier("settings.remindersSync")
                     .accessibilityHint("Synchronizes scheduled and deadline TODOs with the selected Reminders list.")
                 if reminders.access == .granted {
-                    Picker("Reminders source", selection: $settings.remindersMasterSource) {
-                        ForEach(IOSSyncMasterSource.allCases) { source in
-                            Text(source.remindersPickerLabel).tag(source)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .accessibilityIdentifier("settings.remindersMasterSource")
+                    Toggle("iOS Reminders is master", isOn: $settings.remindersMasterSource.isIOSAppsMaster)
+                        .accessibilityIdentifier("settings.remindersMasterSource")
+                        .accessibilityHint("When on, iOS Reminders is the source of truth. When off, org files are.")
                     Picker("Reminders List", selection: $settings.remindersListID) {
                         Text("OrgSync (managed)").tag("")
                         ForEach(reminders.lists, id: \.calendarIdentifier) { list in
@@ -100,13 +96,9 @@ struct IOSSyncSettingsView: View {
                     .accessibilityIdentifier("settings.calendarSync")
                     .accessibilityHint("Synchronizes calendar events with calendar.org.")
                 if calendar.access == .granted {
-                    Picker("Calendar source", selection: $settings.calendarMasterSource) {
-                        ForEach(IOSSyncMasterSource.allCases) { source in
-                            Text(source.calendarPickerLabel).tag(source)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .accessibilityIdentifier("settings.calendarMasterSource")
+                    Toggle("iOS Calendar is master", isOn: $settings.calendarMasterSource.isIOSAppsMaster)
+                        .accessibilityIdentifier("settings.calendarMasterSource")
+                        .accessibilityHint("When on, iOS Calendar is the source of truth. When off, calendar.org is.")
                     Toggle("Show in Agenda & Widgets", isOn: $settings.calendarShowInAgenda)
                         .disabled(!settings.calendarSync)
                         .accessibilityIdentifier("settings.calendarShowInAgenda")
@@ -145,24 +137,14 @@ struct IOSSyncSettingsView: View {
         guard reminders.access == .granted else {
             return String(localized: "Allow access to sync scheduled and deadline TODOs with a dedicated OrgSync list.")
         }
-        switch settings.remindersMasterSource {
-        case .iosApps:
-            return String(localized: "When iOS Reminders is the source, Reminders changes import into your org files first, then org TODOs mirror back to the selected list.")
-        case .orgFiles:
-            return String(localized: "When Org files is the source, scheduled and deadline TODOs in your org files update the selected Reminders list. Reminders-side edits are not imported.")
-        }
+        return String(localized: "When this is off, scheduled and deadline TODOs in your org files update the selected Reminders list.")
     }
 
     private var calendarFooter: String {
         guard calendar.access == .granted else {
             return String(localized: "Allow access to sync calendar events with calendar.org.")
         }
-        switch settings.calendarMasterSource {
-        case .iosApps:
-            return String(localized: "When iOS Calendar is the source, the next 30 days of events are mirrored into calendar.org on every sync. Edits to calendar.org are overwritten.")
-        case .orgFiles:
-            return String(localized: "When calendar.org is the source, events in that file within the next 30 days update the OrgSync calendar. Calendar-side edits are not imported.")
-        }
+        return String(localized: "When this is off, events in calendar.org update the OrgSync calendar.")
     }
 
     private func syncRemindersNow() async {

@@ -11955,209 +11955,6 @@
     "•": {
       "shouldTranslate": false
     },
-    "Reminders source": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erinnerungsquelle"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fuente de recordatorios"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Source des rappels"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "リマインダーのソース"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fonte dos lembretes"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提醒事项来源"
-          }
-        }
-      }
-    },
-    "Calendar source": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kalenderquelle"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fuente del calendario"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Source du calendrier"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "カレンダーのソース"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fonte do calendário"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日历来源"
-          }
-        }
-      }
-    },
-    "iOS Calendar": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS-Kalender"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calendario de iOS"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calendrier iOS"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOSカレンダー"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calendário do iOS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS日历"
-          }
-        }
-      }
-    },
-    "calendar.org": {
-      "shouldTranslate": false
-    },
-    "iOS Reminders": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS-Erinnerungen"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recordatorios de iOS"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rappels iOS"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOSリマインダー"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lembretes do iOS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS提醒事项"
-          }
-        }
-      }
-    },
-    "Org files": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Org-Dateien"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Archivos org"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fichiers org"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Orgファイル"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arquivos org"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Org文件"
-          }
-        }
-      }
-    },
     "Allow access to sync calendar events with calendar.org.": {
       "localizations": {
         "de": {
@@ -12238,162 +12035,242 @@
         }
       }
     },
-    "When iOS Reminders is the source, Reminders changes import into your org files first, then org TODOs mirror back to the selected list.": {
+    "iOS Reminders is master": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn iOS-Erinnerungen die Quelle ist, werden Änderungen zuerst in deine Org-Dateien importiert, danach spiegeln Org-TODOs zurück in die ausgewählte Liste."
+            "value": "iOS-Erinnerungen sind führend"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cuando Recordatorios de iOS es la fuente, los cambios se importan primero a tus archivos org y luego los TODO org se reflejan en la lista seleccionada."
+            "value": "Recordatorios de iOS es el origen principal"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand Rappels iOS est la source, les changements sont d'abord importés dans vos fichiers org, puis les TODO org sont reflétés dans la liste sélectionnée."
+            "value": "Rappels iOS est la source principale"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iOSリマインダーがソースの場合、リマインダーの変更はまずOrgファイルに取り込まれ、その後OrgのTODOが選択したリストに反映されます。"
+            "value": "iOSリマインダーをマスターにする"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quando Lembretes do iOS é a fonte, as alterações são importadas primeiro para seus arquivos org e depois os TODOs org são espelhados na lista selecionada."
+            "value": "Lembretes do iOS é a origem principal"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当 iOS 提醒事项为来源时，提醒事项的更改会先导入到你的 org 文件，然后 org TODO 会同步回所选列表。"
+            "value": "以 iOS 提醒事项为主"
           }
         }
       }
     },
-    "When Org files is the source, scheduled and deadline TODOs in your org files update the selected Reminders list. Reminders-side edits are not imported.": {
+    "iOS Calendar is master": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn Org-Dateien die Quelle sind, aktualisieren geplante und fällige TODOs in deinen Org-Dateien die ausgewählte Erinnerungsliste. Änderungen in Erinnerungen werden nicht importiert."
+            "value": "iOS-Kalender ist führend"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cuando los archivos org son la fuente, los TODO programados y con fecha límite en tus archivos org actualizan la lista de recordatorios seleccionada. Las ediciones en Recordatorios no se importan."
+            "value": "Calendario de iOS es el origen principal"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand les fichiers org sont la source, les TODO planifiés et à échéance dans vos fichiers org mettent à jour la liste de rappels sélectionnée. Les modifications côté Rappels ne sont pas importées."
+            "value": "Calendrier iOS est la source principale"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Orgファイルがソースの場合、Orgファイル内の予定・締め切りTODOが選択したリマインダーリストを更新します。リマインダー側の編集は取り込まれません。"
+            "value": "iOSカレンダーをマスターにする"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quando os arquivos org são a fonte, TODOs agendados e com prazo nos seus arquivos org atualizam a lista de lembretes selecionada. Edições no app Lembretes não são importadas."
+            "value": "Calendário do iOS é a origem principal"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当 Org 文件为来源时，org 文件中的计划和截止 TODO 会更新所选提醒事项列表。提醒事项侧的编辑不会被导入。"
+            "value": "以 iOS 日历为主"
           }
         }
       }
     },
-    "When iOS Calendar is the source, the next 30 days of events are mirrored into calendar.org on every sync. Edits to calendar.org are overwritten.": {
+    "When this is off, scheduled and deadline TODOs in your org files update the selected Reminders list.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn iOS-Kalender die Quelle ist, werden die Ereignisse der nächsten 30 Tage bei jeder Synchronisierung in calendar.org gespiegelt. Änderungen an calendar.org werden überschrieben."
+            "value": "Wenn dies aus ist, aktualisieren geplante und fällige TODOs in deinen Org-Dateien die ausgewählte Erinnerungsliste."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cuando Calendario de iOS es la fuente, los eventos de los próximos 30 días se reflejan en calendar.org en cada sincronización. Las ediciones en calendar.org se sobrescriben."
+            "value": "Si está desactivado, los TODO programados y con fecha límite de tus archivos org actualizan la lista de recordatorios seleccionada."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand Calendrier iOS est la source, les événements des 30 prochains jours sont reflétés dans calendar.org à chaque synchronisation. Les modifications de calendar.org sont écrasées."
+            "value": "Si cette option est désactivée, les TODO planifiés et à échéance de vos fichiers org mettent à jour la liste de rappels sélectionnée."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iOSカレンダーがソースの場合、今後30日分のイベントが同期のたびにcalendar.orgに反映されます。calendar.orgの編集は上書きされます。"
+            "value": "オフの場合、Orgファイル内の予定・締め切りTODOが選択したリマインダーリストを更新します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quando Calendário do iOS é a fonte, os eventos dos próximos 30 dias são espelhados em calendar.org a cada sincronização. Edições em calendar.org são sobrescritas."
+            "value": "Quando desativado, TODOs agendados e com prazo nos seus arquivos org atualizam a lista de lembretes selecionada."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当 iOS 日历为来源时，未来 30 天的事件会在每次同步时镜像到 calendar.org。对 calendar.org 的编辑会被覆盖。"
+            "value": "关闭时，org 文件中的计划和截止 TODO 会更新所选提醒事项列表。"
           }
         }
       }
     },
-    "When calendar.org is the source, events in that file within the next 30 days update the OrgSync calendar. Calendar-side edits are not imported.": {
+    "When this is off, events in calendar.org update the OrgSync calendar.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn calendar.org die Quelle ist, aktualisieren Ereignisse in dieser Datei innerhalb der nächsten 30 Tage den OrgSync-Kalender. Änderungen im Kalender werden nicht importiert."
+            "value": "Wenn dies aus ist, aktualisieren Ereignisse in calendar.org den OrgSync-Kalender."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cuando calendar.org es la fuente, los eventos de ese archivo dentro de los próximos 30 días actualizan el calendario OrgSync. Las ediciones del calendario no se importan."
+            "value": "Si está desactivado, los eventos de calendar.org actualizan el calendario OrgSync."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand calendar.org est la source, les événements de ce fichier dans les 30 prochains jours mettent à jour le calendrier OrgSync. Les modifications côté Calendrier ne sont pas importées."
+            "value": "Si cette option est désactivée, les événements de calendar.org mettent à jour le calendrier OrgSync."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "calendar.orgがソースの場合、そのファイル内の今後30日分のイベントがOrgSyncカレンダーを更新します。カレンダー側の編集は取り込まれません。"
+            "value": "オフの場合、calendar.orgのイベントがOrgSyncカレンダーを更新します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quando calendar.org é a fonte, eventos nesse arquivo nos próximos 30 dias atualizam o calendário OrgSync. Edições no Calendário não são importadas."
+            "value": "Quando desativado, eventos em calendar.org atualizam o calendário OrgSync."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当 calendar.org 为来源时，该文件中未来 30 天的事件会更新 OrgSync 日历。日历侧的编辑不会被导入。"
+            "value": "关闭时，calendar.org 中的事件会更新 OrgSync 日历。"
+          }
+        }
+      }
+    },
+    "When on, iOS Reminders is the source of truth. When off, org files are.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein: iOS-Erinnerungen sind die Quelle. Aus: Org-Dateien sind die Quelle."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activado: Recordatorios de iOS es la fuente. Desactivado: los archivos org lo son."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activé : Rappels iOS est la source. Désactivé : les fichiers org le sont."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンの場合はiOSリマインダーが正、オフの場合はOrgファイルが正です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativado: Lembretes do iOS é a fonte. Desativado: os arquivos org são."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启时以 iOS 提醒事项为准；关闭时以 org 文件为准。"
+          }
+        }
+      }
+    },
+    "When on, iOS Calendar is the source of truth. When off, calendar.org is.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein: iOS-Kalender ist die Quelle. Aus: calendar.org ist die Quelle."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activado: Calendario de iOS es la fuente. Desactivado: calendar.org lo es."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activé : Calendrier iOS est la source. Désactivé : calendar.org l'est."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンの場合はiOSカレンダーが正、オフの場合はcalendar.orgが正です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativado: Calendário do iOS é a fonte. Desativado: calendar.org é."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启时以 iOS 日历为准；关闭时以 calendar.org 为准。"
           }
         }
       }
