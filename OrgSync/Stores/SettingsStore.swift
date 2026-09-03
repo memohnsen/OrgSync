@@ -23,7 +23,9 @@ final class SettingsStore {
         static let pullOnOpen = "settings.sync.pullOnOpen"
         static let remindersSync = "settings.reminders.sync"
         static let remindersListID = "settings.reminders.listID"
+        static let remindersMasterSource = "settings.reminders.masterSource"
         static let calendarSync = "settings.calendar.sync"
+        static let calendarMasterSource = "settings.calendar.masterSource"
         static let calendarShowInAgenda = "settings.calendar.showInAgenda"
         static let archiveCompletedInboxTasks = "settings.inbox.archiveCompletedTasks"
         static let agendaDays = "settings.agenda.days"
@@ -72,11 +74,23 @@ final class SettingsStore {
         didSet { defaults.set(remindersListID, forKey: Key.remindersListID) }
     }
 
+    /// Which side wins when Reminders sync runs. Default `.iosApps` keeps
+    /// today's two-way flow (Reminders changes import first, then org mirrors out).
+    var remindersMasterSource: IOSSyncMasterSource {
+        didSet { defaults.set(remindersMasterSource.rawValue, forKey: Key.remindersMasterSource) }
+    }
+
     // MARK: - Calendar
 
-    /// Mirrors upcoming calendar events into the read-only calendar.org file.
+    /// Syncs calendar events with calendar.org; direction follows calendarMasterSource.
     var calendarSync: Bool {
         didSet { defaults.set(calendarSync, forKey: Key.calendarSync) }
+    }
+
+    /// Which side wins when Calendar sync runs. Default `.iosApps` keeps
+    /// today's one-way mirror into calendar.org.
+    var calendarMasterSource: IOSSyncMasterSource {
+        didSet { defaults.set(calendarMasterSource.rawValue, forKey: Key.calendarMasterSource) }
     }
 
     /// Whether mirrored calendar events appear in the Agenda tab and widgets.
@@ -127,7 +141,13 @@ final class SettingsStore {
         pullOnOpen = defaults.bool(forKey: Key.pullOnOpen)
         remindersSync = defaults.bool(forKey: Key.remindersSync)
         remindersListID = defaults.string(forKey: Key.remindersListID) ?? ""
+        remindersMasterSource = IOSSyncMasterSource(
+            rawValue: defaults.string(forKey: Key.remindersMasterSource) ?? ""
+        ) ?? .iosApps
         calendarSync = defaults.bool(forKey: Key.calendarSync)
+        calendarMasterSource = IOSSyncMasterSource(
+            rawValue: defaults.string(forKey: Key.calendarMasterSource) ?? ""
+        ) ?? .iosApps
         calendarShowInAgenda = defaults.object(forKey: Key.calendarShowInAgenda) as? Bool ?? true
         archiveCompletedInboxTasks = defaults.bool(forKey: Key.archiveCompletedInboxTasks)
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)

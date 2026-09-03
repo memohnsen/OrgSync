@@ -45,6 +45,80 @@ import Testing
         #expect(CalendarSyncRules.render(events: events) == CalendarSyncRules.render(events: events.reversed()))
     }
 
+    @Test func renderIncludesPersistentIDPropertyDrawer() {
+        let text = CalendarSyncRules.render(events: [
+            .init(persistentID: "ABC-123", title: "Meet", start: date(2026, 7, 22, 10, 0), isAllDay: false),
+        ])
+        #expect(text.contains(":ID: ABC-123"))
+        #expect(text.contains("* TODO Meet\n:PROPERTIES:"))
+    }
+
+    @Test func eventsFromDocumentParsesScheduledTodosWithIDs() {
+        let document = OrgParser.parse("""
+        * TODO Standup
+        :PROPERTIES:
+        :ID: STANDUP-ID
+        :END:
+        SCHEDULED: <2026-07-22 Wed 09:00>
+        """)
+        let events = CalendarSyncRules.events(from: document)
+        #expect(events.count == 1)
+        #expect(events[0].persistentID == "STANDUP-ID")
+        #expect(events[0].title == "Standup")
+        #expect(events[0].isAllDay == false)
+    }
+
+    @Test func eventsInWindowFiltersOutsideWindow() {
+        let now = date(2026, 7, 20, 12, 0)
+        let document = OrgParser.parse("""
+        * TODO Inside
+        SCHEDULED: <2026-07-21 Tue>
+        * TODO Outside
+        SCHEDULED: <2026-09-01 Mon>
+        """)
+        let events = CalendarSyncRules.events(inWindowFrom: document, now: now)
+        #expect(events.map(\.title) == ["Inside"])
+    }
+
+    @Test func orgMasterRenderUsesManagedHeader() {
+        let text = CalendarSyncRules.render(events: [], orgIsMaster: true)
+        #expect(text.contains("Managed by OrgSync"))
+        #expect(!text.contains("Read-only mirror"))
+    }
+
+    @Test func mappingKeyUsesPersistentIDPrefix() {
+        #expect(CalendarSyncRules.mappingKey(persistentID: "ABC") == "id|ABC")
+    }
+
+    @Test func footerWindowMatchesSyncWindowConstant() {
+        #expect(CalendarSyncRules.windowDays == 30)
+    }
+
+    @Test func exportUpsertPlansKeepExistingEventsOnTheirCalendar() {
+        let events = [
+            CalendarSyncRules.Event(persistentID: "ORG-1", title: "Existing", start: date(2026, 7, 22), isAllDay: true),
+            CalendarSyncRules.Event(persistentID: "ORG-2", title: "New", start: date(2026, 7, 23), isAllDay: true),
+        ]
+        let mappings = ["ORG-1": "EVT-1", "ORG-2": "EVT-MISSING"]
+        let plans = CalendarSyncRules.exportUpsertPlans(
+            orgEvents: events,
+            mappings: mappings,
+            existingMappedEventIDs: ["EVT-1"]
+        )
+        #expect(plans == [
+            .init(orgID: "ORG-1", usesManagedCalendar: false),
+            .init(orgID: "ORG-2", usesManagedCalendar: true),
+        ])
+    }
+
+    @Test func staleMappedOrgIDsOnlyIncludeMissingLiveEntries() {
+        let stale = CalendarSyncRules.staleMappedOrgIDs(
+            seenOrgIDs: ["KEEP"],
+            mappings: ["KEEP": "EVT-1", "GONE": "EVT-2"]
+        )
+        #expect(stale == ["GONE"])
+    }
+
     @Test func windowSpansThirtyDaysFromMidnight() {
         let now = date(2026, 7, 20, 15, 45)
         let window = CalendarSyncRules.window(now: now)
