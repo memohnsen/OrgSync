@@ -210,7 +210,7 @@ struct FolderView: View {
         .disabled(sync.phase.isBusy)
         .accessibilityValue(sync.lastError != nil ? "Last sync failed" : "")
         .accessibilityLabel("Git commands")
-        .accessibilityHint("Open Pull, Stage, Commit, Push, and Sync commands.")
+        .accessibilityHint("Open Pull, Stage & Commit, Push, and other Git commands.")
         .accessibilityIdentifier("notes.gitCommands")
     }
 

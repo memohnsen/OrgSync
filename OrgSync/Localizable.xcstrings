@@ -2783,46 +2783,6 @@
         }
       }
     },
-    "Creates a local pending Git commit without publishing it.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erstellt einen lokalen ausstehenden Git-Commit, ohne ihn zu veröffentlichen."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crea un commit de Git local pendiente sin publicarlo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crée un commit Git local en attente sans le publier."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "公開せずにローカルの保留中Gitコミットを作成します。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cria um commit Git local pendente sem publicá-lo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建本地待处理的Git提交而不发布。"
-          }
-        }
-      }
-    },
     "Custom Lead Time": {
       "localizations": {
         "de": {
@@ -6666,42 +6626,42 @@
         }
       }
     },
-    "Open Pull, Stage, Commit, Push, and Sync commands.": {
+    "Open Pull, Stage & Commit, Push, and other Git commands.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Öffnet die Befehle Pull, Stage, Commit, Push und Sync."
+            "value": "Öffnet Pull, Stage & Commit, Push und weitere Git-Befehle."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abre los comandos Pull, Stage, Commit, Push y Sync."
+            "value": "Abre Pull, Stage & Commit, Push y otros comandos de Git."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvre les commandes Pull, Stage, Commit, Push et Sync."
+            "value": "Ouvre Pull, Stage & Commit, Push et d’autres commandes Git."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プル、ステージ、コミット、プッシュ、同期のコマンドを開きます。"
+            "value": "プル、ステージしてコミット、プッシュなどのGitコマンドを開きます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abre os comandos Pull, Stage, Commit, Push e Sync."
+            "value": "Abre Pull, Stage & Commit, Push e outros comandos Git."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "打开拉取、暂存、提交、推送和同步命令。"
+            "value": "打开拉取、暂存并提交、推送和其他Git命令。"
           }
         }
       }
@@ -8549,46 +8509,6 @@
         }
       }
     },
-    "Selects every current local change for the next commit.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wählt alle aktuellen lokalen Änderungen für den nächsten Commit aus."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selecciona todos los cambios locales actuales para el próximo commit."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionne toutes les modifications locales actuelles pour le prochain commit."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現在のすべてのローカル変更を次のコミットの対象にします。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleciona todas as alterações locais atuais para o próximo commit."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择当前所有本地更改用于下一次提交。"
-          }
-        }
-      }
-    },
     "Sends local notifications for scheduled and deadline TODOs.": {
       "localizations": {
         "de": {
@@ -9269,6 +9189,46 @@
         }
       }
     },
+    "Stage & Commit Changes": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen bereitstellen und committen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparar y hacer commit de los cambios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indexer et commiter les modifications"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更をステージしてコミット"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparar e fazer commit das alterações"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂存并提交更改"
+          }
+        }
+      }
+    },
     "Staged": {
       "localizations": {
         "de": {
@@ -9305,6 +9265,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "已暂存"
+          }
+        }
+      }
+    },
+    "Stages every local change and creates a local pending Git commit without publishing it.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stellt alle lokalen Änderungen bereit und erstellt einen lokalen ausstehenden Git-Commit, ohne ihn zu veröffentlichen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepara todos los cambios locales y crea un commit de Git local pendiente sin publicarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indexe toutes les modifications locales et crée un commit Git local en attente sans le publier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのローカル変更をステージし、公開せずにローカルの保留中Gitコミットを作成します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepara todas as alterações locais e cria um commit Git local pendente sem publicá-lo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂存所有本地更改并创建本地待处理的Git提交而不发布。"
           }
         }
       }
