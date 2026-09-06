@@ -27,6 +27,7 @@ final class SettingsStore {
         static let calendarSync = "settings.calendar.sync"
         static let calendarMasterSource = "settings.calendar.masterSource"
         static let calendarShowInAgenda = "settings.calendar.showInAgenda"
+        static let calendarSourceIDs = "settings.calendar.sourceIDs"
         static let archiveCompletedInboxTasks = "settings.inbox.archiveCompletedTasks"
         static let agendaDays = "settings.agenda.days"
         static let appearance = "settings.appearance"
@@ -99,6 +100,13 @@ final class SettingsStore {
         didSet { defaults.set(calendarShowInAgenda, forKey: Key.calendarShowInAgenda) }
     }
 
+    /// EventKit calendar identifiers imported into `calendar.org`.
+    /// Empty means all calendars, including ones added later. Existing
+    /// installs have no stored value, so they keep today's all-calendar import.
+    var calendarSourceIDs: [String] {
+        didSet { defaults.set(calendarSourceIDs, forKey: Key.calendarSourceIDs) }
+    }
+
     /// UserDefaults key for `calendarShowInAgenda`, read directly by
     /// AgendaSnapshotWriter (widget payload generation happens outside the
     /// store graph, mirroring how RepoStore reads the TODO keywords).
@@ -154,6 +162,7 @@ final class SettingsStore {
             rawValue: defaults.string(forKey: Key.calendarMasterSource) ?? ""
         ) ?? .iosApps
         calendarShowInAgenda = defaults.object(forKey: Key.calendarShowInAgenda) as? Bool ?? true
+        calendarSourceIDs = defaults.stringArray(forKey: Key.calendarSourceIDs) ?? []
         archiveCompletedInboxTasks = defaults.bool(forKey: Key.archiveCompletedInboxTasks)
         agendaDays = max(1, defaults.object(forKey: Key.agendaDays) as? Int ?? 7)
         appearance = defaults.string(forKey: Key.appearance) ?? "system"

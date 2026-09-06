@@ -125,6 +125,45 @@ import Testing
         #expect(window.start == Calendar.current.startOfDay(for: now))
         #expect(window.end == date(2026, 8, 19))
     }
+
+    @Test func emptySelectionImportsEveryAvailableCalendar() {
+        #expect(CalendarSyncRules.importsAllCalendars(selectedIDs: []))
+        #expect(CalendarSyncRules.isCalendarSelected(id: "home", selectedIDs: []))
+        #expect(CalendarSyncRules.importCalendarIDs(selectedIDs: [], availableIDs: ["home", "work"]) == nil)
+    }
+
+    @Test func explicitSelectionFiltersImportToMatchingIDs() {
+        let selected = ["work", "gone"]
+        let available = ["home", "work", "birthdays"]
+        #expect(CalendarSyncRules.importsAllCalendars(selectedIDs: selected) == false)
+        #expect(CalendarSyncRules.isCalendarSelected(id: "work", selectedIDs: selected))
+        #expect(CalendarSyncRules.isCalendarSelected(id: "home", selectedIDs: selected) == false)
+        #expect(CalendarSyncRules.importCalendarIDs(selectedIDs: selected, availableIDs: available) == ["work"])
+        #expect(CalendarSyncRules.importCalendarIDs(selectedIDs: ["work"], availableIDs: []) == [])
+    }
+
+    @Test func togglingCalendarsMaterializesThenCollapsesToAll() {
+        let available = ["home", "work", "birthdays"]
+        let withoutHome = CalendarSyncRules.togglingCalendar(
+            id: "home", selectedIDs: [], availableIDs: available
+        )
+        #expect(withoutHome == ["work", "birthdays"])
+
+        let onlyWork = CalendarSyncRules.togglingCalendar(
+            id: "birthdays", selectedIDs: withoutHome, availableIDs: available
+        )
+        #expect(onlyWork == ["work"])
+
+        let allAgain = CalendarSyncRules.togglingCalendar(
+            id: "home", selectedIDs: ["work", "birthdays"], availableIDs: available
+        )
+        #expect(allAgain.isEmpty)
+
+        let clearedLast = CalendarSyncRules.togglingCalendar(
+            id: "work", selectedIDs: ["work"], availableIDs: available
+        )
+        #expect(clearedLast.isEmpty)
+    }
 }
 
 @MainActor

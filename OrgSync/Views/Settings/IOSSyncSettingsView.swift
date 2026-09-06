@@ -43,6 +43,10 @@ struct IOSSyncSettingsView: View {
         } message: {
             Text("calendar.org is up to date.")
         }
+        .onAppear {
+            reminders.refreshAccess()
+            calendar.refreshAccess()
+        }
     }
 
     @ViewBuilder
@@ -107,6 +111,19 @@ struct IOSSyncSettingsView: View {
                             repo.refresh()
                             AgendaSnapshotWriter.write(repo: repo)
                         }
+                    if calendar.calendars.isEmpty {
+                        Text("No calendars available.")
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("settings.calendarSources.empty")
+                    } else {
+                        NavigationLink {
+                            CalendarSourcePicker()
+                        } label: {
+                            LabeledContent("Calendars", value: calendarSelectionSummary)
+                        }
+                        .accessibilityIdentifier("settings.calendarSources")
+                        .accessibilityHint("Choose which iOS calendars are imported into calendar.org.")
+                    }
                     Button("Sync Calendar Now") { Task { await syncCalendarNow() } }
                         .disabled(!settings.calendarSync || calendar.isSyncing)
                         .accessibilityIdentifier("settings.syncCalendarNow")
@@ -144,7 +161,21 @@ struct IOSSyncSettingsView: View {
         guard calendar.access == .granted else {
             return String(localized: "Allow access to sync calendar events with calendar.org.")
         }
-        return String(localized: "When this is off, events in calendar.org update the OrgSync calendar.")
+        return String(localized: "Events from the selected calendars are imported into calendar.org. When this is off, events in calendar.org update the OrgSync calendar.")
+    }
+
+    private var calendarSelectionSummary: String {
+        let ids = settings.calendarSourceIDs
+        if CalendarSyncRules.importsAllCalendars(selectedIDs: ids) {
+            return String(localized: "All Calendars")
+        }
+        let titles = ids.compactMap { id in
+            calendar.calendars.first { $0.calendarIdentifier == id }?.title
+        }
+        if titles.count == 1, ids.count == 1 {
+            return titles[0]
+        }
+        return String(localized: "\(ids.count) Calendars")
     }
 
     private func syncRemindersNow() async {
@@ -155,6 +186,76 @@ struct IOSSyncSettingsView: View {
     private func syncCalendarNow() async {
         await calendar.sync(repo: repo)
         showCalendarSyncSuccess = calendar.lastError == nil
+    }
+}
+
+private struct CalendarSourcePicker: View {
+    @Environment(SettingsStore.self) private var settings
+    @Environment(CalendarSyncEngine.self) private var calendar
+
+    var body: some View {
+        @Bindable var settings = settings
+        Form {
+            Section {
+                calendarRow(
+                    title: String(localized: "All Calendars"),
+                    isSelected: CalendarSyncRules.importsAllCalendars(selectedIDs: settings.calendarSourceIDs),
+                    identifier: "settings.calendarSources.all"
+                ) {
+                    settings.calendarSourceIDs = []
+                }
+                .accessibilityHint("Imports events from every iOS calendar.")
+            }
+            Section {
+                ForEach(calendar.calendars, id: \.calendarIdentifier) { source in
+                    let isSelected = CalendarSyncRules.isCalendarSelected(
+                        id: source.calendarIdentifier,
+                        selectedIDs: settings.calendarSourceIDs
+                    )
+                    calendarRow(
+                        title: source.title,
+                        isSelected: isSelected,
+                        identifier: "settings.calendarSources.\(source.calendarIdentifier)"
+                    ) {
+                        settings.calendarSourceIDs = CalendarSyncRules.togglingCalendar(
+                            id: source.calendarIdentifier,
+                            selectedIDs: settings.calendarSourceIDs,
+                            availableIDs: calendar.calendars.map(\.calendarIdentifier)
+                        )
+                    }
+                    .accessibilityHint("Toggles whether this calendar is imported into calendar.org.")
+                }
+            } footer: {
+                Text("Choose which iOS calendars are imported into calendar.org.")
+            }
+        }
+        .navigationTitle("Calendars")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .onAppear { calendar.refreshAccess() }
+    }
+
+    private func calendarRow(
+        title: String,
+        isSelected: Bool,
+        identifier: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+        .tint(.primary)
+        .accessibilityIdentifier(identifier)
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 }
 

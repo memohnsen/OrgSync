@@ -21,6 +21,7 @@ final class CalendarSyncEngine {
     private let mappingKey = "calendar.orgIDToEventIdentifier"
 
     private(set) var access: Access = .unknown
+    private(set) var calendars: [EKCalendar] = []
     private(set) var lastError: String?
     private(set) var isSyncing = false
 
@@ -33,6 +34,13 @@ final class CalendarSyncEngine {
     func refreshAccess() {
         let status = EKEventStore.authorizationStatus(for: .event)
         access = status == .fullAccess ? .granted : status == .denied ? .denied : .unknown
+        if access == .granted {
+            calendars = store.calendars(for: .event).sorted {
+                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+        } else {
+            calendars = []
+        }
     }
 
     func clearError() { lastError = nil }
@@ -65,7 +73,11 @@ final class CalendarSyncEngine {
 
     private func importFromIOS(repo: RepoStore) throws {
         let window = CalendarSyncRules.window()
-        let predicate = store.predicateForEvents(withStart: window.start, end: window.end, calendars: nil)
+        let predicate = store.predicateForEvents(
+            withStart: window.start,
+            end: window.end,
+            calendars: calendarsForImport()
+        )
         let fetched = store.events(matching: predicate)
         var mappings = loadMappings()
         var events: [CalendarSyncRules.Event] = []
@@ -156,6 +168,18 @@ final class CalendarSyncEngine {
         var document = repo.document(of: file)
         guard document.ensurePersistentIDsForTodoHeadlines() else { return }
         _ = repo.write(document.serialize(), to: file)
+    }
+
+    private func calendarsForImport() -> [EKCalendar]? {
+        let available = store.calendars(for: .event)
+        guard let identifiers = CalendarSyncRules.importCalendarIDs(
+            selectedIDs: settings.calendarSourceIDs,
+            availableIDs: available.map(\.calendarIdentifier)
+        ) else {
+            return nil
+        }
+        let wanted = Set(identifiers)
+        return available.filter { wanted.contains($0.calendarIdentifier) }
     }
 
     private func orgSyncCalendar() throws -> EKCalendar {

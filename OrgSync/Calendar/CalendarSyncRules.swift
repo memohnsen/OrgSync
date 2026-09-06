@@ -88,6 +88,45 @@ enum CalendarSyncRules {
         }
     }
 
+    static func importsAllCalendars(selectedIDs: [String]) -> Bool {
+        selectedIDs.isEmpty
+    }
+
+    static func isCalendarSelected(id: String, selectedIDs: [String]) -> Bool {
+        selectedIDs.isEmpty || selectedIDs.contains(id)
+    }
+
+    /// `nil` means every EventKit calendar (`calendars: nil`). Otherwise only
+    /// the selected identifiers that still exist among `availableIDs`.
+    static func importCalendarIDs(
+        selectedIDs: [String],
+        availableIDs: [String]
+    ) -> [String]? {
+        guard !selectedIDs.isEmpty else { return nil }
+        let wanted = Set(selectedIDs)
+        return availableIDs.filter { wanted.contains($0) }
+    }
+
+    static func togglingCalendar(
+        id: String,
+        selectedIDs: [String],
+        availableIDs: [String]
+    ) -> [String] {
+        if selectedIDs.isEmpty {
+            return availableIDs.filter { $0 != id }
+        }
+        var next = selectedIDs
+        if let index = next.firstIndex(of: id) {
+            next.remove(at: index)
+        } else {
+            next.append(id)
+        }
+        if next.isEmpty || Set(next) == Set(availableIDs) {
+            return []
+        }
+        return next
+    }
+
     struct ExportUpsertPlan: Equatable {
         var orgID: String
         var usesManagedCalendar: Bool
