@@ -134,6 +134,46 @@
     "%@: %@": {
       "shouldTranslate": false
     },
+    "%lld Calendars": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Kalender"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld calendarios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld calendriers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld個のカレンダー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld calendários"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个日历"
+          }
+        }
+      }
+    },
     "A": {
       "shouldTranslate": false
     },
@@ -733,6 +773,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "议程视图"
+          }
+        }
+      }
+    },
+    "All Calendars": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Kalender"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos los calendarios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les calendriers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのカレンダー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos os calendários"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有日历"
           }
         }
       }
@@ -1343,6 +1423,46 @@
         }
       }
     },
+    "Calendars": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalender"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendarios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendriers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendários"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日历"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "de": {
@@ -1619,6 +1739,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择今天、即将到来、所有已计划或未计划的任务。"
+          }
+        }
+      }
+    },
+    "Choose which iOS calendars are imported into calendar.org.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle, welche iOS-Kalender in calendar.org importiert werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige qué calendarios de iOS se importan en calendar.org."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez les calendriers iOS importés dans calendar.org."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "calendar.orgに取り込むiOSカレンダーを選択します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha quais calendários do iOS são importados para calendar.org."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择要导入 calendar.org 的 iOS 日历。"
           }
         }
       }
@@ -4746,6 +4906,46 @@
         }
       }
     },
+    "Imports events from every iOS calendar.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importiert Ereignisse aus jedem iOS-Kalender."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa eventos de todos los calendarios de iOS."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importe les événements de tous les calendriers iOS."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのiOSカレンダーからイベントを取り込みます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa eventos de todos os calendários do iOS."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从所有 iOS 日历导入事件。"
+          }
+        }
+      }
+    },
     "Keep Local": {
       "localizations": {
         "de": {
@@ -5942,6 +6142,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "无需账户，无跟踪"
+          }
+        }
+      }
+    },
+    "No calendars available.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Kalender verfügbar."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay calendarios disponibles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun calendrier disponible."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "利用できるカレンダーがありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum calendário disponível."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可用的日历。"
           }
         }
       }
@@ -11029,6 +11269,46 @@
         }
       }
     },
+    "Toggles whether this calendar is imported into calendar.org.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legt fest, ob dieser Kalender in calendar.org importiert wird."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa o desactiva si este calendario se importa en calendar.org."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active ou désactive l'import de ce calendrier dans calendar.org."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このカレンダーをcalendar.orgに取り込むかを切り替えます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alterna se este calendário é importado para calendar.org."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换是否将此日历导入 calendar.org。"
+          }
+        }
+      }
+    },
     "Type naturally — dates, #tags, and ! priority are picked up automatically.": {
       "localizations": {
         "de": {
@@ -12155,42 +12435,42 @@
         }
       }
     },
-    "When this is off, events in calendar.org update the OrgSync calendar.": {
+    "Events from the selected calendars are imported into calendar.org. When this is off, events in calendar.org update the OrgSync calendar.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn dies aus ist, aktualisieren Ereignisse in calendar.org den OrgSync-Kalender."
+            "value": "Ereignisse aus den ausgewählten Kalendern werden in calendar.org importiert. Wenn dies aus ist, aktualisieren Ereignisse in calendar.org den OrgSync-Kalender."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si está desactivado, los eventos de calendar.org actualizan el calendario OrgSync."
+            "value": "Los eventos de los calendarios seleccionados se importan en calendar.org. Si está desactivado, los eventos de calendar.org actualizan el calendario OrgSync."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si cette option est désactivée, les événements de calendar.org mettent à jour le calendrier OrgSync."
+            "value": "Les événements des calendriers sélectionnés sont importés dans calendar.org. Si cette option est désactivée, les événements de calendar.org mettent à jour le calendrier OrgSync."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "オフの場合、calendar.orgのイベントがOrgSyncカレンダーを更新します。"
+            "value": "選択したカレンダーのイベントがcalendar.orgに取り込まれます。オフの場合、calendar.orgのイベントがOrgSyncカレンダーを更新します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quando desativado, eventos em calendar.org atualizam o calendário OrgSync."
+            "value": "Eventos dos calendários selecionados são importados para calendar.org. Quando desativado, eventos em calendar.org atualizam o calendário OrgSync."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "关闭时，calendar.org 中的事件会更新 OrgSync 日历。"
+            "value": "所选日历中的事件会导入 calendar.org。关闭时，calendar.org 中的事件会更新 OrgSync 日历。"
           }
         }
       }

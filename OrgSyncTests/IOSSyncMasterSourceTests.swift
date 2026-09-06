@@ -19,6 +19,8 @@ import Testing
         let settings = SettingsStore(defaults: makeDefaults())
         #expect(settings.calendarMasterSource == .iosApps)
         #expect(settings.remindersMasterSource == .iosApps)
+        #expect(settings.calendarSourceIDs.isEmpty)
+        #expect(CalendarSyncRules.importsAllCalendars(selectedIDs: settings.calendarSourceIDs))
     }
 
     @Test func masterSourcesRoundTripThroughUserDefaults() {
@@ -30,6 +32,16 @@ import Testing
         let restored = SettingsStore(defaults: defaults)
         #expect(restored.calendarMasterSource == .orgFiles)
         #expect(restored.remindersMasterSource == .orgFiles)
+    }
+
+    @Test func calendarSourceIDsRoundTripThroughUserDefaults() {
+        let defaults = makeDefaults()
+        let settings = SettingsStore(defaults: defaults)
+        settings.calendarSourceIDs = ["work", "personal"]
+
+        let restored = SettingsStore(defaults: defaults)
+        #expect(restored.calendarSourceIDs == ["work", "personal"])
+        #expect(CalendarSyncRules.importsAllCalendars(selectedIDs: restored.calendarSourceIDs) == false)
     }
 
     @Test func switchBindingMapsOnToIOSAppsAndOffToOrgFiles() {
